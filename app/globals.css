@@ -1,0 +1,177 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
+
+  /* Glass recipe, kept in one place so every surface agrees. */
+  --glass-fill: rgba(255, 255, 255, 0.78);
+  --glass-fill-strong: rgba(255, 255, 255, 0.9);
+  --glass-rim: rgba(255, 255, 255, 0.85);
+  --glass-edge: rgba(21, 34, 56, 0.07);
+
+  color-scheme: light;
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-ink-900 text-fg antialiased;
+    font-family: var(--font-sans);
+    /* Cream base + a very subtle blue glow and a warm glow, layered. */
+    background-image:
+      radial-gradient(1100px 620px at 8% -10%, rgba(46, 107, 230, 0.1), transparent 62%),
+      radial-gradient(900px 520px at 98% 2%, rgba(232, 137, 30, 0.09), transparent 60%),
+      radial-gradient(760px 620px at 60% 110%, rgba(124, 92, 214, 0.07), transparent 62%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(46, 107, 230, 0.18);
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand/55 ring-offset-2 ring-offset-ink-900 rounded-[6px];
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cdd8e6;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b3c2d6;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* ---------------------------------------------------------- surfaces */
+
+  .panel {
+    border-radius: 20px;
+    background: var(--glass-fill);
+    border: 1px solid var(--glass-rim);
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
+      0 0 0 1px var(--glass-edge),
+      0 10px 30px -18px rgba(21, 34, 56, 0.28),
+      0 2px 6px -3px rgba(21, 34, 56, 0.1);
+    backdrop-filter: blur(14px) saturate(1.15);
+    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  }
+
+  /* A slightly more opaque variant for dense content (tables, forms). */
+  .panel-solid {
+    background: var(--glass-fill-strong);
+  }
+
+  .panel-head {
+    @apply flex items-start justify-between gap-4 px-5 py-4;
+    border-bottom: 1px solid rgba(21, 34, 56, 0.07);
+  }
+
+  .panel-title {
+    @apply text-[13px] font-semibold tracking-[0.01em] text-fg;
+  }
+
+  /* ------------------------------------------------------------- text */
+
+  .label {
+    @apply text-[10.5px] font-semibold uppercase tracking-[0.13em] text-fg-dim;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    @apply text-[12.5px] tracking-tight;
+  }
+
+  .rule {
+    border-top: 1px solid rgba(21, 34, 56, 0.07);
+  }
+
+  /* --------------------------------------------------------- ornament */
+
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(21, 34, 56, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(21, 34, 56, 0.045) 1px, transparent 1px);
+    background-size: 30px 30px;
+  }
+
+  /* Hairline tricolour accent — used sparingly, never as decoration. */
+  .tricolour {
+    background: linear-gradient(
+      90deg,
+      #e8891e 0%,
+      #e8891e 33%,
+      #ffffff 33%,
+      #ffffff 66%,
+      #0e8a4f 66%,
+      #0e8a4f 100%
+    );
+  }
+
+  .hover-lift {
+    transition:
+      transform 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+      box-shadow 0.18s cubic-bezier(0.22, 0.61, 0.36, 1),
+      border-color 0.18s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* Documents (certificate, field-test record) print on paper, not glass. */
+.print-sheet {
+  background: #ffffff;
+  color: #111827;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    background-image: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    backdrop-filter: none !important;
+  }
+  .print-page {
+    page-break-after: always;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

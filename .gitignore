@@ -1,0 +1,23 @@
+# dependencies & build output
+node_modules
+.next
+out
+*.tsbuildinfo
+next-env.d.ts
+
+# local evidence store — regenerated from the seed on first run
+.data
+
+# vercel
+.vercel
+
+# editor / OS
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+
+# stray media dropped in the project root (kept locally, not in the repo)
+/*.mp4
+/*.mov
+/*.zip

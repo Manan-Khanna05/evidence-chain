@@ -1,0 +1,217 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://evidence-chain.local/schema/record.schema.json",
+  "title": "Evidence record",
+  "description": "One JSON schema covering all three record families, with a type discriminator. Implementation Plan, Step 2. The authoritative TypeScript definitions live in lib/domain/types.ts; this file is the interchange contract.",
+  "type": "object",
+  "required": [
+    "record_id",
+    "type",
+    "case_ref",
+    "device_id",
+    "officer_id",
+    "claimed_time",
+    "seq",
+    "prev_hash",
+    "payload",
+    "payload_hash",
+    "signature",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "record_id": {
+      "type": "string",
+      "description": "Unique record identifier, generated on the device."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["trigger", "field_test", "handoff_transfer", "handoff_receipt"],
+      "description": "Type discriminator. The handoff family is two records: a transfer and a receipt."
+    },
+    "case_ref": {
+      "type": "string",
+      "description": "Groups the records belonging to one event."
+    },
+    "device_id": {
+      "type": "string",
+      "description": "From the attestation certificate in production, never user-entered."
+    },
+    "officer_id": { "type": "string", "description": "Who is operating the device." },
+    "claimed_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UNTRUSTED. The device clock at capture. Never to be presented as a proven timestamp; the trusted claim is the interval between the previous and current anchor."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonic counter, per device. From a secure-element counter in production, so a device cannot silently reorder or re-issue."
+    },
+    "prev_hash": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 identity hash of the previous record on this device; null for the genesis record."
+    },
+    "payload": {
+      "description": "Type-specific body. See the four payload definitions below.",
+      "oneOf": [
+        { "$ref": "#/$defs/triggerPayload" },
+        { "$ref": "#/$defs/fieldTestPayload" },
+        { "$ref": "#/$defs/handoffTransferPayload" },
+        { "$ref": "#/$defs/handoffReceiptPayload" }
+      ]
+    },
+    "payload_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 over the canonicalised payload. Canonicalisation sorts object keys at every depth, so key order is irrelevant."
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[0-9a-f]+$",
+      "description": "Over payload_hash + prev_hash + seq, by the hardware-backed key. Hex of the raw ECDSA P-256 signature in this build."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["captured", "queued", "pushed", "anchored"]
+    },
+    "received_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Server ingest time. Trusted only as a lower bound; the anchor is what bounds the record."
+    },
+    "anchor_id": {
+      "type": ["string", "null"],
+      "description": "The anchor whose tree contains this record, once anchored."
+    }
+  },
+  "$defs": {
+    "sensorReading": {
+      "type": "object",
+      "required": ["raw_value", "tier", "sensor_type", "sensor_id", "taken_at", "simulated", "adapter"],
+      "properties": {
+        "raw_value": { "type": "string" },
+        "tier": {
+          "type": "string",
+          "enum": ["no_referral", "tier_1", "tier_2", "tier_3"],
+          "description": "A non-probabilistic referral tier. Never a probability or confidence score."
+        },
+        "sensor_type": { "type": "string" },
+        "sensor_id": { "type": "string" },
+        "taken_at": { "type": "string", "format": "date-time" },
+        "simulated": {
+          "type": "boolean",
+          "description": "True whenever the reading came from a mock adapter, so a record can never imply a capability the deployment lacks."
+        },
+        "adapter": { "type": "string" }
+      }
+    },
+    "triggerPayload": {
+      "type": "object",
+      "required": ["place", "place_kind", "sensor", "officer_action", "search_outcome", "statutory_basis"],
+      "properties": {
+        "place": { "type": "string" },
+        "place_kind": { "type": "string" },
+        "train_or_location_ref": { "type": "string" },
+        "sensor": { "$ref": "#/$defs/sensorReading" },
+        "officer_action": { "type": "string", "enum": ["searched", "not_searched"] },
+        "search_outcome": {
+          "type": "string",
+          "enum": ["material_recovered", "nothing_recovered", "not_applicable"],
+          "description": "Negative outcomes are recorded. A log of only the hits cannot tell anyone whether the programme works."
+        },
+        "grounds_note": { "type": "string" },
+        "statutory_basis": { "type": "string" }
+      }
+    },
+    "fieldTestPayload": {
+      "type": "object",
+      "required": [
+        "kit_type",
+        "manufacturer",
+        "lot_number",
+        "expiry_date",
+        "lot_expired",
+        "observed_colour",
+        "reference_table",
+        "operator_id",
+        "result_status",
+        "epistemic_status"
+      ],
+      "properties": {
+        "kit_type": { "type": "string" },
+        "manufacturer": { "type": "string" },
+        "lot_number": { "type": "string" },
+        "expiry_date": { "type": "string", "format": "date" },
+        "lot_expired": {
+          "type": "boolean",
+          "description": "Carried into the signed payload so the warning travels with the record."
+        },
+        "observed_colour": {
+          "type": "string",
+          "description": "From a fixed vocabulary. Never free text."
+        },
+        "reference_table": { "type": "string" },
+        "ambient_temperature_c": { "type": ["number", "null"] },
+        "operator_id": { "type": "string" },
+        "result_status": {
+          "type": "string",
+          "enum": ["presumptive_positive", "presumptive_negative", "inconclusive"],
+          "description": "Three values, all presumptive. There is no 'confirmed' or 'identified'."
+        },
+        "epistemic_status": {
+          "type": "string",
+          "const": "Presumptive — not a chemical identification"
+        },
+        "linked_trigger_record_id": { "type": ["string", "null"] }
+      }
+    },
+    "handoffTransferPayload": {
+      "type": "object",
+      "required": [
+        "transferor_officer_id",
+        "transferor_force",
+        "receiving_agency",
+        "sample_count",
+        "seal_state",
+        "handoff_id"
+      ],
+      "properties": {
+        "transferor_officer_id": { "type": "string" },
+        "transferor_force": { "type": "string", "const": "RPF" },
+        "receiving_agency": { "type": "string", "const": "GRP" },
+        "receiving_post": { "type": "string" },
+        "sample_count": { "type": "integer", "minimum": 1 },
+        "seal_state": { "type": "string", "enum": ["intact", "resealed_documented", "broken"] },
+        "seal_marks": { "type": "string" },
+        "article_description": { "type": "string" },
+        "gross_weight_g": { "type": "number" },
+        "linked_record_ids": { "type": "array", "items": { "type": "string" } },
+        "handoff_id": { "type": "string" }
+      }
+    },
+    "handoffReceiptPayload": {
+      "type": "object",
+      "required": [
+        "handoff_id",
+        "transfer_record_id",
+        "receiving_officer_id",
+        "receiving_force",
+        "sample_count",
+        "seal_state"
+      ],
+      "description": "A receipt cannot exist without its transfer record. Sample count and seal state are compared against the transfer, not copied from it.",
+      "properties": {
+        "handoff_id": { "type": "string" },
+        "transfer_record_id": { "type": "string" },
+        "receiving_officer_id": { "type": "string" },
+        "receiving_force": { "type": "string", "const": "GRP" },
+        "sample_count": { "type": "integer", "minimum": 1 },
+        "seal_state": { "type": "string", "enum": ["intact", "resealed_documented", "broken"] },
+        "seal_marks": { "type": "string" },
+        "remarks": { "type": "string" }
+      }
+    }
+  }
+}

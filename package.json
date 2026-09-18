@@ -1,0 +1,31 @@
+{
+  "name": "evidence-chain",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evidence Chain - structured evidence capture for railway narcotics events (SIH 2026 Phase 1 prototype)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "sim:esp32": "node tools/esp32-simulator/server.mjs"
+  },
+  "dependencies": {
+    "jspdf": "2.5.2",
+    "lucide-react": "0.468.0",
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.7",
+    "@types/react-dom": "19.0.3",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.49",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.7.3",
+    "ws": "^8.18.0"
+  }
+}
