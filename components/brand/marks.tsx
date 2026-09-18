@@ -74,13 +74,13 @@ export function BrandLockup({
 /* ------------------------------------------------------- banner artwork */
 
 /**
- * Both banners live in one asset sheet, `public/images/banners.png`
- * (2172 × 724). The railway hero occupies y 0–360 and the India pledge band
+ * Both banners live in one asset sheet, `public/images/banners.jpg`
+ * (1600 × 533, re-encoded from the 2172 × 724 source kept in docs/design). The railway hero occupies y 0–360 and the India pledge band
  * y 369–719, so each is shown by scaling the sheet to the container width and
  * offsetting vertically — no cropping step, one HTTP request, and the two stay
  * in sync if the artwork is ever replaced.
  */
-const SHEET = "/images/banners.png";
+const SHEET = "/images/banners.jpg";
 
 /** y-offset as a background-position percentage: top / (imageH − bandH). */
 const HERO_BAND = { w: 2172, top: 0, height: 360 };
