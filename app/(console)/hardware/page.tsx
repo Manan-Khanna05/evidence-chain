@@ -41,6 +41,9 @@ import {
 } from "@/features/hardware/widgets";
 import { AcquisitionReview } from "@/features/hardware/acquisition-review";
 import { DEFAULT_WIFI_HOSTS } from "@/lib/hardware/client";
+import { ConnectionStatus } from "@/features/hardware/connection-status";
+import { DeviceStatusCard } from "@/features/hardware/device-status-card";
+import { HardwareGuide } from "@/features/hardware/hardware-guide";
 
 /**
  * A page served over https cannot open a plain ws:// socket or fetch http:// —
@@ -70,6 +73,7 @@ export default function HardwarePage() {
   const hw = useHardware();
   const [mass, setMass] = React.useState("100");
   const [busy, setBusy] = React.useState<string | null>(null);
+  const [view, setView] = React.useState<"operator" | "technical">("operator");
 
   if (!store) return null;
 
@@ -88,13 +92,8 @@ export default function HardwarePage() {
       <PageHeader
         eyebrow="System"
         title="Hardware"
-        subtitle="The ESP32-S3 gateway and its sensors. Live values here are telemetry — an evidence record only exists once an officer confirms an acquisition."
-        status={
-          <Pill tone={tone}>
-            {linkLabel(hw.state, hw.transport)}
-            {hw.deviceId ? ` · ${hw.deviceId}` : ""}
-          </Pill>
-        }
+        subtitle="The evidence device and its sensors. Live readings are not evidence — a record only exists once an officer reviews and confirms it."
+        status={<ConnectionStatus />}
         actions={
           <>
             <Button
@@ -124,6 +123,84 @@ export default function HardwarePage() {
 
       {/* --------------------------------------------------------- banner */}
       <InsecureContextNote />
+
+      <div
+        role="tablist"
+        aria-label="Hardware view"
+        className="mb-5 mt-4 inline-flex rounded-xl border border-line bg-white p-1 shadow-chip"
+      >
+        {(
+          [
+            { key: "operator", label: "Operator View" },
+            { key: "technical", label: "Technical View" },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={view === t.key}
+            onClick={() => setView(t.key)}
+            className={cx(
+              "min-h-[44px] rounded-lg px-4 text-[14px] font-semibold transition-colors duration-150",
+              view === t.key ? "bg-brand text-white shadow-chip" : "text-fg-muted hover:bg-ink-750 hover:text-fg",
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {view === "operator" ? (
+        <div className="space-y-5">
+          <DeviceStatusCard />
+
+          <Panel className="min-w-0">
+            <PanelHead title="Device controls" subtitle="The same as the buttons on the device." icon={<ScanLine size={17} />} />
+            <div className="grid gap-3 p-5 sm:grid-cols-[2fr_1fr_1fr]">
+              <Button
+                size="lg"
+                variant="primary"
+                className="h-14 text-[17px]"
+                disabled={!connected}
+                busy={busy === "acq"}
+                icon={<ScanLine size={20} />}
+                onClick={() => act("acq", hw.acquire)}
+              >
+                ACQUIRE
+              </Button>
+              <Button size="lg" className="h-14" disabled={!connected} busy={busy === "tare"} icon={<Scale size={18} />} onClick={() => act("tare", hw.tare)}>
+                Tare
+              </Button>
+              <Button size="lg" className="h-14" disabled={!connected} busy={busy === "reset"} icon={<RotateCcw size={18} />} onClick={() => act("reset", hw.reset)}>
+                RESET
+              </Button>
+            </div>
+            <p className="border-t border-line px-5 py-3.5 text-[13.5px] leading-relaxed text-fg-muted">
+              After ACQUIRE, a review screen opens. Nothing is saved until you check the reading and confirm it.
+            </p>
+          </Panel>
+
+          <Panel className="min-w-0">
+            <PanelHead title="Connect the device" subtitle="Three steps. You only do this once per shift." icon={<Plug size={17} />} />
+            <ol className="grid gap-3 p-5 md:grid-cols-3">
+              {[
+                ["Switch it on", "Connect the power bank. The green LED lights when the device is ready."],
+                ["Keep it near the phone", "The phone finds the device on its own. If asked, join the “EvidenceChain” Wi-Fi."],
+                ["Look for “Device Connected”", "It appears at the top of this page. Then press ACQUIRE to take a reading."],
+              ].map(([t, b], i) => (
+                <li key={t} className="rounded-2xl border border-line bg-white px-4 py-3.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-[13px] font-bold text-white">{i + 1}</span>
+                  <span className="mt-2 block text-[15px] font-semibold text-fg">{t}</span>
+                  <span className="mt-0.5 block text-[13.5px] leading-relaxed text-fg-muted">{b}</span>
+                </li>
+              ))}
+            </ol>
+          </Panel>
+
+          <HardwareGuide />
+        </div>
+      ) : (
+      <>
 
       {!connected ? (
         <Callout tone="warn" title="No hardware connected" icon={<AlertTriangle size={13} />}>
@@ -385,6 +462,8 @@ export default function HardwarePage() {
           </Callout>
         </div>
       </div>
+      </>
+      )}
 
       <AcquisitionReview />
     </>

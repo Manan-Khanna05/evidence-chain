@@ -5,6 +5,8 @@ import {
   AlertTriangle,
   Check,
   CircleDashed,
+  MonitorPlay,
+  RefreshCw,
   RotateCcw,
   ScanLine,
   Thermometer,
@@ -23,7 +25,9 @@ import {
   Pill,
   cx,
 } from "@/components/ui/primitives";
-import { HardwareChip, LedMirror, LoadGauge } from "@/features/hardware/widgets";
+import { LedMirror, LoadGauge } from "@/features/hardware/widgets";
+import { ConnectionStatus } from "@/features/hardware/connection-status";
+import { AssetImage } from "@/components/ui/asset-image";
 import { AcquisitionReview } from "@/features/hardware/acquisition-review";
 
 /**
@@ -49,10 +53,36 @@ export default function OperatorPage() {
     <>
       <PageHeader
         eyebrow="Field device"
-        title="Operator"
-        subtitle="The screen an officer uses on the platform. Everything technical lives elsewhere."
-        status={<HardwareChip />}
+        title="Operator Mode"
+        subtitle="One screen for the platform: is the device ready, what is it reading, and did the record save."
+        status={<ConnectionStatus />}
       />
+
+      {hw.state !== "connected" ? (
+        <Panel className="mx-auto mb-4 w-full max-w-[880px] overflow-hidden">
+          <div className="grid items-center gap-5 p-5 sm:grid-cols-[auto_minmax(0,1fr)]">
+            <div className="mx-auto w-full max-w-[260px] sm:w-[220px]">
+              <AssetImage name="deviceEvidence" alt="The phone and the RPF evidence device" />
+            </div>
+            <div>
+              <h2 className="text-[20px] font-semibold text-fg">
+                {hw.state === "connecting" || hw.state === "searching" ? "Connecting to device…" : "No device connected"}
+              </h2>
+              <p className="mt-1.5 text-[15px] leading-relaxed text-fg-muted">
+                Switch the evidence device on and keep it near this phone. It connects by itself.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Button variant="primary" size="lg" icon={<RefreshCw size={18} />} onClick={() => void hw.connect()}>
+                  Try again
+                </Button>
+                <Button size="lg" icon={<MonitorPlay size={18} />} onClick={hw.useDemoHardware}>
+                  Use demo device
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Panel>
+      ) : null}
 
       <div className="mx-auto grid w-full max-w-[880px] gap-4">
         {/* ------------------------------------------------- device state */}
@@ -107,9 +137,12 @@ export default function OperatorPage() {
             </div>
 
             {hw.lastFault ? (
-              <Callout tone="danger" title={hw.lastFault.code} icon={<AlertTriangle size={13} />}>
-                {hw.lastFault.detail}
-              </Callout>
+              <div className="mt-4">
+                <Callout tone="danger" title="The device reported a problem" icon={<AlertTriangle size={13} />}>
+                  {hw.lastFault.detail} Press RESET, then try again. If it keeps happening, check the
+                  cables on the Hardware page.
+                </Callout>
+              </div>
             ) : null}
           </div>
 
@@ -155,9 +188,9 @@ export default function OperatorPage() {
               className="h-[64px] text-[16px]"
               disabled={hw.state !== "connected"}
               onClick={() => void hw.acquire()}
-              icon={<ScanLine size={20} />}
+              icon={<ScanLine size={22} />}
             >
-              Acquire
+              ACQUIRE
             </Button>
             <Button
               size="lg"
@@ -166,9 +199,9 @@ export default function OperatorPage() {
               onClick={() => void hw.reset()}
               icon={<RotateCcw size={18} />}
             >
-              Reset
+              RESET
             </Button>
-            <p className="col-span-full text-center text-[11.5px] leading-relaxed text-fg-dim">
+            <p className="col-span-full text-center text-[13px] leading-relaxed text-fg-muted">
               The physical ACQUIRE button on the device does the same thing. Reset clears the device
               session — it never deletes a record.
             </p>
@@ -185,7 +218,7 @@ export default function OperatorPage() {
               <div>
                 <div className="text-[15px] font-semibold text-ok">Saved</div>
                 <div className="mono mt-0.5 text-[12.5px] text-fg-muted">
-                  {justSaved} · signed and chained{online ? " · pushed" : " · queued on device"}
+                  {justSaved} · signed and saved{online ? "" : " · waiting to sync"}
                 </div>
               </div>
             </div>
@@ -199,14 +232,14 @@ export default function OperatorPage() {
               <Pill tone={online ? "ok" : "warn"}>{online ? "Online" : "Offline"}</Pill>
               {queued > 0 ? (
                 <Pill tone="warn">
-                  {queued} record{queued === 1 ? "" : "s"} queued
+                  {queued} waiting to sync
                 </Pill>
               ) : (
                 <Pill tone="ok">Nothing waiting</Pill>
               )}
             </div>
-            <p className="mt-2.5 text-[11.5px] leading-relaxed text-fg-dim">
-              Records save on the device first. They push by themselves when connectivity returns.
+            <p className="mt-2.5 text-[13px] leading-relaxed text-fg-muted">
+              Records save on this device first, then upload when you are back online.
             </p>
           </Panel>
 

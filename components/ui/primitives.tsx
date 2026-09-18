@@ -65,12 +65,12 @@ export type Tone = "ok" | "warn" | "danger" | "info" | "sim" | "neutral" | "bran
 
 /** Pill / chip surface: tinted fill, soft rim, readable text on cream. */
 const TONES: Record<Tone, string> = {
-  ok: "border-ok/25 bg-ok/[0.10] text-[#0B7A56]",
-  warn: "border-warn/30 bg-warn/[0.12] text-[#A4601A]",
-  danger: "border-danger/30 bg-danger/[0.10] text-[#B93B3B]",
-  info: "border-info/25 bg-info/[0.09] text-[#2154B8]",
-  sim: "border-sim/28 bg-sim/[0.10] text-[#5F44A8]",
-  brand: "border-brand/25 bg-brand/[0.09] text-[#2154B8]",
+  ok: "border-ok/25 bg-ok/[0.10] text-[#15803D]",
+  warn: "border-warn/30 bg-warn/[0.12] text-[#B45309]",
+  danger: "border-danger/30 bg-danger/[0.10] text-[#DC2626]",
+  info: "border-info/25 bg-info/[0.09] text-[#1D4ED8]",
+  sim: "border-sim/28 bg-sim/[0.10] text-[#6D28D9]",
+  brand: "border-brand/25 bg-brand/[0.09] text-[#1D4ED8]",
   neutral: "border-line-strong bg-white/70 text-fg-muted",
 };
 
@@ -104,18 +104,18 @@ function buttonClasses(variant: ButtonVariant, size: "sm" | "md" | "lg") {
   const base =
     "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45 select-none";
   const sizes = {
-    sm: "h-9 px-3 text-[12.5px]",
-    md: "h-[42px] px-4 text-[13.5px]",
-    lg: "h-[46px] px-5 text-[14.5px]",
+    sm: "h-9 px-3 text-[13px]",
+    md: "h-11 px-4 text-[14px]",
+    lg: "h-12 px-5 text-[15px]",
   }[size];
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(46,107,230,0.85)] hover:bg-[#3b78ef] active:bg-[#2559c9]",
+      "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.85)] hover:bg-[#1D5BE0] active:bg-[#1E4FC4]",
     secondary:
       "border border-line-strong bg-white/80 text-fg shadow-chip backdrop-blur-sm hover:bg-white hover:border-brand/35",
     ghost: "text-fg-muted hover:text-fg hover:bg-ink-750",
-    danger: "border border-danger/30 bg-danger/[0.09] text-[#B93B3B] hover:bg-danger/[0.15]",
-    success: "border border-ok/30 bg-ok/[0.09] text-[#0B7A56] hover:bg-ok/[0.15]",
+    danger: "border border-danger/30 bg-danger/[0.09] text-[#DC2626] hover:bg-danger/[0.15]",
+    success: "border border-ok/30 bg-ok/[0.09] text-[#15803D] hover:bg-ok/[0.15]",
   };
   return cx(base, sizes, variants[variant]);
 }
@@ -128,7 +128,7 @@ export function Button({
   className,
   icon,
   ...rest
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+}: React.ComponentPropsWithRef<"button"> & {
   variant?: ButtonVariant;
   size?: "sm" | "md" | "lg";
   busy?: boolean;
@@ -436,7 +436,7 @@ export function SimulatedNote({
   return (
     <div
       className={cx(
-        "flex gap-2.5 rounded-xl border border-sim/22 bg-sim/[0.07] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#5F44A8]",
+        "flex gap-2.5 rounded-xl border border-sim/22 bg-sim/[0.07] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#6D28D9]",
         className,
       )}
     >

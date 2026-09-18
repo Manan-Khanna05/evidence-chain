@@ -57,7 +57,7 @@ export const RESULT_STATUSES: { value: FieldTestResult; label: string }[] = [
   { value: "inconclusive", label: "Inconclusive" },
 ];
 
-export const PRESUMPTIVE_NOTICE = "Presumptive — not a chemical identification";
+export const PRESUMPTIVE_NOTICE = "Presumptive result — not a chemical identification";
 
 export const SEAL_STATES: { value: SealState; label: string }[] = [
   { value: "intact", label: "Intact" },

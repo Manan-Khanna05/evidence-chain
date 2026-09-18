@@ -68,6 +68,18 @@ export default function CaseDetailPage() {
     };
   }, [verify, caseRef, stamp]);
 
+  // Global search links straight to a record: /cases/<ref>?record=<id>.
+  const recordParam = React.useRef<string | null>(null);
+  React.useEffect(() => {
+    recordParam.current = new URLSearchParams(window.location.search).get("record");
+  }, []);
+  React.useEffect(() => {
+    if (!store || !recordParam.current) return;
+    const r = store.records.find((x) => x.record_id === recordParam.current);
+    recordParam.current = null;
+    if (r) setDrawerRecord(r);
+  }, [store]);
+
   const sectionRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const scrollTo = (key: PipelineNodeKey) => {
     const map: Record<PipelineNodeKey, string> = {

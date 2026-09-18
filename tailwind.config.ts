@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Design tokens — premium light / warm ivory / glass.
+ * Design tokens — light railway console, subtle glass.
  *
  * The token NAMES are stable across the app (ink-*, line, fg-*, brand, ok,
  * warn, danger, info, sim). Only their values changed when the console moved
@@ -23,33 +23,33 @@ const config: Config = {
       colors: {
         /* Surfaces, lightest → most recessed. */
         ink: {
-          900: "#F5F3ED", // page canvas — warm ivory
-          850: "#FBFAF6", // sidebar / raised cream
+          900: "#F6F8FC", // page canvas — --bg
+          850: "#FBFCFE", // sidebar
           800: "#FFFFFF", // card fill (used with /75–/88 for glass)
-          750: "#F1F5FA", // hover / inset surface
+          750: "#F1F5FB", // hover / inset surface
           700: "#E8EEF6", // pressed / stronger inset
           600: "#DDE5EF",
           500: "#CBD6E4",
         },
         line: {
-          DEFAULT: "#E7E4DA", // warm hairline
-          strong: "#D6DEE9", // cool hairline for controls
+          DEFAULT: "#E4EAF3", // hairline
+          strong: "#D5DEEB", // cool hairline for controls
         },
         fg: {
-          DEFAULT: "#152238", // deep navy, never pure black
-          muted: "#4E6180",
-          dim: "#8093AA",
+          DEFAULT: "#102A56", // --text
+          muted: "#64748B",
+          dim: "#7C8BA1",
         },
         brand: {
-          DEFAULT: "#2E6BE6", // soft royal blue
-          deep: "#1B3F91", // navy for headings/logo
-          soft: "#E7EFFD", // tinted fill
+          DEFAULT: "#2563EB", // --primary
+          deep: "#173B8F", // --primary-dark
+          soft: "#EAF1FE", // tinted fill
         },
-        ok: "#0F9D6E", // emerald
-        warn: "#D98324", // warm amber
-        danger: "#E05252", // soft coral
-        info: "#2E6BE6",
-        sim: "#7C5CD6", // lavender / violet
+        ok: "#16A34A", // --success
+        warn: "#F59E0B", // --warning
+        danger: "#EF4444", // --danger
+        info: "#2563EB",
+        sim: "#7C3AED", // --violet
         saffron: "#E8891E",
         india: "#0E8A4F",
       },
@@ -75,9 +75,9 @@ const config: Config = {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-ring": {
-          "0%": { boxShadow: "0 0 0 0 rgba(15,157,110,0.35)" },
-          "70%": { boxShadow: "0 0 0 10px rgba(15,157,110,0)" },
-          "100%": { boxShadow: "0 0 0 0 rgba(15,157,110,0)" },
+          "0%": { boxShadow: "0 0 0 0 rgba(22,163,74,0.35)" },
+          "70%": { boxShadow: "0 0 0 10px rgba(22,163,74,0)" },
+          "100%": { boxShadow: "0 0 0 0 rgba(22,163,74,0)" },
         },
         "grow-x": { from: { transform: "scaleX(0)" }, to: { transform: "scaleX(1)" } },
       },

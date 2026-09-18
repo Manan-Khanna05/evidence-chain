@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Check,
   CircleDashed,
+  Clock,
   Cpu,
   Radio,
   Thermometer,
@@ -57,7 +58,7 @@ export function HardwareChip({ compact = false }: { compact?: boolean }) {
 
   return (
     <Pill tone={tone} icon={icon} title={`${linkLabel(state, transport)}${deviceId ? ` · ${deviceId}` : ""}`}>
-      {compact ? (transport === "demo" ? "Demo HW" : state === "connected" ? "HW" : "No HW") : linkLabel(state, transport)}
+      {compact ? (transport === "demo" ? "Demo" : state === "connected" ? "Connected" : "Offline") : linkLabel(state, transport)}
     </Pill>
   );
 }
@@ -91,7 +92,7 @@ export function LoadGauge({
         <defs>
           <linearGradient id="lg-arc" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#5A93F0" />
-            <stop offset="100%" stopColor="#2E6BE6" />
+            <stop offset="100%" stopColor="#2563EB" />
           </linearGradient>
         </defs>
         <path
@@ -263,9 +264,9 @@ export function LedMirror({
   );
   return (
     <div className="flex items-center gap-5">
-      {lamp(green, "#0F9D6E", "Ready")}
-      {lamp(amber, "#D98324", "Recording")}
-      {lamp(red, "#E05252", "Fault")}
+      {lamp(green, "#16A34A", "Ready")}
+      {lamp(amber, "#F59E0B", "Recording")}
+      {lamp(red, "#EF4444", "Fault")}
     </div>
   );
 }
@@ -280,31 +281,25 @@ export function HardwareFlow({ active }: { active: string | null }) {
     { key: "link", label: "Wi-Fi / USB", icon: <Radio size={15} /> },
     { key: "app", label: "Evidence Chain", icon: <Activity size={15} /> },
     { key: "signed", label: "Signed record", icon: <Check size={15} /> },
-    { key: "queue", label: "Offline queue", icon: <CircleDashed size={15} /> },
-    { key: "anchor", label: "Anchor", icon: <TriangleAlert size={15} /> },
+    { key: "queue", label: "Pending Sync", icon: <CircleDashed size={15} /> },
+    { key: "anchor", label: "Trusted time", icon: <Clock size={15} /> },
   ];
   return (
-    <div className="-mx-1 overflow-x-auto px-1">
-      <ol className="flex min-w-[640px] items-center gap-1">
-        {steps.map((s, i) => (
-          <React.Fragment key={s.key}>
-            <li
-              className={cx(
-                "flex flex-1 flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center",
-                active === s.key
-                  ? "border-brand/35 bg-brand/[0.09] text-brand"
-                  : "border-line bg-white/60 text-fg-dim",
-              )}
-            >
-              {s.icon}
-              <span className="text-[11px] font-semibold leading-tight text-fg">{s.label}</span>
-            </li>
-            {i < steps.length - 1 ? (
-              <ArrowRight size={13} className="shrink-0 text-fg-dim/60" />
-            ) : null}
-          </React.Fragment>
-        ))}
-      </ol>
-    </div>
+    <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
+      {steps.map((s) => (
+        <li
+          key={s.key}
+          className={cx(
+            "flex flex-col items-center gap-1.5 rounded-xl border px-2 py-2.5 text-center",
+            active === s.key
+              ? "border-brand/35 bg-brand/[0.09] text-brand"
+              : "border-line bg-white text-fg-dim",
+          )}
+        >
+          {s.icon}
+          <span className="text-[12px] font-semibold leading-tight text-fg">{s.label}</span>
+        </li>
+      ))}
+    </ol>
   );
 }

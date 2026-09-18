@@ -25,6 +25,7 @@ import {
 import { ConnectivityPill } from "@/components/ui/status";
 import { MOCK_READINGS, MOCK_SENSOR_ID, MOCK_SENSOR_TYPE } from "@/lib/sensor/mock_readings";
 import { REFERRAL_TIERS } from "@/lib/domain/vocab";
+import { DeviceStatusCard } from "@/features/hardware/device-status-card";
 
 export default function DeviceStatusPage() {
   const { store, officer } = useApp();
@@ -47,21 +48,28 @@ export default function DeviceStatusPage() {
     <>
       <PageHeader
         eyebrow="System"
-        title="Device status"
-        subtitle="What this build actually implements, set against what the production handheld is specified to provide. The two are not the same, and the difference is stated rather than blurred."
+        title="Device Status"
+        subtitle="Is the evidence device ready, and what is each phone? Below the live card: what this prototype implements, set against the production specification."
         status={<ConnectivityPill online={store.connectivity.online} />}
       />
+
+      <div className="mb-6">
+        <DeviceStatusCard />
+      </div>
+
+      <h2 className="mb-3 text-[20px] font-semibold text-fg">Phones</h2>
 
       <div className="mb-4 flex flex-wrap gap-1.5">
         {store.devices.map((d) => (
           <button
             key={d.device_id}
             onClick={() => setSelected(d.device_id)}
+            aria-pressed={d.device_id === activeId}
             className={cx(
-              "flex items-center gap-2 rounded-lg border px-3 py-2 text-[13px] transition-colors",
+              "flex min-h-[44px] items-center gap-2 rounded-xl border px-3 text-[13.5px] transition-colors duration-150",
               d.device_id === activeId
-                ? "border-brand/50 bg-brand/12 text-fg"
-                : "border-line bg-ink-800 text-fg-muted hover:border-line-strong hover:text-fg",
+                ? "border-brand/40 bg-brand/[0.09] text-brand-deep"
+                : "border-line bg-white text-fg-muted hover:border-line-strong hover:text-fg",
             )}
           >
             <Smartphone size={14} />
@@ -106,7 +114,7 @@ export default function DeviceStatusPage() {
             <div className="p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-sim/35 bg-sim/[0.06] p-4">
-                  <div className="label text-[#5F44A8]">Implemented in this build</div>
+                  <div className="label text-[#6D28D9]">Implemented in this build</div>
                   <dl className="mt-3 space-y-3">
                     <Line k="Key location" v="Software key in the server process" />
                     <Line k="Algorithm" v="ECDSA P-256 / SHA-256 (Web Crypto)" />

@@ -4,54 +4,74 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Activity,
-  Anchor,
+  ArrowLeftRight,
   Bell,
+  BookOpen,
   Camera,
   CheckCircle2,
-  ChevronDown,
   CircleDashed,
+  CloudUpload,
   Cpu,
-  FileText,
+  FileBadge,
   FolderOpen,
   Info,
   LayoutDashboard,
-  Link2,
-  ListChecks,
   LogOut,
   Menu,
   MonitorPlay,
-  ScanLine,
+  MoreHorizontal,
+  PlayCircle,
   ShieldCheck,
-  Signature,
   Smartphone,
   TriangleAlert,
+  Wifi,
+  WifiOff,
   X,
 } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
-import { Button, IconContainer, Pill, cx } from "@/components/ui/primitives";
-import { BrandLockup, HeroBanner, HeroStrip } from "@/components/brand/marks";
-import { HardwareChip } from "@/features/hardware/widgets";
+import { Button, IconContainer, cx } from "@/components/ui/primitives";
+import { EvidenceChainMark } from "@/components/brand/marks";
+import { ConnectionStatus } from "@/features/hardware/connection-status";
+import { GlobalSearch } from "@/components/layout/global-search";
+import { OnboardingProvider, useReplayGuide } from "@/components/onboarding/onboarding";
+import { ASSETS } from "@/lib/assets";
 
-const NAV_PRIMARY = [
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  /** Extra path prefixes that should light this item. */
+  match?: string[];
+};
+
+const NAV_MAIN: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/cases", label: "Cases", icon: FolderOpen },
-  { href: "/operator", label: "Operator", icon: ScanLine },
-  { href: "/capture/trigger", label: "Capture", icon: Camera, match: "/capture" },
-  { href: "/queue", label: "Offline Queue", icon: ListChecks },
-  { href: "/handoff", label: "Handoff", icon: Activity },
+  { href: "/capture/trigger", label: "Capture", icon: Camera, match: ["/capture", "/operator"] },
+  { href: "/queue", label: "Pending Sync", icon: CloudUpload },
+  { href: "/handoff", label: "Handoff", icon: ArrowLeftRight },
   { href: "/verification", label: "Verification", icon: ShieldCheck },
-  { href: "/certificate", label: "Certificates", icon: FileText },
+  { href: "/certificate", label: "Certificates", icon: FileBadge },
 ];
 
-const NAV_SECONDARY = [
+const NAV_SYSTEM: NavItem[] = [
   { href: "/hardware", label: "Hardware", icon: Cpu },
   { href: "/settings/device", label: "Device Status", icon: Smartphone },
   { href: "/demo", label: "Demo Mode", icon: MonitorPlay },
 ];
 
+const NAV_HELP: NavItem[] = [{ href: "/help", label: "How to Use", icon: BookOpen }];
+
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { store, loading, session, officer, signOut } = useApp();
+  return (
+    <OnboardingProvider>
+      <Shell>{children}</Shell>
+    </OnboardingProvider>
+  );
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  const { store, loading, session } = useApp();
   const pathname = usePathname();
   const router = useRouter();
   const [navOpen, setNavOpen] = React.useState(false);
@@ -64,79 +84,215 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     if (!loading && !session) router.replace("/login");
   }, [loading, session, router]);
 
+  React.useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setNavOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [navOpen]);
+
   if (loading || !store) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="panel flex items-center gap-3 px-5 py-4 text-fg-muted">
           <CircleDashed size={18} className="animate-spin text-brand" />
-          <span className="text-[13.5px]">Loading evidence store…</span>
+          <span className="text-[14px]">Loading evidence store…</span>
         </div>
       </div>
     );
   }
   if (!session) return null;
 
-  const queued = store.records.filter((r) => r.status === "queued" || r.status === "captured").length;
-  const tampered = store.tamper.length;
-  const isActive = (item: { href: string; match?: string }) =>
-    pathname === item.href || pathname.startsWith(item.match ?? item.href + "/");
+  return (
+    <div className="flex min-h-screen">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-lift"
+      >
+        Skip to content
+      </a>
 
-  const NavList = ({ items }: { items: typeof NAV_PRIMARY }) => (
-    <ul className="space-y-1">
-      {items.map((item) => {
-        const Icon = item.icon;
-        const active = isActive(item);
-        return (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              aria-current={active ? "page" : undefined}
-              className={cx(
-                "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[14px] transition-all duration-150",
-                active
-                  ? "bg-brand/[0.10] font-semibold text-brand-deep"
-                  : "text-fg-muted hover:bg-white/70 hover:text-fg",
-              )}
-            >
-              {active ? (
-                <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand" />
-              ) : null}
-              <Icon size={19} className={active ? "text-brand" : "text-fg-dim"} strokeWidth={2} />
-              <span className="flex-1">{item.label}</span>
-              {item.href === "/queue" && queued > 0 ? (
-                <span className="rounded-full border border-warn/30 bg-warn/[0.14] px-1.5 py-[1px] text-[11px] font-bold text-[#A4601A]">
-                  {queued}
-                </span>
-              ) : null}
-              {item.href === "/verification" && tampered > 0 ? (
-                <TriangleAlert size={14} className="text-danger" />
-              ) : null}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
+      {/* ---------------------------------------------------------- sidebar */}
+      <aside className="sticky top-0 hidden h-screen w-[256px] shrink-0 flex-col border-r border-line bg-white/85 backdrop-blur-xl lg:flex">
+        <SidebarBrand />
+        <div className="flex-1 overflow-y-auto">
+          <SidebarBody pathname={pathname} />
+        </div>
+      </aside>
 
-  const navBody = (
-    <div className="flex h-full flex-col gap-6 px-3.5 pb-4 pt-2">
-      <NavList items={NAV_PRIMARY} />
+      {navOpen ? (
+        <div className="fixed inset-0 z-[60] lg:hidden">
+          <div
+            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#102A56]/35"
+            onClick={() => setNavOpen(false)}
+          />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation"
+            className="absolute left-0 top-0 flex h-full w-[288px] max-w-[86vw] animate-[drawer-in_.22s_ease-out] flex-col border-r border-line bg-white shadow-lift"
+          >
+            <div className="flex items-center justify-between pr-3">
+              <SidebarBrand />
+              <button
+                aria-label="Close navigation"
+                className="flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted hover:bg-ink-750"
+                onClick={() => setNavOpen(false)}
+              >
+                <X size={19} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <SidebarBody pathname={pathname} />
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
-      <div>
-        <div className="label px-3 pb-2">System</div>
-        <NavList items={NAV_SECONDARY} />
+      {/* ------------------------------------------------------------- main */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <main id="main" className="mx-auto w-full max-w-[1480px] flex-1 px-4 pb-6 pt-4 lg:px-8 lg:pb-8 lg:pt-6">
+          <GlobalHeader onOpenNav={() => setNavOpen(true)} />
+          <div key={pathname} className="animate-fade-up">
+            {children}
+          </div>
+        </main>
+
+        <SiteFooter />
       </div>
 
-      <div className="mt-auto space-y-3">
-        {/* Understated railway motif + the product's own line. */}
-        <div className="relative overflow-hidden rounded-2xl border border-white/80 bg-white/60 px-4 py-4">
-          <HeroStrip className="pointer-events-none absolute inset-x-0 bottom-0 opacity-[0.22]" height={64} />
-          <div className="tricolour mb-2.5 h-[3px] w-9 rounded-full opacity-70" />
-          <p className="relative text-[12.5px] font-semibold leading-snug text-brand-deep">
-            Safer Railways.
-            <br />
-            Stronger Justice.
-          </p>
+      <MobileNav pathname={pathname} onMore={() => setNavOpen(true)} />
+      <ToastRail />
+    </div>
+  );
+}
+
+/* --------------------------------------------------------------- sidebar */
+
+function SidebarBrand() {
+  return (
+    <Link href="/dashboard" className="flex items-center gap-3 px-5 pb-4 pt-5">
+      <EvidenceChainMark size={42} />
+      <span className="leading-tight">
+        <span className="block text-[17px] font-bold tracking-tight text-brand-deep">Evidence Chain</span>
+        <span className="block text-[12px] font-medium text-fg-muted">Railway Evidence Console</span>
+        <span className="mt-0.5 block text-[11px] font-semibold text-brand">SIH 2026 • Phase 1</span>
+      </span>
+    </Link>
+  );
+}
+
+function isActive(pathname: string, item: NavItem) {
+  if (pathname === item.href || pathname.startsWith(item.href + "/")) return true;
+  return (item.match ?? []).some((m) => pathname === m || pathname.startsWith(m + "/"));
+}
+
+function SidebarBody({ pathname }: { pathname: string }) {
+  const { store, officer, session, signOut } = useApp();
+  const router = useRouter();
+  const replay = useReplayGuide();
+  if (!store || !session) return null;
+
+  const pending = store.records.filter((r) => r.status === "queued" || r.status === "captured").length;
+  const needsVerification = store.tamper.length > 0;
+  const device = store.devices.find((d) => d.assigned_officer_id === session.officer_id) ?? null;
+
+  const Section = ({ title, items }: { title: string; items: NavItem[] }) => (
+    <div>
+      <div className="label px-3 pb-1.5">{title}</div>
+      <ul className="space-y-0.5">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(pathname, item);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cx(
+                  "group relative flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-[14.5px] transition-colors duration-150",
+                  active
+                    ? "bg-brand/[0.09] font-semibold text-brand-deep"
+                    : "text-fg-muted hover:bg-ink-750 hover:text-fg",
+                )}
+              >
+                {active ? (
+                  <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-brand" />
+                ) : null}
+                <Icon size={19} strokeWidth={2} className={active ? "text-brand" : "text-fg-dim group-hover:text-fg-muted"} />
+                <span className="flex-1">{item.label}</span>
+                {item.href === "/queue" && pending > 0 ? (
+                  <span
+                    className="min-w-[22px] rounded-full bg-warn px-1.5 py-[1px] text-center text-[11.5px] font-bold text-white"
+                    aria-label={`${pending} records waiting to sync`}
+                  >
+                    {pending}
+                  </span>
+                ) : null}
+                {item.href === "/verification" && needsVerification ? (
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-danger" title="A record no longer matches what was signed">
+                    <TriangleAlert size={14} />
+                    <span className="sr-only">Needs attention</span>
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+
+  return (
+    <nav aria-label="Main" className="flex min-h-full flex-col gap-5 px-3.5 pb-5 pt-1">
+      <Section title="Main" items={NAV_MAIN} />
+      <Section title="System" items={NAV_SYSTEM} />
+      <div>
+        <Section title="Help" items={NAV_HELP} />
+        <button
+          type="button"
+          onClick={replay}
+          className="mt-0.5 flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[14.5px] text-fg-muted transition-colors duration-150 hover:bg-ink-750 hover:text-fg"
+        >
+          <PlayCircle size={19} className="text-fg-dim" />
+          Replay Guide
+        </button>
+      </div>
+
+      <div className="mt-auto space-y-3 pt-2">
+        <div className="relative overflow-hidden rounded-2xl border border-line bg-white">
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 opacity-[0.16]"
+            style={{
+              backgroundImage: `url(${ASSETS.railwayLight.src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center 40%",
+            }}
+          />
+          <div className="relative px-4 py-3.5">
+            <div className="tricolour mb-2 h-[3px] w-10 rounded-full" />
+            <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-brand-deep">Indian Railways</p>
+            <p className="mt-0.5 text-[13px] font-medium leading-snug text-fg-muted">
+              Safer Railways. Stronger India.
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-line bg-ink-750/60 px-3.5 py-3">
+          <div className="label">Operator</div>
+          <div className="mt-1.5 flex items-center gap-2.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#173B8F] text-[12px] font-bold text-white">
+              {initials(officer?.name ?? session.officer_id)}
+            </span>
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-[14px] font-semibold text-fg">{officer?.name ?? session.officer_id}</span>
+              <span className="mono block truncate text-[11.5px] text-fg-dim">
+                {session.officer_id}
+                {device ? ` · ${device.device_id}` : ""}
+              </span>
+            </span>
+          </div>
         </div>
 
         <button
@@ -144,239 +300,114 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             signOut();
             router.push("/login");
           }}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] text-fg-dim transition-colors hover:bg-white/70 hover:text-fg"
+          className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[14px] text-fg-muted transition-colors hover:bg-ink-750 hover:text-fg"
         >
           <LogOut size={18} />
-          Sign out
+          Sign Out
         </button>
       </div>
-    </div>
-  );
-
-  return (
-    <div className="flex min-h-screen">
-      {/* ---------------------------------------------------------- sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-[236px] shrink-0 flex-col border-r border-white/70 bg-ink-850/80 backdrop-blur-xl lg:flex">
-        <div className="px-4 py-4">
-          <Link href="/dashboard" className="block">
-            <BrandLockup />
-          </Link>
-        </div>
-        <div className="flex-1 overflow-y-auto">{navBody}</div>
-      </aside>
-
-      {navOpen ? (
-        <div className="fixed inset-0 z-[60] lg:hidden">
-          <div
-            className="absolute inset-0 bg-[#152238]/35 backdrop-blur-sm"
-            onClick={() => setNavOpen(false)}
-          />
-          <aside className="absolute left-0 top-0 flex h-full w-[268px] flex-col border-r border-white/70 bg-ink-850 shadow-lift">
-            <div className="flex items-center justify-between px-4 py-4">
-              <BrandLockup />
-              <button
-                aria-label="Close navigation"
-                className="rounded-lg p-2 text-fg-muted hover:bg-ink-750"
-                onClick={() => setNavOpen(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">{navBody}</div>
-          </aside>
-        </div>
-      ) : null}
-
-      {/* ------------------------------------------------------------- main */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <main className="mx-auto w-full max-w-[1560px] flex-1 px-4 py-4 lg:px-7 lg:py-6">
-          <HeroBand onOpenNav={() => setNavOpen(true)} />
-          {children}
-        </main>
-
-        <footer className="mx-auto w-full max-w-[1560px] px-4 pb-6 lg:px-7">
-          <p className="text-[11.5px] leading-relaxed text-fg-dim">
-            Integrity verification does not establish chemical identification. This system records
-            what happened; it does not prove what a substance is.
-          </p>
-        </footer>
-      </div>
-
-      <ToastRail />
-    </div>
+    </nav>
   );
 }
 
-/* ------------------------------------------------------------- hero band */
+/* ---------------------------------------------------------------- header */
 
 /**
- * The railway hero. Full height on the dashboard, compact everywhere else, so
- * every screen carries the same masthead without stealing vertical space from
- * working views.
+ * The railway masthead. Full height on the dashboard, compact elsewhere. The
+ * supplied railway-hero.jpg carries its own tagline on the left, so a light
+ * scrim sits over that side and the live title is rendered on top of it;
+ * the train and station remain clear on the right.
  */
-function HeroBand({ onOpenNav }: { onOpenNav: () => void }) {
-  const { store, officer, session, run } = useApp();
+function GlobalHeader({ onOpenNav }: { onOpenNav: () => void }) {
   const pathname = usePathname();
   const full = pathname === "/dashboard";
-  if (!store || !session) return null;
-
-  const online = store.connectivity.online;
-  const device = store.devices.find((d) => d.assigned_officer_id === session.officer_id) ?? null;
-  const attention =
-    store.tamper.length +
-    store.handoffs.filter((h) => h.transfer_record_id && !h.receipt_record_id).length +
-    (store.records.some((r) => r.status === "queued") ? 1 : 0);
 
   return (
-    <section className="relative mb-5 overflow-hidden rounded-panel border border-white/80 shadow-hero">
-      {/*
-        On the dashboard the artwork carries the masthead text itself. Below lg
-        that baked-in text would be unreadable, so there we show a cropped strip
-        of the same artwork and render the title live over it.
-      */}
-      {full ? (
-        <>
-          <HeroBanner className="hidden lg:block" />
-          <HeroStrip className="lg:hidden" height={104} />
-        </>
-      ) : (
-        <HeroStrip height={92} />
-      )}
-
-      {/* scrim, only where live text sits on top */}
+    <header className="relative mb-6 overflow-hidden rounded-[24px] border border-white shadow-hero">
       <div
-        className={cx("absolute inset-0", full && "lg:hidden")}
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${ASSETS.railwayHero.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: full ? "right 62%" : "right 58%",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(100deg, rgba(250,249,245,0.97) 0%, rgba(250,249,245,0.9) 38%, rgba(250,249,245,0.45) 62%, rgba(250,249,245,0.1) 82%)",
+            "linear-gradient(90deg, rgba(248,250,254,0.98) 0%, rgba(248,250,254,0.96) 40%, rgba(248,250,254,0.62) 60%, rgba(248,250,254,0.06) 82%)",
         }}
       />
 
-      <div
-        className={cx(
-          "absolute inset-x-0 top-0 flex flex-col gap-4 px-5 py-4 lg:px-7 lg:py-5",
-          full && "lg:pointer-events-none",
-        )}
-      >
+      <div className={cx("relative flex flex-col gap-4 px-4 sm:px-6 lg:px-7", full ? "py-5 lg:py-7" : "py-4")}>
         <div className="flex items-start gap-3">
           <button
             aria-label="Open navigation"
-            className="rounded-lg border border-white/80 bg-white/70 p-2 text-fg-muted backdrop-blur-sm hover:text-fg lg:hidden"
+            className="glass flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-fg-muted hover:text-fg lg:hidden"
             onClick={onOpenNav}
           >
-            <Menu size={18} />
+            <Menu size={19} />
           </button>
 
-          <div className={cx("min-w-0 flex-1", full && "lg:sr-only")}>
-            <h1
-              className={cx(
-                "font-semibold leading-tight tracking-tight text-brand-deep",
-                full ? "text-[19px] sm:text-[22px]" : "text-[16px] lg:text-[19px]",
-              )}
-            >
-              Railway Evidence Integrity Console
-            </h1>
-            <p className={cx("text-fg-muted", full ? "mt-1 text-[12.5px]" : "mt-0.5 text-[12px]")}>
-              Structured evidence capture for railway narcotics events
-            </p>
+          <div className="min-w-0 flex-1">
+            {full ? (
+              <>
+                <div className="text-[13px] font-bold uppercase tracking-[0.14em] text-brand">Evidence Chain</div>
+                <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[30px] lg:text-[34px]">
+                  Railway Evidence Integrity Console
+                </h1>
+                <p className="mt-1.5 text-[15px] font-medium text-fg-muted sm:text-[16px]">
+                  Trusted Evidence. Safer Journeys.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-brand">Evidence Chain</div>
+                <div className="mt-0.5 truncate text-[16px] font-semibold text-brand-deep sm:text-[18px]">
+                  Railway Evidence Integrity Console
+                </div>
+              </>
+            )}
           </div>
 
-          {/* account cluster */}
-          <div className="pointer-events-auto ml-auto flex shrink-0 items-center gap-2">
-            <span className="hidden md:inline-flex">
-              <HardwareChip />
-            </span>
-            <span
-              className={cx(
-                "hidden items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[12px] font-semibold sm:inline-flex",
-                online
-                  ? "border-ok/25 bg-white/80 text-[#0B7A56]"
-                  : "border-warn/30 bg-white/80 text-[#A4601A]",
-              )}
-            >
-              <span
-                className={cx(
-                  "inline-block h-2 w-2 rounded-full",
-                  online ? "animate-pulse-ring bg-ok" : "bg-warn",
-                )}
-              />
-              {online ? "Online" : "Offline"}
-            </span>
-
-            <button
-              onClick={() =>
-                run(
-                  "connectivity.set",
-                  { online: !online },
-                  {
-                    toast: {
-                      title: online ? "Aeroplane mode" : "Connectivity restored",
-                      body: online
-                        ? "Capture continues locally. Records will queue on the device."
-                        : "Queued records can now be pushed and anchored.",
-                    },
-                  },
-                )
-              }
-              title={online ? "Simulate going offline" : "Simulate reconnecting"}
-              aria-label={`${attention} item(s) need attention`}
-              className="relative rounded-full border border-white/80 bg-white/80 p-2 text-fg-muted shadow-chip backdrop-blur-sm transition-colors hover:text-fg"
-            >
-              <Bell size={17} />
-              {attention > 0 ? (
-                <span className="absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-bold text-white">
-                  {attention}
-                </span>
-              ) : null}
-            </button>
-
-            <div className="flex items-center gap-2.5 rounded-full border border-white/80 bg-white/80 py-1.5 pl-1.5 pr-3 shadow-chip backdrop-blur-sm">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#3B7BF0] to-[#1B3F91] text-[11px] font-bold text-white">
-                {initials(officer?.name ?? session.officer_id)}
-              </span>
-              <span className="hidden leading-tight sm:block">
-                <span className="block text-[12.5px] font-semibold text-fg">
-                  {officer?.name ?? session.officer_id}
-                </span>
-                <span className="mono block text-[10px] text-fg-dim">
-                  {session.officer_id}
-                  {device ? ` | ${device.device_id}` : ""}
-                </span>
-              </span>
-              <ChevronDown size={14} className="hidden text-fg-dim sm:block" />
-            </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <GlobalSearch />
+            <Notifications />
+            <SystemStatus />
           </div>
         </div>
 
-        {/* The lg+ artwork already carries this row. */}
         {full ? (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 lg:hidden">
+          <ul className="flex flex-wrap gap-2" aria-label="What the console does">
             {[
-              { icon: <Signature size={14} />, label: "Sign" },
-              { icon: <Link2 size={14} />, label: "Chain" },
-              { icon: <Anchor size={14} />, label: "Anchor" },
-              { icon: <CheckCircle2 size={14} />, label: "Verify" },
-              { icon: <ShieldCheck size={14} />, label: "Secure" },
+              { icon: <Camera size={16} />, label: "Capture" },
+              { icon: <ShieldCheck size={16} />, label: "Secure" },
+              { icon: <CheckCircle2 size={16} />, label: "Verify" },
+              { icon: <ArrowLeftRight size={16} />, label: "Handoff" },
             ].map((s) => (
-              <span
+              <li
                 key={s.label}
-                className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-fg-muted"
+                className="glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold text-brand-deep"
               >
                 <span className="text-brand">{s.icon}</span>
                 {s.label}
-              </span>
+              </li>
             ))}
-          </div>
+          </ul>
         ) : null}
       </div>
 
-      {/* standing honesty strip — never dismissible */}
-      <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/70 bg-white/55 px-5 py-1.5 text-[11px] text-fg-dim backdrop-blur-sm lg:px-7">
+      {/* Standing honesty strip — never dismissible. */}
+      <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/80 bg-white/80 px-4 py-1.5 text-[11.5px] text-fg-muted sm:px-6 lg:px-7">
         {[
-          "Mock sensor adapter",
-          "Simulated timestamp authorities",
-          "Demo signatures — software key, not hardware-backed",
-          "Local prototype storage",
+          "Mock Sensor",
+          "Simulated TSA",
+          "Demo Signatures",
+          "Local Prototype Storage",
         ].map((t) => (
           <span key={t} className="inline-flex items-center gap-1.5">
             <CircleDashed size={11} className="text-sim" />
@@ -384,7 +415,294 @@ function HeroBand({ onOpenNav }: { onOpenNav: () => void }) {
           </span>
         ))}
       </div>
-    </section>
+    </header>
+  );
+}
+
+/** Close a popover on outside click or Escape. */
+function usePopover() {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  return { open, setOpen, ref };
+}
+
+function Notifications() {
+  const { store } = useApp();
+  const pathname = usePathname();
+  const { open, setOpen, ref } = usePopover();
+  React.useEffect(() => setOpen(false), [pathname, setOpen]);
+  if (!store) return null;
+
+  const items: { tone: "danger" | "warn" | "info"; title: string; body: string; href: string }[] = [];
+  if (store.tamper.length) {
+    items.push({
+      tone: "danger",
+      title: `${store.tamper.length} record(s) changed after signing`,
+      body: "Verification will show exactly which record and why.",
+      href: "/verification",
+    });
+  }
+  const awaiting = store.handoffs.filter((h) => h.transfer_record_id && !h.receipt_record_id);
+  for (const h of awaiting) {
+    items.push({
+      tone: "warn",
+      title: `${h.case_ref} is waiting for a GRP receipt`,
+      body: "The transfer is signed; the receiving officer still has to confirm.",
+      href: "/handoff",
+    });
+  }
+  const pending = store.records.filter((r) => r.status === "queued" || r.status === "captured").length;
+  if (pending) {
+    items.push({
+      tone: "warn",
+      title: `${pending} record(s) waiting to sync`,
+      body: "Saved safely on this device. They upload when you are online.",
+      href: "/queue",
+    });
+  }
+  const pushed = store.records.filter((r) => r.status === "pushed").length;
+  if (pushed) {
+    items.push({
+      tone: "info",
+      title: `${pushed} record(s) not yet anchored`,
+      body: "On the server, waiting for the next trusted-time anchor.",
+      href: "/queue",
+    });
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-label={items.length ? `Notifications: ${items.length} need attention` : "Notifications"}
+        className="glass relative flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted shadow-chip transition-colors hover:text-fg"
+      >
+        <Bell size={18} />
+        {items.length ? (
+          <span className="absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-danger px-1 text-[10.5px] font-bold text-white">
+            {items.length}
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-full z-[70] mt-2 w-[340px] max-w-[calc(100vw-2rem)] animate-fade-up rounded-2xl border border-line-strong bg-white p-2 shadow-lift">
+          <div className="px-3 pb-1 pt-2 text-[14px] font-semibold text-fg">Needs attention</div>
+          {items.length === 0 ? (
+            <p className="px-3 py-6 text-center text-[13.5px] text-fg-muted">
+              All clear. Nothing is waiting for you.
+            </p>
+          ) : (
+            <ul>
+              {items.map((it, i) => (
+                <li key={i}>
+                  <Link
+                    href={it.href}
+                    className="flex items-start gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-ink-750"
+                  >
+                    <IconContainer size="sm" tone={it.tone}>
+                      {it.tone === "danger" ? <TriangleAlert size={15} /> : it.tone === "warn" ? <CloudUpload size={15} /> : <Info size={15} />}
+                    </IconContainer>
+                    <span className="min-w-0">
+                      <span className="block text-[13.5px] font-semibold text-fg">{it.title}</span>
+                      <span className="block text-[12.5px] leading-snug text-fg-muted">{it.body}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Operator + system status. Holds the network toggle that used to hide behind
+ * the bell: "Simulate offline" is a demo control and is labelled as one.
+ */
+function SystemStatus() {
+  const { store, officer, session, run } = useApp();
+  const pathname = usePathname();
+  const { open, setOpen, ref } = usePopover();
+  React.useEffect(() => setOpen(false), [pathname, setOpen]);
+  if (!store || !session) return null;
+  const online = store.connectivity.online;
+  const device = store.devices.find((d) => d.assigned_officer_id === session.officer_id) ?? null;
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        aria-label={`Operator ${officer?.name ?? session.officer_id}, ${online ? "online" : "offline"}`}
+        className="glass flex h-11 items-center gap-2.5 rounded-xl pl-1.5 pr-2.5 shadow-chip transition-colors hover:bg-white"
+      >
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#173B8F] text-[11.5px] font-bold text-white">
+          {initials(officer?.name ?? session.officer_id)}
+          <span
+            className={cx(
+              "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white",
+              online ? "bg-ok" : "bg-warn",
+            )}
+          />
+        </span>
+        <span className="hidden text-left leading-tight md:block">
+          <span className="block text-[13px] font-semibold text-fg">{officer?.name ?? session.officer_id}</span>
+          <span className={cx("block text-[11.5px] font-semibold", online ? "text-[#15803D]" : "text-[#B45309]")}>
+            {online ? "System online" : "Working offline"}
+          </span>
+        </span>
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-full z-[70] mt-2 w-[320px] max-w-[calc(100vw-2rem)] animate-fade-up rounded-2xl border border-line-strong bg-white p-4 shadow-lift">
+          <div className="text-[15px] font-semibold text-fg">{officer?.name ?? session.officer_id}</div>
+          <div className="mono mt-0.5 text-[12px] text-fg-dim">
+            {session.officer_id}
+            {device ? ` · ${device.device_id}` : ""}
+          </div>
+
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] text-fg-muted">Evidence device</span>
+              <ConnectionStatus size="sm" />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] text-fg-muted">Server connection</span>
+              <span
+                className={cx(
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
+                  online ? "border-ok/25 bg-ok/[0.08] text-[#15803D]" : "border-warn/30 bg-warn/[0.1] text-[#B45309]",
+                )}
+              >
+                {online ? <Wifi size={13} /> : <WifiOff size={13} />}
+                {online ? "Online" : "Offline"}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-4 border-t border-line pt-3">
+            <div className="label mb-2">Demo control</div>
+            <Button
+              size="md"
+              className="w-full"
+              icon={online ? <WifiOff size={16} /> : <Wifi size={16} />}
+              onClick={() =>
+                run(
+                  "connectivity.set",
+                  { online: !online },
+                  {
+                    toast: {
+                      title: online ? "Working offline" : "Back online",
+                      body: online
+                        ? "Keep capturing. Records are saved safely on this device until you reconnect."
+                        : "Records waiting to sync can now be uploaded.",
+                    },
+                  },
+                )
+              }
+            >
+              {online ? "Simulate going offline" : "Simulate reconnecting"}
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------- mobile nav */
+
+function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void }) {
+  const { store } = useApp();
+  const pending = store
+    ? store.records.filter((r) => r.status === "queued" || r.status === "captured").length
+    : 0;
+  const items: NavItem[] = [
+    NAV_MAIN[0],
+    NAV_MAIN[1],
+    NAV_MAIN[2],
+    NAV_MAIN[3],
+  ];
+  return (
+    <nav
+      aria-label="Quick navigation"
+      className="fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden"
+    >
+      <ul className="grid grid-cols-5">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(pathname, item);
+          return (
+            <li key={item.href}>
+              <Link
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={cx(
+                  "relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-medium transition-colors",
+                  active ? "text-brand" : "text-fg-muted",
+                )}
+              >
+                <Icon size={21} strokeWidth={active ? 2.3 : 2} />
+                {item.label}
+                {item.href === "/queue" && pending ? (
+                  <span className="absolute right-3 top-1 min-w-[18px] rounded-full bg-warn px-1 text-center text-[10px] font-bold text-white">
+                    {pending}
+                  </span>
+                ) : null}
+              </Link>
+            </li>
+          );
+        })}
+        <li>
+          <button
+            type="button"
+            onClick={onMore}
+            className="flex min-h-[52px] w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-medium text-fg-muted"
+          >
+            <MoreHorizontal size={21} />
+            More
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+/* ---------------------------------------------------------------- footer */
+
+function SiteFooter() {
+  return (
+    <footer className="mx-auto w-full max-w-[1480px] px-4 pb-28 lg:px-8 lg:pb-8">
+      <div className="flex flex-col gap-2 border-t border-line pt-4 text-[12.5px] text-fg-dim sm:flex-row sm:items-center sm:justify-between">
+        <span className="inline-flex items-center gap-2">
+          <span className="tricolour inline-block h-[3px] w-8 rounded-full" />
+          Evidence Chain · SIH 2026 Phase 1 prototype · Indian Railways
+        </span>
+        <span className="max-w-xl leading-relaxed">
+          Integrity verification is not chemical identification. This system records what happened;
+          it does not prove what a substance is.
+        </span>
+      </div>
+    </footer>
   );
 }
 
@@ -401,16 +719,20 @@ function ToastRail() {
   const { toasts, dismissToast } = useApp();
   if (!toasts.length) return null;
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[70] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2">
+    <div
+      aria-live="polite"
+      className="pointer-events-none fixed bottom-24 right-4 z-[70] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2 lg:bottom-4"
+    >
       {toasts.map((t) => (
         <div
           key={t.id}
           role="status"
           className={cx(
-            "panel panel-solid pointer-events-auto animate-fade-up px-4 py-3 shadow-lift",
+            "pointer-events-auto animate-fade-up rounded-2xl border bg-white px-4 py-3 shadow-lift",
             t.tone === "ok" && "border-ok/30",
             t.tone === "danger" && "border-danger/35",
             t.tone === "warn" && "border-warn/30",
+            t.tone === "info" && "border-line-strong",
           )}
         >
           <div className="flex items-start gap-2.5">
@@ -427,17 +749,17 @@ function ToastRail() {
               )}
             </IconContainer>
             <div className="min-w-0 flex-1">
-              <div className="text-[13px] font-semibold text-fg">{t.title}</div>
+              <div className="text-[14px] font-semibold text-fg">{t.title}</div>
               {t.body ? (
-                <div className="mt-0.5 text-[12.5px] leading-relaxed text-fg-muted">{t.body}</div>
+                <div className="mt-0.5 text-[13px] leading-relaxed text-fg-muted">{t.body}</div>
               ) : null}
             </div>
             <button
               aria-label="Dismiss"
               onClick={() => dismissToast(t.id)}
-              className="shrink-0 rounded p-0.5 text-fg-dim hover:text-fg"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-fg-dim hover:bg-ink-750 hover:text-fg"
             >
-              <X size={14} />
+              <X size={15} />
             </button>
           </div>
         </div>
@@ -448,7 +770,7 @@ function ToastRail() {
 
 /* ------------------------------------------------------------ page header */
 
-/** Per-screen title block. Sits under the hero band on every page. */
+/** Per-screen title block. Sits under the global header on every page. */
 export function PageHeader({
   eyebrow,
   title,
@@ -463,17 +785,17 @@ export function PageHeader({
   status?: React.ReactNode;
 }) {
   return (
-    <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
       <div className="min-w-0">
         {eyebrow ? <div className="label mb-1.5">{eyebrow}</div> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-[24px] font-semibold leading-tight tracking-tight text-brand-deep lg:text-[30px]">
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px] lg:text-[36px]">
             {title}
-          </h2>
+          </h1>
           {status}
         </div>
         {subtitle ? (
-          <p className="mt-1.5 max-w-3xl text-[13.5px] leading-relaxed text-fg-muted">{subtitle}</p>
+          <p className="mt-2 max-w-3xl text-[15px] leading-relaxed text-fg-muted">{subtitle}</p>
         ) : null}
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

@@ -116,7 +116,7 @@ export function FieldTestView({
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-warn/40 bg-warn/[0.09] px-3.5 py-3">
-        <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.09em] text-[#A4601A]">
+        <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.09em] text-[#B45309]">
           <AlertTriangle size={14} />
           {payload.epistemic_status}
         </div>

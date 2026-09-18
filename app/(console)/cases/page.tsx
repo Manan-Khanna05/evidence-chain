@@ -7,14 +7,9 @@ import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import { Button, ButtonLink, EmptyState, Panel, Pill, cx } from "@/components/ui/primitives";
 import { TextInput } from "@/components/ui/form";
-import {
-  AnchorPill,
-  HandoffPill,
-  RecordTypePill,
-  StagePill,
-} from "@/components/ui/status";
+import { AnchorPill, HandoffPill, RecordTypePill } from "@/components/ui/status";
 import { summariseAll } from "@/lib/domain/status";
-import { fmtRelative } from "@/lib/format";
+import { fmtDate, fmtRelative } from "@/lib/format";
 import type { CaseVerdict } from "@/app/api/verify/route";
 
 type Filter =
@@ -41,6 +36,12 @@ export default function CasesPage() {
   const [verdicts, setVerdicts] = React.useState<CaseVerdict[] | null>(null);
   const [query, setQuery] = React.useState("");
   const [filter, setFilter] = React.useState<Filter>("all");
+  const [officerFilter, setOfficerFilter] = React.useState<string | null>(null);
+
+  // Global search links here as /cases?officer=<id>.
+  React.useEffect(() => {
+    setOfficerFilter(new URLSearchParams(window.location.search).get("officer"));
+  }, []);
 
   const stamp = store ? `${store.records.length}:${store.tamper.length}:${store.anchors.length}` : "";
 
@@ -61,7 +62,13 @@ export default function CasesPage() {
 
   const filtered = summaries.filter((s) => {
     const q = query.trim().toLowerCase();
-    if (q && !s.case_ref.toLowerCase().includes(q) && !s.place.toLowerCase().includes(q)) return false;
+    if (
+      q &&
+      ![s.case_ref, s.place, s.officer_id, s.device_id, s.title].some((x) => x.toLowerCase().includes(q))
+    )
+      return false;
+    if (officerFilter && !s.records.some((r) => r.officer_id === officerFilter) && s.officer_id !== officerFilter)
+      return false;
     const v = verdictFor(s.case_ref);
     switch (filter) {
       case "triggered":
@@ -98,20 +105,21 @@ export default function CasesPage() {
       <PageHeader
         eyebrow="Evidence chain"
         title="Cases"
-        subtitle="One row per case. Evidence stage, handoff state, anchor state and verification verdict, computed from the records themselves."
+        subtitle="Every case, with where its evidence is right now. Open a case for its full timeline."
         actions={
-          <ButtonLink href="/capture/trigger" variant="primary" icon={<Radio size={15} />}>
-              New trigger record
-            </ButtonLink>
+          <ButtonLink href="/capture/trigger" variant="primary" icon={<Radio size={16} />}>
+            New capture
+          </ButtonLink>
         }
       />
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-        <div className="relative lg:w-[300px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-dim" />
+        <div className="relative lg:w-[320px]">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-dim" />
           <TextInput
             className="pl-9"
-            placeholder="Search case reference or place"
+            aria-label="Search cases"
+            placeholder="Case ID, location, officer or device"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -121,19 +129,36 @@ export default function CasesPage() {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
+              aria-pressed={filter === f.key}
               className={cx(
-                "rounded-lg border px-2.5 py-1.5 text-[12.5px] font-medium transition-colors",
+                "min-h-[40px] rounded-xl border px-3 text-[13.5px] font-medium transition-colors duration-150",
                 filter === f.key
-                  ? "border-brand/50 bg-brand/12 text-fg"
-                  : "border-line bg-ink-800 text-fg-muted hover:border-line-strong hover:text-fg",
+                  ? "border-brand/40 bg-brand/[0.09] text-brand-deep"
+                  : "border-line bg-white text-fg-muted hover:border-line-strong hover:text-fg",
               )}
             >
               {f.label}
-              <span className="ml-1.5 text-[11px] text-fg-dim">{counts[f.key]}</span>
+              <span className="ml-1.5 text-[12px] text-fg-dim">{counts[f.key]}</span>
             </button>
           ))}
         </div>
       </div>
+
+      {officerFilter ? (
+        <div className="mb-4 flex items-center gap-2">
+          <Pill tone="brand">Officer {officerFilter}</Pill>
+          <button
+            type="button"
+            onClick={() => {
+              setOfficerFilter(null);
+              window.history.replaceState(null, "", "/cases");
+            }}
+            className="inline-flex min-h-[36px] items-center gap-1 text-[13px] font-semibold text-brand hover:underline"
+          >
+            <X size={14} /> Clear
+          </button>
+        </div>
+      ) : null}
 
       <Panel className="overflow-hidden">
         {filtered.length === 0 ? (
@@ -147,6 +172,7 @@ export default function CasesPage() {
                 onClick={() => {
                   setQuery("");
                   setFilter("all");
+                  setOfficerFilter(null);
                 }}
               >
                 Clear filters
@@ -154,81 +180,82 @@ export default function CasesPage() {
             }
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-line bg-ink-850/60">
-                  {["Case ref", "Latest record", "Officer", "Device", "Evidence status", "Handoff", "Anchor", "Updated"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="px-4 py-2.5 text-[10.5px] font-bold uppercase tracking-[0.11em] text-fg-dim"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {filtered.map((s) => {
-                  const v = verdictFor(s.case_ref);
-                  return (
-                    <tr
-                      key={s.case_ref}
-                      className="group cursor-pointer transition-colors hover:bg-ink-750/60"
-                      onClick={() => {
-                        window.location.href = `/cases/${s.case_ref}`;
-                      }}
-                    >
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/cases/${s.case_ref}`}
-                          className="mono text-[13px] font-semibold text-fg group-hover:text-brand"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {s.case_ref}
-                        </Link>
-                        <div className="mt-0.5 max-w-[220px] truncate text-[11.5px] text-fg-dim">
-                          {s.place}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {s.latest_record ? <RecordTypePill type={s.latest_record.type} /> : "—"}
-                      </td>
-                      <td className="mono whitespace-nowrap px-4 py-3 text-[12.5px] text-fg-muted">{s.officer_id}</td>
-                      <td className="mono whitespace-nowrap px-4 py-3 text-[12.5px] text-fg-muted">{s.device_id}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col items-start gap-1.5">
-                          <StagePill stage={s.stage} />
-                          {v ? (
-                            v.verified ? (
-                              <Pill tone={v.degraded ? "warn" : "ok"} icon={<Check size={11} />}>
-                                {v.degraded ? "Verified — degraded" : "Verified"}
-                              </Pill>
-                            ) : (
-                              <Pill tone="danger" icon={<X size={11} />}>
-                                Chain broken
-                              </Pill>
-                            )
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <HandoffPill status={s.handoff_status} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <AnchorPill state={s.anchor_state} />
-                      </td>
-                      <td className="whitespace-nowrap px-4 py-3 text-[12px] text-fg-muted">
-                        {fmtRelative(s.latest_update)}
-                      </td>
-                    </tr>
+          <>
+            <div className="hidden grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)_80px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 border-b border-line bg-ink-750/50 px-5 py-3 lg:grid">
+              {["Case", "Date", "Evidence", "Sync", "Verification", "Handoff"].map((h) => (
+                <span key={h} className="text-[11px] font-bold uppercase tracking-[0.1em] text-fg-dim">
+                  {h}
+                </span>
+              ))}
+            </div>
+            <ul className="divide-y divide-line">
+              {filtered.map((s) => {
+                const v = verdictFor(s.case_ref);
+                const sync =
+                  s.queued_count > 0 ? (
+                    <Pill tone="warn">{s.queued_count} waiting to sync</Pill>
+                  ) : (
+                    <AnchorPill state={s.anchor_state} />
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
+                const verification = v ? (
+                  v.verified ? (
+                    <Pill tone={v.degraded ? "warn" : "ok"} icon={<Check size={11} />}>
+                      {v.degraded ? "Verified — degraded" : "Verified"}
+                    </Pill>
+                  ) : (
+                    <Pill tone="danger" icon={<X size={11} />}>
+                      Chain broken
+                    </Pill>
+                  )
+                ) : (
+                  <Pill tone="neutral">Checking…</Pill>
+                );
+                return (
+                  <li key={s.case_ref}>
+                    <Link
+                      href={`/cases/${s.case_ref}`}
+                      className="group grid gap-3 px-5 py-4 transition-colors duration-150 hover:bg-brand/[0.04] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.9fr)_80px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:items-center lg:gap-4"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="mono text-[14px] font-semibold text-fg group-hover:text-brand">
+                            {s.case_ref}
+                          </span>
+                          {s.latest_record ? <RecordTypePill type={s.latest_record.type} /> : null}
+                        </div>
+                        <div className="mt-0.5 truncate text-[13.5px] text-fg-muted">{s.place}</div>
+                        <div className="mono mt-0.5 text-[12px] text-fg-dim">
+                          {s.officer_id} · {s.device_id}
+                        </div>
+                      </div>
+                      <div className="text-[13.5px] text-fg-muted">
+                        <span className="label mr-2 lg:hidden">Date</span>
+                        {fmtDate(s.opened_at)}
+                        <div className="text-[12px] text-fg-dim">Updated {fmtRelative(s.latest_update)}</div>
+                      </div>
+                      <div className="text-[14px] font-semibold text-fg">
+                        <span className="label mr-2 lg:hidden">Evidence</span>
+                        {s.record_count}
+                        <span className="ml-1 text-[12.5px] font-normal text-fg-dim lg:hidden">records</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="label lg:hidden">Sync</span>
+                        {sync}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="label lg:hidden">Verification</span>
+                        {verification}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="label lg:hidden">Handoff</span>
+                        <HandoffPill status={s.handoff_status} />
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </Panel>
     </>

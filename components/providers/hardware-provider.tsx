@@ -193,13 +193,17 @@ export function HardwareProvider({ children }: { children: React.ReactNode }) {
         setSample(pendingSample.current);
         pendingSample.current = null;
       }
-      if (pendingStatus.current) {
-        setStatus((cur) => (cur === "ACQUIRING" ? cur : pendingStatus.current as DeviceStatus));
+      // Read the refs before resetting them: state updaters run later, during
+      // render, by which time the refs would already be cleared.
+      const nextStatus = pendingStatus.current;
+      if (nextStatus) {
         pendingStatus.current = null;
+        setStatus((cur) => (cur === "ACQUIRING" ? cur : nextStatus));
       }
-      if (packetCount.current) {
-        setPackets((p) => p + packetCount.current);
+      const newPackets = packetCount.current;
+      if (newPackets) {
         packetCount.current = 0;
+        setPackets((p) => p + newPackets);
       }
     }, UI_FLUSH_MS);
 
@@ -304,16 +308,27 @@ export function useHardware(): HardwareContextValue {
   return ctx;
 }
 
-/** One label for the link, used by every surface so they cannot disagree. */
+/**
+ * One label for the link, used by every surface so they cannot disagree.
+ * Operator language, not network language: no IPs, sockets or baud rates.
+ */
 export function linkLabel(state: LinkState, transport: TransportKind): string {
   if (state === "connected") {
-    if (transport === "wifi") return "Hardware connected";
-    if (transport === "usb") return "USB connected";
-    if (transport === "demo") return "Demo hardware";
+    if (transport === "wifi") return "Device Connected";
+    if (transport === "usb") return "Device Connected · USB";
+    if (transport === "demo") return "Demo Device";
   }
-  if (state === "syncing") return "Synchronising";
-  if (state === "connecting") return "Connecting";
-  if (state === "searching") return "Searching";
-  if (state === "error") return "Hardware error";
-  return "Offline";
+  if (state === "syncing") return "Syncing with device…";
+  if (state === "connecting" || state === "searching") return "Connecting to device…";
+  if (state === "error") return "Device needs attention";
+  return "Device offline";
+}
+
+/** The four states an operator is told about. */
+export type ConnectionKind = "connected" | "connecting" | "offline" | "demo";
+
+export function connectionKind(state: LinkState, transport: TransportKind): ConnectionKind {
+  if (state === "connected") return transport === "demo" ? "demo" : "connected";
+  if (state === "connecting" || state === "searching" || state === "syncing") return "connecting";
+  return "offline";
 }

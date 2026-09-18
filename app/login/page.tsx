@@ -6,7 +6,9 @@ import { ArrowRight, CircleDashed, Fingerprint, Landmark, ShieldCheck, UserRound
 import { useApp } from "@/components/providers/app-provider";
 import { Button, Callout, IconContainer, Pill } from "@/components/ui/primitives";
 import { Field, TextInput } from "@/components/ui/form";
-import { BrandLockup, HeroStrip, IndiaSilhouette } from "@/components/brand/marks";
+import { BrandLockup } from "@/components/brand/marks";
+import { AssetImage } from "@/components/ui/asset-image";
+import { ASSETS } from "@/lib/assets";
 
 const DEMO_LOGINS = [
   {
@@ -46,7 +48,7 @@ export default function LoginPage() {
   const submit = (id: string) => {
     const officer = store?.officers.find((o) => o.officer_id === id.trim().toUpperCase());
     if (!officer) {
-      setError(`No officer with ID "${id}" exists in this demo dataset.`);
+      setError(`We couldn't find officer ID "${id}". Check it and try again, or use a demo login below.`);
       return;
     }
     setError(null);
@@ -55,49 +57,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
       {/* ------------------------------------------------------- left panel */}
-      <div className="relative hidden flex-col justify-between overflow-hidden border-r border-white/70 p-10 lg:flex">
-        <HeroStrip className="absolute inset-x-0 top-0" height={300} />
+      <div className="relative hidden flex-col gap-8 overflow-hidden border-r border-line p-10 lg:flex">
         <div
-          className="absolute inset-0"
+          aria-hidden="true"
+          className="absolute inset-0 opacity-[0.12]"
           style={{
-            background:
-              "linear-gradient(180deg, rgba(245,243,237,0.35) 0%, rgba(245,243,237,0.9) 42%, rgba(245,243,237,1) 62%)",
+            backgroundImage: `url(${ASSETS.railwayLight.src})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         />
-        <div className="pointer-events-none absolute -bottom-16 -left-10 h-[340px] w-[340px] text-brand">
-          <IndiaSilhouette opacity={0.07} />
-        </div>
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-white/40 via-[#F6F8FC]/85 to-[#F6F8FC]" />
 
         <div className="relative">
-          <BrandLockup size={44} subtitle="SIH 2026 • Phase 1 Prototype" />
+          <AssetImage
+            name="railwayBranding"
+            alt="Indian Railways — Evidence Chain, Railway Evidence Integrity Console. Trusted Evidence. Safer Journeys."
+            priority
+            className="rounded-3xl shadow-hero"
+          />
         </div>
 
-        <div className="relative max-w-lg">
-          <div className="tricolour mb-5 h-[3px] w-12 rounded-full" />
-          <h1 className="text-[38px] font-semibold leading-[1.12] tracking-tight text-brand-deep">
-            The seam, not the sensor.
+        <div className="relative max-w-xl">
+          <div className="tricolour mb-4 h-[3px] w-12 rounded-full" />
+          <h1 className="text-[34px] font-bold leading-[1.15] tracking-tight text-brand-deep">
+            Trusted evidence across the RPF → GRP seam.
           </h1>
-          <p className="mt-4 text-[14.5px] leading-relaxed text-fg-muted">
-            RPF searches under NDPS s.43. The GRP prosecutes. The case crosses a two-agency seam that
-            no existing system spans — and that is where Indian appellate courts actually acquit
-            people.
+          <p className="mt-3 text-[15px] leading-relaxed text-fg-muted">
+            RPF searches under NDPS s.43; the GRP prosecutes. This console records what happened at
+            the stop, the presumptive field test, and the custody handoff — signed and chained on the
+            device, and anchored to a bounded trusted time window.
           </p>
-          <p className="mt-3 text-[14.5px] leading-relaxed text-fg-muted">
-            This console records three objects across that seam, signs and chains them on the device,
-            and anchors them to a bounded trusted time interval.
-          </p>
-
-          <ol className="mt-7 space-y-3">
+          <ol className="mt-6 space-y-3">
             {[
               "s.43 trigger record — what caused the stop",
-              "Presumptive field-test record — reagent, lot, expiry, colour, reference table",
+              "Presumptive field test — kit, lot, expiry, colour, reference table",
               "RPF → GRP custody handoff — two officers, two signatures, one transfer",
             ].map((line, i) => (
-              <li key={line} className="flex items-start gap-3 text-[13.5px] text-fg">
-                <span className="mono mt-[1px] flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-lg border border-brand/20 bg-brand/[0.08] text-[10.5px] font-bold text-brand">
-                  {String(i + 1).padStart(2, "0")}
+              <li key={line} className="flex items-start gap-3 text-[14.5px] text-fg">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-[12.5px] font-bold text-white">
+                  {i + 1}
                 </span>
                 <span className="leading-relaxed">{line}</span>
               </li>
@@ -105,11 +106,11 @@ export default function LoginPage() {
           </ol>
         </div>
 
-        <div className="panel relative max-w-lg px-5 py-4">
+        <div className="panel relative mt-auto max-w-xl px-5 py-4">
           <div className="label">The limit, said out loud</div>
-          <p className="mt-2 text-[13px] leading-relaxed text-fg-muted">
+          <p className="mt-2 text-[14px] leading-relaxed text-fg-muted">
             This does not make a field test correct. It makes the test&apos;s reagent, lot, operator
-            and epistemic status legible to a court that today receives one sentence in a panchanama.
+            and presumptive status legible to a court.
           </p>
         </div>
       </div>
@@ -117,13 +118,19 @@ export default function LoginPage() {
       {/* ------------------------------------------------------ right panel */}
       <div className="relative flex items-center justify-center px-5 py-10">
         <div className="w-full max-w-[420px]">
-          <div className="mb-7 lg:hidden">
+          <div className="mb-6 space-y-5 lg:hidden">
+            <AssetImage
+              name="railwayBranding"
+              alt="Indian Railways — Evidence Chain, Railway Evidence Integrity Console"
+              priority
+              className="rounded-2xl shadow-lift"
+            />
             <BrandLockup subtitle="SIH 2026 • Phase 1 Prototype" />
           </div>
 
           <div className="panel panel-solid px-6 py-7 shadow-lift">
-            <h2 className="text-[21px] font-semibold tracking-tight text-brand-deep">Sign in</h2>
-            <p className="mt-1.5 text-[13.5px] text-fg-muted">
+            <h2 className="text-[24px] font-bold tracking-tight text-brand-deep">Sign in</h2>
+            <p className="mt-1.5 text-[14.5px] text-fg-muted">
               Identify the officer operating this device.
             </p>
 
@@ -157,7 +164,7 @@ export default function LoginPage() {
               </Field>
 
               {error ? (
-                <Callout tone="danger" title="Sign-in failed">
+                <Callout tone="danger" title="Could not sign in">
                   {error}
                 </Callout>
               ) : null}
@@ -196,8 +203,8 @@ export default function LoginPage() {
                       <Icon size={18} />
                     </IconContainer>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[13.5px] font-semibold text-fg">{d.label}</span>
-                      <span className="block text-[11.5px] leading-snug text-fg-dim">
+                      <span className="block text-[14.5px] font-semibold text-fg">{d.label}</span>
+                      <span className="block text-[12.5px] leading-snug text-fg-muted">
                         {d.detail}
                       </span>
                     </span>

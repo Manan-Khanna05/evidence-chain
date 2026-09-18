@@ -29,6 +29,8 @@ import { summariseAll } from "@/lib/domain/status";
 import type { EvidenceRecord, SealState } from "@/lib/domain/types";
 import { HandoffDocument } from "@/features/handoff/handoff-document";
 import { RecordDrawer } from "@/features/records/record-drawer";
+import { AssetImage } from "@/components/ui/asset-image";
+import { HelpTip } from "@/components/ui/help-tip";
 
 type DeviceRole = "rpf" | "grp";
 
@@ -146,12 +148,12 @@ export default function HandoffPage() {
   return (
     <>
       <PageHeader
-        eyebrow="The seam"
-        title="Custody handoff"
-        subtitle="RPF searches under NDPS s.42/s.43 and must forward the seizure. The GRP prosecutes. Two officers, two devices, two signatures over one transfer — the record no existing system spans."
+        eyebrow="RPF → GRP"
+        title="Handoff"
+        subtitle="RPF seizes and forwards; GRP prosecutes. Two officers, two devices, two signatures over one transfer."
         actions={
-          <div className="flex items-center gap-1.5 rounded-lg border border-line bg-ink-850 p-1">
-            <Smartphone size={14} className="ml-2 text-fg-dim" />
+          <div role="tablist" aria-label="Which device are you using?" className="flex items-center gap-1 rounded-xl border border-line bg-white p-1 shadow-chip">
+            <Smartphone size={16} className="ml-2 text-fg-dim" />
             {(
               [
                 { key: "rpf" as const, label: "Device A — RPF" },
@@ -160,12 +162,14 @@ export default function HandoffPage() {
             ).map((d) => (
               <button
                 key={d.key}
+                role="tab"
+                aria-selected={deviceRole === d.key}
                 onClick={() => setDeviceRole(d.key)}
                 className={cx(
-                  "rounded-md px-2.5 py-1.5 text-[12.5px] font-medium transition-colors",
+                  "min-h-[40px] rounded-lg px-3 text-[13.5px] font-semibold transition-colors duration-150",
                   deviceRole === d.key
-                    ? "bg-brand/15 text-fg ring-1 ring-brand/40"
-                    : "text-fg-muted hover:text-fg",
+                    ? "bg-brand text-white shadow-chip"
+                    : "text-fg-muted hover:bg-ink-750 hover:text-fg",
                 )}
               >
                 {d.label}
@@ -175,13 +179,43 @@ export default function HandoffPage() {
         }
       />
 
-      <Callout tone="info" title="Two-phone demo on one screen" icon={<Info size={13} />}>
-        In the field these are two handsets. Here the toggle above switches which device you are
-        operating: Device A signs the transfer on{" "}
-        <span className="mono">{rpfDevice?.device_id}</span>, Device B signs the receipt on{" "}
-        <span className="mono">{grpDevice?.device_id}</span>. The receipt is refused if it is signed
-        on the same device as the transfer.
-      </Callout>
+      <Panel className="overflow-hidden">
+        <div className="grid items-center gap-6 p-5 md:grid-cols-[auto_minmax(0,1fr)] lg:p-6">
+          <div className="mx-auto w-full max-w-[353px] md:w-[320px]">
+            <AssetImage name="handoff" alt="An RPF officer handing a sealed evidence box to a GRP officer" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[20px] font-semibold text-fg">How a handoff works</h2>
+              <HelpTip term="handoff" />
+            </div>
+            <ol className="mt-4 grid gap-3 sm:grid-cols-3">
+              {[
+                ["RPF signs the transfer", "Samples, seal marks and weight — on the RPF device."],
+                ["GRP checks the samples", "Counts packets and inspects seals against the transfer."],
+                ["GRP signs the receipt", "On a different device. Any mismatch is recorded, not hidden."],
+              ].map(([t, b], i) => (
+                <li key={t} className="rounded-2xl border border-line bg-white px-4 py-3.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-[13px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="mt-2 block text-[15px] font-semibold text-fg">{t}</span>
+                  <span className="mt-0.5 block text-[13.5px] leading-relaxed text-fg-muted">{b}</span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 flex items-start gap-2 text-[13.5px] leading-relaxed text-fg-muted">
+              <Info size={16} className="mt-0.5 shrink-0 text-brand" />
+              <span>
+                A receipt cannot exist without its transfer. In the field these are two phones; here
+                the toggle above switches between Device A (<span className="mono">{rpfDevice?.device_id}</span>)
+                and Device B (<span className="mono">{grpDevice?.device_id}</span>). A receipt signed on the
+                transfer&apos;s own device is refused.
+              </span>
+            </p>
+          </div>
+        </div>
+      </Panel>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1.15fr]">
         {/* ------------------------------------------------------- forms */}

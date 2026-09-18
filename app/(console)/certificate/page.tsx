@@ -29,8 +29,8 @@ export default function CertificatesPage() {
     <>
       <PageHeader
         eyebrow="Court output"
-        title="Section 63 certificates"
-        subtitle="BSA 2023 s.63(4)(c). The operative text of s.63 never uses the word “hash” — the requirement lives in the Schedule certificate, and that is what this produces."
+        title="Certificates"
+        subtitle="Section 63 Schedule certificates (BSA 2023 s.63(4)(c)). Part A is filled from the verified records; Part B is left for the expert to sign."
       />
 
       <Callout tone="info" title="Two rules this system does not bend" icon={<Info size={13} />}>

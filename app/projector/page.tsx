@@ -5,7 +5,8 @@ import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, CircleDashed, RefreshCw, X } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { Button, ButtonLink, cx } from "@/components/ui/primitives";
-import { BrandLockup, HeroStrip } from "@/components/brand/marks";
+import { BrandLockup } from "@/components/brand/marks";
+import { ASSETS } from "@/lib/assets";
 import { fmtInterval, fmtTime } from "@/lib/format";
 import { summariseCase } from "@/lib/domain/status";
 import type { VerificationResult } from "@/lib/domain/verify";
@@ -124,12 +125,20 @@ function ProjectorView() {
 
   return (
     <div className="relative min-h-screen px-6 py-6 lg:px-12 lg:py-10">
-      <HeroStrip className="pointer-events-none absolute inset-x-0 top-0 opacity-55" height={220} />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[240px] opacity-60"
+        style={{
+          backgroundImage: `url(${ASSETS.railwayHero.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "right 62%",
+        }}
+      />
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(180deg, rgba(245,243,237,0.55) 0%, rgba(245,243,237,0.95) 30%, rgba(245,243,237,1) 55%)",
+            "linear-gradient(180deg, rgba(246,248,252,0.5) 0%, rgba(246,248,252,0.95) 30%, rgba(246,248,252,1) 55%)",
         }}
       />
       <div className="relative no-print mb-8 flex flex-wrap items-center justify-between gap-3">

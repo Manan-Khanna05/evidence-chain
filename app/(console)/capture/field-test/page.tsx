@@ -33,7 +33,8 @@ import {
   RESULT_STATUSES,
 } from "@/lib/domain/vocab";
 import type { EvidenceRecord, FieldTestPayload } from "@/lib/domain/types";
-import { CaptureTargetBar } from "@/features/capture/capture-target";
+import { CaptureDeviceHint, CaptureSteps, CaptureTargetBar } from "@/features/capture/capture-target";
+import { HelpTip } from "@/components/ui/help-tip";
 import { FieldTestDocument } from "@/features/field-test/field-test-document";
 
 export default function FieldTestCapturePage() {
@@ -96,8 +97,8 @@ function FieldTestCaptureView() {
       <>
         <PageHeader
           eyebrow="Capture"
-          title="Field-test record created"
-          subtitle="Rendered as a document, with its epistemic status on its face."
+          title="Field test saved"
+          subtitle="Signed and saved. The document below states on its face that the result is presumptive."
           status={<RecordStatusPill status={fresh.status} />}
           actions={
             <>
@@ -113,6 +114,9 @@ function FieldTestCaptureView() {
             </>
           }
         />
+        <div className="no-print mb-5">
+          <CaptureSteps saved synced={fresh.status === "pushed" || fresh.status === "anchored"} />
+        </div>
         <div className="grid gap-5 xl:grid-cols-[1.15fr_1fr]">
           <FieldTestDocument record={fresh} store={store} />
           <Panel className="no-print h-fit">
@@ -164,21 +168,26 @@ function FieldTestCaptureView() {
     <>
       <PageHeader
         eyebrow="Capture"
-        title="Presumptive field test"
-        subtitle="The record a High Court effectively specified: reagent identity and manufacturer, lot, expiry, operator, ambient conditions, observed colour from a fixed vocabulary, and the reference table matched against."
+        title="Field Test"
+        subtitle="Record the kit, the lot, what colour you saw, and the result — all from fixed choices. Review, then confirm to save."
       />
 
       <CaptureTargetBar />
 
-      <div className="mt-4 rounded-xl border border-warn/40 bg-warn/[0.08] px-4 py-3.5">
-        <div className="flex items-center gap-2.5 text-[14px] font-bold uppercase tracking-[0.06em] text-[#A4601A]">
-          <AlertTriangle size={16} />
+      <div role="note" className="mt-4 rounded-2xl border-2 border-warn/50 bg-warn/[0.10] px-5 py-4">
+        <div className="flex items-center gap-2.5 text-[16px] font-bold uppercase tracking-[0.05em] text-[#B45309] sm:text-[18px]">
+          <AlertTriangle size={20} className="shrink-0" />
           {PRESUMPTIVE_NOTICE}
+          <HelpTip term="presumptive" />
         </div>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-fg-muted">
-          A colour test screens; it does not identify. Nothing in this screen will record a
-          substance as confirmed, identified or detected, because the test cannot support it.
+        <p className="mt-1.5 text-[14px] leading-relaxed text-fg-muted">
+          A colour test screens; it does not identify. Nothing on this screen will record a
+          substance as confirmed, identified or detected. Only a laboratory can identify a substance.
         </p>
+      </div>
+
+      <div className="mt-4">
+        <CaptureDeviceHint />
       </div>
 
       {!canCapture ? (

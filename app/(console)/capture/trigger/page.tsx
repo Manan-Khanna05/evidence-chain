@@ -29,7 +29,7 @@ import { Field, OptionGroup, Select, TextArea, TextInput } from "@/components/ui
 import { MOCK_SENSOR_PILL, RecordStatusPill } from "@/components/ui/status";
 import { OFFICER_ACTIONS, PLACE_KINDS, REFERRAL_TIERS, SEARCH_OUTCOMES } from "@/lib/domain/vocab";
 import type { EvidenceRecord, SensorReading, TriggerPayload } from "@/lib/domain/types";
-import { CaptureTargetBar } from "@/features/capture/capture-target";
+import { CaptureDeviceHint, CaptureSteps, CaptureTargetBar } from "@/features/capture/capture-target";
 
 export default function TriggerCapturePage() {
   const { store, officer, run } = useApp();
@@ -102,8 +102,8 @@ export default function TriggerCapturePage() {
       <>
         <PageHeader
           eyebrow="Capture"
-          title="Trigger record created"
-          subtitle="Signed on the device, linked to the local chain and stored."
+          title="Evidence saved"
+          subtitle="Signed on this device, linked into the chain, and saved."
           status={<RecordStatusPill status={fresh.status} />}
           actions={
             <>
@@ -116,6 +116,9 @@ export default function TriggerCapturePage() {
             </>
           }
         />
+        <div className="mb-5">
+          <CaptureSteps saved synced={fresh.status === "pushed" || fresh.status === "anchored"} />
+        </div>
         <div className="grid gap-5 xl:grid-cols-[1fr_1fr]">
           <Panel className="min-w-0">
             <PanelHead title="What just happened" icon={<Signature size={16} />} />
@@ -184,11 +187,15 @@ export default function TriggerCapturePage() {
     <>
       <PageHeader
         eyebrow="Capture"
-        title="Record trigger event"
-        subtitle="Capture what caused the stop. NDPS s.43 governs public places and imposes no writing duty — this record is voluntary, and that is the point."
+        title="Capture Evidence"
+        subtitle="Record what caused the stop — including stops where nothing was found. Fill in each card, review, then sign and save."
       />
 
       <CaptureTargetBar />
+
+      <div className="mt-4">
+        <CaptureDeviceHint />
+      </div>
 
       {!canCapture ? (
         <Callout tone="warn" title="This role cannot capture a trigger record">
@@ -382,7 +389,7 @@ export default function TriggerCapturePage() {
                   <span className="mono">{officer?.officer_id ?? "—"}</span>
                 </KeyValue>
                 <KeyValue k="Connectivity">
-                  {store.connectivity.online ? "Online — will push immediately" : "Offline — will queue"}
+                  {store.connectivity.online ? "Online — saves and syncs" : "Offline — saved on this device"}
                 </KeyValue>
                 <KeyValue k="Next sequence">
                   <span className="mono">

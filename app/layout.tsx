@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AppProvider } from "@/components/providers/app-provider";
 import { HardwareProvider } from "@/components/providers/hardware-provider";
+
+/** Self-hosted at build time by next/font — no font request leaves the app at runtime. */
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Evidence Chain — Railway Evidence Integrity Console",
@@ -10,14 +14,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0A0E13",
+  themeColor: "#F6F8FC",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <AppProvider>
           <HardwareProvider>{children}</HardwareProvider>

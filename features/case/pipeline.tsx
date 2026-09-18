@@ -61,8 +61,8 @@ export function EvidencePipeline({
               onClick={() => onSelect?.(n.key)}
               className={cx(
                 "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11.5px] font-medium transition-all",
-                state === "done" && "border-ok/35 bg-ok/10 text-[#0B7A56]",
-                state === "failed" && "border-danger/45 bg-danger/12 text-[#B93B3B]",
+                state === "done" && "border-ok/35 bg-ok/10 text-[#15803D]",
+                state === "failed" && "border-danger/45 bg-danger/12 text-[#DC2626]",
                 state === "pending" && "border-line bg-ink-800 text-fg-dim",
                 isActive && "ring-1 ring-brand/60",
                 onSelect && "hover:border-brand/50 hover:text-fg",

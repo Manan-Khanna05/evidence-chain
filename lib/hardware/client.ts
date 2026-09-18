@@ -361,6 +361,13 @@ export class HardwareClient {
   private attempts = 0;
   private disposed = false;
   private lastHost: string | null = null;
+  /**
+   * Bumped by every connect attempt and by startDemo. A search that finishes
+   * after a newer attempt began is stale and must not report its result —
+   * otherwise a slow Wi-Fi probe could overwrite a demo device the officer
+   * has just chosen.
+   */
+  private gen = 0;
 
   constructor(private readonly events: HardwareEvents) {}
 
@@ -379,18 +386,27 @@ export class HardwareClient {
    */
   async connect(opts: ConnectOptions = {}): Promise<TransportKind> {
     if (this.disposed) return "none";
+    const gen = ++this.gen;
     await this.teardown();
+    if (gen !== this.gen) return this.kind;
     this.events.onState("searching", "none", "Looking for hardware");
+    const stale = () => gen !== this.gen || this.disposed;
 
     const hosts = [...(opts.hosts ?? []), ...DEFAULT_WIFI_HOSTS].filter(
       (h, i, a) => h && a.indexOf(h) === i,
     );
     for (const host of hosts) {
       const hello = await probeWifi(host);
+      if (stale()) return this.kind;
       if (!hello) continue;
       try {
         this.events.onState("connecting", "wifi", host);
-        this.transport = await openWifi(host, this.events);
+        const t = await openWifi(host, this.events);
+        if (stale()) {
+          await t.close();
+          return this.kind;
+        }
+        this.transport = t;
         this.lastHost = host;
         this.attempts = 0;
         this.events.onMessage(hello);
@@ -402,10 +418,16 @@ export class HardwareClient {
     }
 
     const granted = await previouslyGrantedPorts();
+    if (stale()) return this.kind;
     if (granted.length) {
       try {
         this.events.onState("connecting", "usb", "Serial");
-        this.transport = await openSerialPort(granted[0], this.events);
+        const t = await openSerialPort(granted[0], this.events);
+        if (stale()) {
+          await t.close();
+          return this.kind;
+        }
+        this.transport = t;
         this.attempts = 0;
         this.events.onState("connected", "usb", "USB serial");
         return "usb";
@@ -428,6 +450,7 @@ export class HardwareClient {
     if (!serial) return false;
     try {
       const port = await serial.requestPort();
+      ++this.gen;
       await this.teardown();
       this.events.onState("connecting", "usb", "Serial");
       this.transport = await openSerialPort(port, this.events);
@@ -441,6 +464,15 @@ export class HardwareClient {
   }
 
   startDemo() {
+    ++this.gen;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.demo?.stop();
+    const old = this.transport;
+    this.transport = null;
+    void old?.close();
     this.demo = new DemoDevice(this.events);
     this.demo.start();
     this.events.onState("connected", "demo", "Demo hardware");
@@ -453,7 +485,8 @@ export class HardwareClient {
 
   /** Exponential backoff, capped, so a missing board does not spin the CPU. */
   scheduleReconnect(opts: ConnectOptions = {}) {
-    if (this.disposed || this.reconnectTimer) return;
+    // The demo device is an explicit choice; do not search over the top of it.
+    if (this.disposed || this.reconnectTimer || this.demo) return;
     this.attempts += 1;
     const delay = Math.min(RECONNECT_BASE_MS * this.attempts, RECONNECT_MAX_MS);
     this.reconnectTimer = setTimeout(() => {

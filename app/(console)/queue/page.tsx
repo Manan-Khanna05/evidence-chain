@@ -26,12 +26,14 @@ import { ConnectivityPill, RecordStatusPill, RecordTypePill } from "@/components
 import { fmtTime } from "@/lib/format";
 import type { RecordStatus } from "@/lib/domain/types";
 import { AnchorPanel } from "@/features/anchor/anchor-panel";
+import { AssetImage } from "@/components/ui/asset-image";
+import { HelpTip } from "@/components/ui/help-tip";
 
 const STAGES: { key: RecordStatus; label: string; blurb: string }[] = [
-  { key: "captured", label: "Captured", blurb: "Signed on the device" },
-  { key: "queued", label: "Queued", blurb: "Waiting for connectivity" },
-  { key: "pushed", label: "Pushed", blurb: "Accepted by the server" },
-  { key: "anchored", label: "Anchored", blurb: "Covered by a timestamped tree" },
+  { key: "captured", label: "Saved", blurb: "Signed and saved on the device" },
+  { key: "queued", label: "Waiting to sync", blurb: "Safe on the device until online" },
+  { key: "pushed", label: "Synced", blurb: "Received and checked by the server" },
+  { key: "anchored", label: "Trusted time", blurb: "Inside a timestamped window" },
 ];
 
 export default function QueuePage() {
@@ -66,9 +68,9 @@ export default function QueuePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Device"
-        title="Offline queue"
-        subtitle="Capture never depends on connectivity. Records are signed and chained on the device, then pushed in sequence when a window appears."
+        eyebrow="Offline-first"
+        title="Pending Sync"
+        subtitle="No network? Keep working. Everything you capture is signed and saved on this device, then uploads in order when you are back online."
         status={<ConnectivityPill online={online} />}
         actions={
           <>
@@ -77,14 +79,14 @@ export default function QueuePage() {
               icon={online ? <CloudOff size={15} /> : <UploadCloud size={15} />}
               onClick={() =>
                 act("conn", "connectivity.set", { online: !online }, {
-                  title: online ? "Aeroplane mode" : "Connectivity restored",
+                  title: online ? "Working offline" : "Back online",
                   body: online
-                    ? "New captures will queue on the device."
-                    : "Queued records can now be pushed.",
+                    ? "New captures are saved safely on this device."
+                    : "Records waiting to sync can now be uploaded.",
                 })
               }
             >
-              {online ? "Simulate offline" : "Simulate reconnect"}
+              {online ? "Simulate offline (demo)" : "Simulate reconnect (demo)"}
             </Button>
             <Button
               variant="secondary"
@@ -93,12 +95,12 @@ export default function QueuePage() {
               icon={<UploadCloud size={15} />}
               onClick={() =>
                 act("push", "sync.push", undefined, {
-                  title: "Queue pushed",
-                  body: "Records were sent in sequence and validated on ingest.",
+                  title: "Sync complete",
+                  body: "Records reached the server in order and were checked on arrival.",
                 })
               }
             >
-              Push queue
+              Sync Now
             </Button>
             <Button
               variant="primary"
@@ -107,22 +109,54 @@ export default function QueuePage() {
               icon={<AnchorIcon size={15} />}
               onClick={() =>
                 act("anchor", "anchor.create", undefined, {
-                  title: "Tree head anchored",
-                  body: "Two simulated authorities timestamped the current tree head.",
+                  title: "Anchored to trusted time",
+                  body: "Two simulated time authorities timestamped the log.",
                 })
               }
             >
-              Anchor tree
+              Anchor Now
             </Button>
           </>
         }
       />
 
+      {/* ------------------------------------------------- how sync works */}
+      <Panel className="mb-5 overflow-hidden">
+        <div className="grid items-center gap-6 p-5 md:grid-cols-[auto_minmax(0,1fr)] lg:p-6">
+          <div className="mx-auto w-full max-w-[328px] md:w-[300px]">
+            <AssetImage name="helpSync" alt="Laptop showing two records saved offline, then syncing to the cloud when connected" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-[20px] font-semibold text-fg">How offline sync works</h2>
+              <HelpTip term="pending-sync" />
+            </div>
+            <ol className="mt-4 space-y-3">
+              {[
+                ["Saved safely", "Each record is signed and chained on the device the moment you confirm it."],
+                ["Waits for a connection", "Offline, records stay here. Their order is fixed by the chain, not by the clock."],
+                ["Syncs when online", "Press Sync Now when you are connected. Nothing is lost or re-ordered."],
+              ].map(([t, b], i) => (
+                <li key={t} className="flex gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-[13px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  <span>
+                    <span className="block text-[15px] font-semibold text-fg">{t}</span>
+                    <span className="block text-[14px] leading-relaxed text-fg-muted">{b}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </Panel>
+
       {/* ---------------------------------------------------- the pipeline */}
       <Panel className="mb-5">
         <PanelHead
-          title="Record lifecycle"
-          subtitle="captured → queued → pushed → anchored"
+          title="Where your records are"
+          subtitle="Saved → waiting to sync → synced → trusted time"
           icon={<ListChecks size={16} />}
         />
         <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -153,7 +187,7 @@ export default function QueuePage() {
                         "text-[28px] font-semibold leading-none tabular-nums",
                         tone === "ok" && "text-ok",
                         tone === "info" && "text-info",
-                        tone === "warn" && "text-warn",
+                        tone === "warn" && "text-[#B45309]",
                         tone === "neutral" && "text-fg-dim",
                       )}
                     >
@@ -184,11 +218,11 @@ export default function QueuePage() {
         <div className="min-w-0 space-y-5">
           <Panel className="min-w-0">
             <PanelHead
-              title="On-device queue"
+              title="Waiting on this device"
               subtitle={
                 online
-                  ? "Connectivity is available; nothing should linger here."
-                  : "Aeroplane mode — capture continues locally."
+                  ? "You are online — press Sync Now to upload these."
+                  : "Working offline — capture continues, nothing is lost."
               }
               icon={<CloudOff size={16} />}
               right={<Pill tone={waiting.length ? "warn" : "ok"}>{waiting.length} waiting</Pill>}
@@ -196,8 +230,8 @@ export default function QueuePage() {
             {waiting.length === 0 ? (
               <EmptyState
                 icon={<Check size={22} />}
-                title="Nothing is waiting on a device"
-                body="Every captured record has reached the server log. Going offline and capturing a record will fill this queue."
+                title="Nothing is waiting to sync"
+                body="Every record you captured has reached the server. Records captured while offline will wait here."
                 action={
                   <ButtonLink href="/capture/trigger" size="sm">Capture a record</ButtonLink>
                 }
@@ -227,7 +261,7 @@ export default function QueuePage() {
             )}
             {waiting.length && !online ? (
               <div className="border-t border-line p-5">
-                <Callout tone="warn" title="Offline">
+                <Callout tone="warn" title="Saved safely on this device">
                   These records are signed and chained. They cannot be reordered or backdated
                   silently — the sequence counter and the local hash chain fix their order
                   regardless of what the device clock says.
@@ -238,16 +272,16 @@ export default function QueuePage() {
 
           <Panel className="min-w-0">
             <PanelHead
-              title="Accepted but not yet anchored"
-              subtitle="In the server log and in the current tree, but no authority has timestamped that tree yet."
+              title="Synced, waiting for trusted time"
+              subtitle="On the server, but not yet inside a timestamped window. Press Anchor Now."
               icon={<UploadCloud size={16} />}
               right={<Pill tone={unanchored.length ? "warn" : "ok"}>{unanchored.length}</Pill>}
             />
             {unanchored.length === 0 ? (
               <EmptyState
                 icon={<AnchorIcon size={22} />}
-                title="All current records are covered by an anchor"
-                body="Every record in the server log sits inside a tree that two simulated authorities have timestamped."
+                title="Every synced record has trusted time"
+                body="All records on the server sit inside a window timestamped by two (simulated) time authorities."
               />
             ) : (
               <ul className="divide-y divide-line">
@@ -261,7 +295,7 @@ export default function QueuePage() {
                     >
                       {r.case_ref}
                     </Link>
-                    <span className="ml-auto text-[11.5px] text-warn">Time unproven</span>
+                    <span className="ml-auto text-[12px] font-medium text-[#B45309]">Waiting for anchor</span>
                   </li>
                 ))}
               </ul>
