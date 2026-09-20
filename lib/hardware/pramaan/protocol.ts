@@ -110,6 +110,13 @@ export function parsePramaanLine(raw: string): ParseResult {
   }
   if (!isObj(v)) return { ok: false, reason: "not an object" };
 
+  // A line that names a different protocol is not ours to interpret, whatever
+  // its type field says. Without this, evidence-chain-v1 telemetry would be
+  // read as PRAMAAN telemetry and its values silently dropped.
+  if (typeof v.protocol === "string" && v.protocol !== PRAMAAN_PROTOCOL) {
+    return { ok: false, reason: `different protocol: ${v.protocol}` };
+  }
+
   const type = typeof v.type === "string" ? v.type : null;
   if (!type) return { ok: false, reason: "missing type" };
 

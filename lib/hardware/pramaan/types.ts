@@ -136,4 +136,6 @@ export interface PramaanState {
   log: PramaanLogEntry[];
   telemetryCount: number;
   lastEvent: { kind: "acquire" | "reset"; seq: number; at: number } | null;
+  /** Raw serial lines, newest first, for the diagnostics view. */
+  rawLines: { at: number; text: string; accepted: boolean }[];
 }

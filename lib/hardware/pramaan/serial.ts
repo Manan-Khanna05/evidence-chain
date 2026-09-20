@@ -9,6 +9,7 @@
 
 import { PRAMAAN_BAUD_RATE, type PramaanCommand, type PramaanMessage } from "./types";
 import { encodePramaanCommand, parsePramaanLine, pramaanErrorMessage } from "./protocol";
+import { adaptLegacyLine } from "./compat";
 
 /* Minimal Web Serial typings: the DOM lib does not ship them everywhere. */
 interface SerialPortLike {
@@ -35,6 +36,8 @@ function getSerial(): SerialLike | null {
 
 export interface PramaanSerialEvents {
   onMessage: (message: PramaanMessage) => void;
+  /** Every line exactly as it arrived, for the diagnostics view. */
+  onRaw?: (line: string, accepted: boolean) => void;
   /** A line that could not be understood. Diagnostics only. */
   onJunk?: (line: string, reason: string) => void;
   onOpen: () => void;
@@ -119,9 +122,24 @@ export class PramaanSerialLink {
         while ((nl = buffer.indexOf("\n")) >= 0) {
           const line = buffer.slice(0, nl);
           buffer = buffer.slice(nl + 1);
+          const text = line.trim();
+          if (!text) continue;
           const parsed = parsePramaanLine(line);
-          if (parsed.ok) this.events.onMessage(parsed.message);
-          else if (line.trim()) this.events.onJunk?.(line.trim().slice(0, 200), parsed.reason);
+          if (parsed.ok) {
+            this.events.onRaw?.(text.slice(0, 300), true);
+            this.events.onMessage(parsed.message);
+            continue;
+          }
+          // A board still running the older evidence-chain-v1 firmware speaks a
+          // different dialect on the same port; translate rather than ignore.
+          const legacy = adaptLegacyLine(line);
+          if (legacy) {
+            this.events.onRaw?.(text.slice(0, 300), true);
+            this.events.onMessage(legacy);
+            continue;
+          }
+          this.events.onRaw?.(text.slice(0, 300), false);
+          this.events.onJunk?.(text.slice(0, 200), parsed.reason);
         }
         if (buffer.length > MAX_BUFFER) buffer = "";
       }

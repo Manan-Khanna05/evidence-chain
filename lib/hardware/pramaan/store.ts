@@ -14,6 +14,7 @@
 
 import { PramaanSerialLink } from "./serial";
 import { parsePramaanLine } from "./protocol";
+import { adaptLegacyLine } from "./compat";
 import type {
   PramaanAcquireEvent,
   PramaanCapabilities,
@@ -28,6 +29,10 @@ export const HEARTBEAT_TIMEOUT_MS = 3000;
 /** Checked on this cadence, so one missed packet never flips the badge. */
 const HEARTBEAT_TICK_MS = 500;
 const LOG_LIMIT = 60;
+/** Raw serial lines kept for the diagnostics view. */
+const RAW_LIMIT = 40;
+/** How long an open port may stay silent before we explain what to check. */
+const SILENCE_TIMEOUT_MS = 4000;
 
 export interface PramaanAcquisition {
   event: PramaanAcquireEvent;
@@ -56,6 +61,7 @@ const EMPTY: PramaanState = {
   log: [],
   telemetryCount: 0,
   lastEvent: null,
+  rawLines: [],
 };
 
 type Listener = () => void;
@@ -73,15 +79,21 @@ class PramaanStore {
   private lastAcquireAt = 0;
 
   private acquisitionListeners = new Set<(a: PramaanAcquisition) => void>();
+  /** True once a line has actually been understood on this connection. */
+  private sawProtocolMessage = false;
+  private silenceTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.link = new PramaanSerialLink({
       onMessage: (m) => this.onMessage(m),
+      onRaw: (line, accepted) => this.pushRaw(line, accepted),
       onJunk: (line, reason) => this.log("warn", `Ignored serial line (${reason}): ${line}`),
       onOpen: () => {
-        this.patch({ portOpen: true, connectionState: "connecting", error: null });
+        this.sawProtocolMessage = false;
+        this.patch({ portOpen: true, connectionState: "connecting", error: null, rawLines: [] });
         this.log("info", "Serial port open, waiting for PRAMAAN telemetry");
         this.startHeartbeat();
+        this.armSilenceCheck();
       },
       onClose: (reason) => {
         this.log("info", reason);
@@ -126,6 +138,32 @@ class PramaanStore {
     this.emit();
   }
 
+  private pushRaw(line: string, accepted: boolean) {
+    const next = [{ at: Date.now(), text: line, accepted }, ...this.state.rawLines].slice(0, RAW_LIMIT);
+    this.state = { ...this.state, rawLines: next };
+    this.emit();
+  }
+
+  /**
+   * A port that opens but never speaks the protocol is the most common setup
+   * problem — usually firmware that has not been flashed yet. Say so plainly,
+   * with the raw output available, instead of sitting on "connecting".
+   */
+  private armSilenceCheck() {
+    if (this.silenceTimer) clearTimeout(this.silenceTimer);
+    this.silenceTimer = setTimeout(() => {
+      this.silenceTimer = null;
+      if (this.sawProtocolMessage || !this.state.portOpen) return;
+      const sawAnything = this.state.rawLines.length > 0;
+      this.patch({
+        error: sawAnything
+          ? "Connected to the port, but these are not PRAMAAN messages. The board is probably running different firmware — flash firmware/pramaan-esp32 (see the raw serial output in Technical View)."
+          : "Connected to the port, but PRAMAAN sent nothing. Press the reset button on the board, check it is powered, and make sure no other program (such as the Arduino Serial Monitor) has the port open.",
+      });
+      this.log("warn", "No PRAMAAN messages within 4s of opening the port");
+    }, SILENCE_TIMEOUT_MS);
+  }
+
   /* ------------------------------------------------------------ link */
 
   async connect(options: { reuseGranted?: boolean } = {}): Promise<boolean> {
@@ -144,6 +182,10 @@ class PramaanStore {
 
   private markDisconnected(_reason: string) {
     this.stopHeartbeat();
+    if (this.silenceTimer) {
+      clearTimeout(this.silenceTimer);
+      this.silenceTimer = null;
+    }
     this.patch({
       connectionState: this.state.connectionState === "error" ? "error" : "disconnected",
       connected: false,
@@ -182,6 +224,8 @@ class PramaanStore {
   /* -------------------------------------------------------- messages */
 
   private onMessage(msg: PramaanMessage) {
+    this.sawProtocolMessage = true;
+
     // Once the device has identified itself, anything claiming to be a
     // different device on the same port is ignored rather than merged in.
     if (
@@ -358,13 +402,18 @@ class PramaanStore {
    */
   injectLine(line: string) {
     if (process.env.NODE_ENV === "production") return;
+    // Mirrors the real read loop exactly: PRAMAAN first, then the older
+    // evidence-chain-v1 dialect, then rejection.
     const parsed = parsePramaanLine(line);
-    if (parsed.ok) {
+    const message = parsed.ok ? parsed.message : adaptLegacyLine(line);
+    if (message) {
       if (!this.state.portOpen) this.patch({ portOpen: true });
       this.startHeartbeat();
-      this.onMessage(parsed.message);
+      this.pushRaw(line.slice(0, 300), true);
+      this.onMessage(message);
     } else {
-      this.log("warn", `Injected line rejected: ${parsed.reason}`);
+      this.pushRaw(line.slice(0, 300), false);
+      this.log("warn", `Injected line rejected: ${parsed.ok ? "unknown" : parsed.reason}`);
     }
   }
 }
