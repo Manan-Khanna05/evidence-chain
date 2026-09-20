@@ -171,3 +171,23 @@ export function summariseAll(store: SummaryStore): CaseSummary[] {
     .map((c) => summariseCase(store, c))
     .sort((a, b) => (a.latest_update < b.latest_update ? 1 : -1));
 }
+
+/**
+ * Cases in the order they were last worked on.
+ *
+ * Deliberately NOT sorted by the device clock: that clock is untrusted, and the
+ * seeded demo records carry times that would bury a capture taken a minute ago.
+ * The log is append-only, so a record's position in it is the honest answer to
+ * "what happened most recently". Cases with no records yet fall back to the
+ * order they were created in.
+ */
+export function summariseByRecency(store: SummaryStore): CaseSummary[] {
+  const lastRecordIndex = new Map<string, number>();
+  store.records.forEach((r, i) => lastRecordIndex.set(r.case_ref, i));
+  const caseIndex = new Map(store.cases.map((c, i) => [c.case_ref, i]));
+  const score = (ref: string) => {
+    const withRecords = lastRecordIndex.get(ref);
+    return withRecords === undefined ? (caseIndex.get(ref) ?? 0) : withRecords + 1_000_000;
+  };
+  return summariseAll(store).sort((a, b) => score(b.case_ref) - score(a.case_ref));
+}

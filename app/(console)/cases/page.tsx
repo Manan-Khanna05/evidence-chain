@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/layout/app-shell";
 import { Button, ButtonLink, EmptyState, Panel, Pill, cx } from "@/components/ui/primitives";
 import { TextInput } from "@/components/ui/form";
 import { AnchorPill, HandoffPill, RecordTypePill } from "@/components/ui/status";
-import { summariseAll } from "@/lib/domain/status";
+import { summariseByRecency } from "@/lib/domain/status";
 import { NewCaseDialog } from "@/features/case/case-context";
 import { useRouter } from "next/navigation";
 import { fmtDate, fmtRelative } from "@/lib/format";
@@ -61,7 +61,7 @@ export default function CasesPage() {
 
   if (!store) return null;
 
-  const summaries = summariseAll(store);
+  const summaries = summariseByRecency(store);
   const verdictFor = (ref: string) => verdicts?.find((v) => v.case_ref === ref) ?? null;
 
   const filtered = summaries.filter((s) => {

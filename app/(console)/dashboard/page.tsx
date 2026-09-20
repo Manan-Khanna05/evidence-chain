@@ -52,7 +52,7 @@ import { TechnicalDetailsDrawer } from "@/components/ui/tech-drawer";
 import { EvidenceFlow, FLOW_ICONS, type FlowState } from "@/features/dashboard/evidence-flow";
 import { DeviceStatusCard } from "@/features/hardware/device-status-card";
 import { NewCaseDialog } from "@/features/case/case-context";
-import { summariseAll } from "@/lib/domain/status";
+import { summariseByRecency } from "@/lib/domain/status";
 import { fmtInterval, fmtRelative } from "@/lib/format";
 import type { AssetKey } from "@/lib/assets";
 import type { CaseVerdict } from "@/app/api/verify/route";
@@ -95,7 +95,7 @@ export default function DashboardPage() {
 
   if (!store) return null;
 
-  const summaries = summariseAll(store);
+  const summaries = summariseByRecency(store);
 
   const verifiedCount = verdicts ? verdicts.filter((v) => v.verified).length : 0;
   const brokenCases = verdicts ? verdicts.filter((v) => !v.verified) : [];
@@ -113,10 +113,12 @@ export default function DashboardPage() {
   const latestAnchor = store.anchors[store.anchors.length - 1] ?? null;
   const online = store.connectivity.online;
 
-  /* Recent activity: the newest records by device claim, newest first. */
-  const recentRecords = [...store.records]
-    .sort((a, b) => (a.claimed_time < b.claimed_time ? 1 : -1))
-    .slice(0, 6);
+  /*
+   * Recent activity: the last records appended to the log, newest first. The
+   * log is append-only, so its order is what actually happened — the device
+   * clock is untrusted and would rank a fresh capture below seeded demo rows.
+   */
+  const recentRecords = [...store.records].reverse().slice(0, 6);
 
   /* Every flow state is derived from the store; none of it is hardcoded. */
   const has = (t: string) => store.records.some((r) => r.type === t);
