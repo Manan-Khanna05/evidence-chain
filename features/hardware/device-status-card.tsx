@@ -1,21 +1,33 @@
 "use client";
 
 import * as React from "react";
-import { Check, Cpu, MonitorPlay, RefreshCw, ScanLine, TriangleAlert, Usb } from "lucide-react";
+import {
+  Check,
+  Cpu,
+  Minus,
+  MonitorPlay,
+  Plug,
+  RefreshCw,
+  ScanLine,
+  TriangleAlert,
+  Usb,
+} from "lucide-react";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { useApp } from "@/components/providers/app-provider";
-import { Button, ButtonLink, KeyValue, Panel, PanelHead, Pill, cx } from "@/components/ui/primitives";
+import {
+  Button,
+  ButtonLink,
+  Callout,
+  KeyValue,
+  Panel,
+  PanelHead,
+  Pill,
+  cx,
+} from "@/components/ui/primitives";
 import { AssetImage } from "@/components/ui/asset-image";
 import { TechnicalDetailsDrawer } from "@/components/ui/tech-drawer";
 import { ConnectionStatus } from "@/features/hardware/connection-status";
-
-const SENSOR_LABEL: Record<string, string> = {
-  load_cell: "Weighing (load cell)",
-  thermal: "Temperature camera",
-  collector_switch: "Collector switch",
-  acquire_button: "ACQUIRE button",
-  reset_button: "RESET button",
-};
+import { PramaanSerialLink } from "@/lib/hardware/pramaan/serial";
 
 function ago(ms: number | null) {
   if (!ms) return "Not yet";
@@ -27,9 +39,12 @@ function ago(ms: number | null) {
 }
 
 /**
- * What an operator needs to know about the evidence device, in words: is it
- * connected, is it ready, are the sensors working. Network details, firmware
+ * What an operator needs to know about the attached device: is it connected,
+ * is it ready, and which of its parts are actually present. Ports, firmware
  * and packet counts live in the technical drawer.
+ *
+ * A missing optional component never makes the whole device "faulty" — it is
+ * listed as unavailable and everything else keeps working.
  */
 export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) {
   const hw = useHardware();
@@ -40,25 +55,23 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
     return () => clearInterval(t);
   }, []);
 
-  // Packets are counted in batches; any increase means the device just spoke.
-  const [lastSeen, setLastSeen] = React.useState<number | null>(null);
+  const [canReconnect, setCanReconnect] = React.useState(false);
   React.useEffect(() => {
-    if (hw.packets > 0) setLastSeen(Date.now());
-  }, [hw.packets]);
+    void PramaanSerialLink.hasGrantedPort().then(setCanReconnect);
+  }, [hw.isPramaan, hw.state]);
 
   const phone = store?.devices.find((d) => d.assigned_officer_id === session?.officer_id) ?? null;
   const connected = hw.state === "connected";
-  const sensors = hw.health ? Object.entries(hw.health) : [];
-  const failing = sensors.filter(([, ok]) => !ok);
+  const serialSupported = PramaanSerialLink.supported();
+
+  // "Needs attention" means a part the device says it HAS is not working.
+  const failing = hw.capabilities.filter((c) => !c.available && !c.note);
   const ready = connected && hw.status === "READY" && failing.length === 0;
+  const name = hw.isPramaan ? "PRAMAAN" : "evidence device";
 
   return (
     <Panel className="min-w-0">
-      <PanelHead
-        title="Device Status"
-        icon={<Cpu size={17} />}
-        right={<ConnectionStatus size="sm" />}
-      />
+      <PanelHead title="Device Status" icon={<Cpu size={17} />} right={<ConnectionStatus size="sm" />} />
       <div className="grid gap-5 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0 space-y-4">
           <div
@@ -83,28 +96,50 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
                 ? "Ready to capture"
                 : connected
                   ? hw.status === "ACQUIRING"
-                    ? "Taking a reading…"
+                    ? "Reading captured — review it"
                     : failing.length
-                      ? "A sensor needs attention"
+                      ? "A component needs attention"
                       : "Starting up…"
-                  : "No evidence device connected"}
+                  : hw.isPramaan
+                    ? "Waiting for PRAMAAN"
+                    : "No evidence device connected"}
             </div>
             <p className="mt-1 text-[14px] leading-relaxed text-fg-muted">
               {ready
-                ? "Press ACQUIRE on the device, or use the Capture screen."
+                ? `Press ACQUIRE on ${hw.isPramaan ? "PRAMAAN" : "the device"}, or use the Capture screen.`
                 : connected
                   ? failing.length
-                    ? `Check: ${failing.map(([k]) => SENSOR_LABEL[k] ?? k).join(", ")}.`
+                    ? `Check: ${failing.map((c) => c.label).join(", ")}.`
                     : "The device is answering. It will be ready in a moment."
-                  : "Switch the device on and keep it near this phone. You can still capture without it."}
+                  : `Connect ${name} over USB. You can still capture, and enter values manually, without it.`}
             </p>
           </div>
+
+          {hw.pramaan.error ? (
+            <Callout tone="warn" title="PRAMAAN" icon={<TriangleAlert size={13} />}>
+              {hw.pramaan.error}
+            </Callout>
+          ) : null}
 
           <div className="grid grid-cols-2 gap-4">
             <KeyValue k="Device">
               <span className="mono text-[13.5px]">{hw.deviceId ?? "—"}</span>
             </KeyValue>
-            <KeyValue k="Last seen">{hw.state === "connected" ? ago(lastSeen ?? hw.lastAckAt) : ago(lastSeen)}</KeyValue>
+            <KeyValue k="Last seen">{ago(hw.lastAckAt)}</KeyValue>
+            <KeyValue k="Connection">
+              {hw.isPramaan
+                ? "USB Serial"
+                : hw.transport === "wifi"
+                  ? "Wi-Fi"
+                  : hw.transport === "usb"
+                    ? "USB Serial"
+                    : hw.transport === "demo"
+                      ? "In-browser demo"
+                      : "—"}
+            </KeyValue>
+            <KeyValue k="Firmware">
+              <span className="mono text-[13.5px]">{hw.firmware ?? "—"}</span>
+            </KeyValue>
             <KeyValue k="Phone">
               <span className="mono text-[13.5px]">{phone?.device_id ?? "—"}</span>
             </KeyValue>
@@ -119,12 +154,25 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
             </KeyValue>
           </div>
 
-          {sensors.length ? (
-            <ul className="flex flex-wrap gap-2" aria-label="Sensor checks">
-              {sensors.map(([k, ok]) => (
-                <li key={k}>
-                  <Pill tone={ok ? "ok" : "danger"} icon={ok ? <Check size={11} /> : <TriangleAlert size={11} />}>
-                    {SENSOR_LABEL[k] ?? k}
+          {hw.capabilities.length ? (
+            <ul className="flex flex-wrap gap-2" aria-label="Device capabilities">
+              {hw.capabilities.map((c) => (
+                <li key={c.key}>
+                  <Pill
+                    tone={c.available ? "ok" : c.note ? "neutral" : "danger"}
+                    icon={
+                      c.available ? (
+                        <Check size={11} />
+                      ) : c.note ? (
+                        <Minus size={11} />
+                      ) : (
+                        <TriangleAlert size={11} />
+                      )
+                    }
+                    title={c.note}
+                  >
+                    {c.label}
+                    {!c.available && c.note ? " unavailable" : ""}
                   </Pill>
                 </li>
               ))}
@@ -138,20 +186,35 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
               </ButtonLink>
             ) : (
               <>
-                <Button variant="primary" icon={<RefreshCw size={16} />} onClick={() => void hw.connect()}>
-                  Connect Device
+                <Button
+                  variant="primary"
+                  icon={<Plug size={16} />}
+                  disabled={!serialSupported}
+                  title={serialSupported ? undefined : "Use Chrome or Edge on a laptop"}
+                  onClick={() => void hw.connectPramaan()}
+                >
+                  Connect PRAMAAN
                 </Button>
-                {hw.serialAvailable ? (
-                  <Button icon={<Usb size={16} />} onClick={() => void hw.connectUsb()}>
-                    Use USB cable
+                {canReconnect ? (
+                  <Button icon={<Usb size={16} />} onClick={() => void hw.connectPramaan({ reuseGranted: true })}>
+                    Reconnect last port
                   </Button>
                 ) : null}
+                <Button variant="ghost" icon={<RefreshCw size={16} />} onClick={() => void hw.connect()}>
+                  Search Wi-Fi device
+                </Button>
                 <Button variant="ghost" icon={<MonitorPlay size={16} />} onClick={hw.useDemoHardware}>
                   Use demo device
                 </Button>
               </>
             )}
-            <TechnicalDetailsDrawer subtitle="Link, firmware and sensor telemetry reported by the device.">
+            {connected && hw.isPramaan ? (
+              <Button icon={<Usb size={16} />} onClick={() => void hw.disconnectPramaan()}>
+                Disconnect
+              </Button>
+            ) : null}
+
+            <TechnicalDetailsDrawer subtitle="Link, firmware and live telemetry reported by the device.">
               <div className="grid grid-cols-2 gap-4">
                 <KeyValue k="Link state">
                   <span className="mono">{hw.state}</span>
@@ -165,26 +228,36 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
                 <KeyValue k="Firmware">
                   <span className="mono">{hw.firmware ?? "—"}</span>
                 </KeyValue>
-                <KeyValue k="Device status">
-                  <span className="mono">{hw.status}</span>
+                <KeyValue k="Protocol">
+                  <span className="mono">{hw.isPramaan ? (hw.pramaan.protocol ?? "PRAMAAN-1") : "evidence-chain-v1"}</span>
                 </KeyValue>
-                <KeyValue k="Packets received">
+                <KeyValue k="Device state">
+                  <span className="mono">{hw.isPramaan ? (hw.pramaan.state ?? "—") : hw.status}</span>
+                </KeyValue>
+                <KeyValue k="Device sequence">
+                  <span className="mono">{hw.pramaan.seq ?? "—"}</span>
+                </KeyValue>
+                <KeyValue k="Messages received">
                   <span className="mono">{hw.packets}</span>
                 </KeyValue>
-                <KeyValue k="Host">
-                  <span className="mono">{hw.host || "auto"}</span>
+                <KeyValue k="Temperature">
+                  <span className="mono">
+                    {hw.temperature.value === null ? "—" : `${hw.temperature.value.toFixed(1)} °C`}
+                    {hw.temperature.source ? ` (${hw.temperature.source})` : ""}
+                  </span>
                 </KeyValue>
-                <KeyValue k="Last fault">
-                  <span className="mono">{hw.lastFault ? `${hw.lastFault.code}: ${hw.lastFault.detail}` : "none"}</span>
+                <KeyValue k="Weight">
+                  <span className="mono">
+                    {hw.weight.value === null ? "—" : `${hw.weight.value.toFixed(1)} g`}
+                  </span>
                 </KeyValue>
                 <KeyValue k="Detail" className="col-span-2">
                   <span className="mono break-all">{hw.detail ?? "—"}</span>
                 </KeyValue>
-                <KeyValue k="Load cell (g)">
-                  <span className="mono">{hw.sample?.load_cell_g != null ? hw.sample.load_cell_g.toFixed(1) : "—"}</span>
-                </KeyValue>
-                <KeyValue k="Phone key">
-                  <span className="mono">{phone ? `${phone.key_security_level} (target: ${phone.target_key_security_level})` : "—"}</span>
+                <KeyValue k="Phone key" className="col-span-2">
+                  <span className="mono">
+                    {phone ? `${phone.key_security_level} (target: ${phone.target_key_security_level})` : "—"}
+                  </span>
                 </KeyValue>
               </div>
               <p className="mt-5 text-[12.5px] leading-relaxed text-fg-muted">
@@ -197,7 +270,7 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
 
         {showImage ? (
           <div className="hidden sm:block">
-            <AssetImage name="deviceEvidence" alt="Evidence Chain phone and RPF evidence device" maxWidth={240} />
+            <AssetImage name="deviceEvidence" alt="The phone and the PRAMAAN evidence device" maxWidth={240} />
           </div>
         ) : null}
       </div>

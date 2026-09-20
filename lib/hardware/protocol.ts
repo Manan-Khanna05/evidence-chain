@@ -22,6 +22,9 @@ export type DeviceStatus = "BOOTING" | "READY" | "ACQUIRING" | "FAULT";
 /** Which physical link the browser is holding, if any. */
 export type TransportKind = "wifi" | "usb" | "demo" | "none";
 
+/** Which device the console is talking to, for naming in the UI. */
+export type DeviceBrand = "PRAMAAN" | "Evidence device";
+
 export type LinkState =
   | "disconnected"
   | "searching"
@@ -51,7 +54,11 @@ export interface SensorSample {
   load_cell_g: number | null;
   load_cell_stable: boolean;
   thermal: ThermalSummary | null;
-  collector_installed: boolean;
+  /** Null when the device has no collector switch — never guessed as false. */
+  collector_installed: boolean | null;
+  /** Temperature, with the input it came from. Null when unavailable. */
+  temperature_c?: number | null;
+  temperature_source?: "potentiometer" | "thermal_camera" | null;
 }
 
 /* --------------------------------------------------------- device → host */
@@ -269,7 +276,7 @@ const ACK_ACTIONS: AckMessage["action"][] = [
  * change its mind about which it was.
  */
 export interface HardwareObservation {
-  source: "esp32" | "demo";
+  source: "esp32" | "pramaan" | "demo";
   transport: TransportKind;
   device_id: string;
   firmware: string;
@@ -279,7 +286,12 @@ export interface HardwareObservation {
   thermal_min_c: number | null;
   thermal_max_c: number | null;
   thermal_avg_c: number | null;
-  collector_installed: boolean;
+  collector_installed: boolean | null;
+  temperature_c?: number | null;
+  temperature_source?: "potentiometer" | "thermal_camera" | null;
+  weight_source?: "load_cell" | null;
+  capture_trigger?: "device_button" | "app";
+  device_sequence?: number | null;
   /** Restates the boundary inside the signed payload, not just in the UI. */
   note: string;
 }
@@ -316,6 +328,10 @@ export function toObservation(
     thermal_max_c: msg.sensors.thermal?.max_c ?? null,
     thermal_avg_c: msg.sensors.thermal?.avg_c ?? null,
     collector_installed: msg.sensors.collector_installed,
+    temperature_c: msg.sensors.thermal?.avg_c ?? null,
+    temperature_source: msg.sensors.thermal ? "thermal_camera" : null,
+    weight_source: msg.sensors.load_cell_g === null ? null : "load_cell",
+    capture_trigger: "device_button",
     note: HARDWARE_NOTE,
   };
 }

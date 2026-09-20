@@ -38,7 +38,29 @@ interface AppContextValue {
   toasts: Toast[];
   pushToast: (t: Omit<Toast, "id">) => void;
   dismissToast: (id: number) => void;
+  /** Where the store lives, as reported by the server. */
+  storage: StorageInfo | null;
+  /** Live sync with the shared store. */
+  sync: SyncState;
 }
+
+export interface StorageInfo {
+  backend: "postgres" | "file" | "memory";
+  label: string;
+  detail: string;
+}
+
+export interface SyncState {
+  /** Server revision this device currently shows. */
+  revision: number | null;
+  /** Last time this device confirmed it is up to date. */
+  lastSyncedAt: number | null;
+  /** True when the last sync attempt failed (server or network unreachable). */
+  error: boolean;
+}
+
+/** How often an open device checks the shared store for changes. */
+const SYNC_INTERVAL_MS = 4000;
 
 const AppContext = React.createContext<AppContextValue | null>(null);
 
@@ -52,6 +74,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = React.useState<Session | null>(null);
   const [toasts, setToasts] = React.useState<Toast[]>([]);
   const toastSeq = React.useRef(0);
+  const [storage, setStorage] = React.useState<StorageInfo | null>(null);
+  const [sync, setSync] = React.useState<SyncState>({ revision: null, lastSyncedAt: null, error: false });
+  const revisionRef = React.useRef<number | null>(null);
+
+  const markSynced = React.useCallback((revision: number | undefined | null) => {
+    if (typeof revision === "number") revisionRef.current = revision;
+    setSync({ revision: revisionRef.current, lastSyncedAt: Date.now(), error: false });
+  }, []);
 
   const pushToast = React.useCallback((t: Omit<Toast, "id">) => {
     const id = ++toastSeq.current;
@@ -66,12 +96,72 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const refresh = React.useCallback(async () => {
     try {
       const res = await fetch("/api/state", { cache: "no-store" });
-      const data = (await res.json()) as { store: ClientStore };
+      if (!res.ok) throw new Error("state unavailable");
+      const data = (await res.json()) as { store: ClientStore; revision?: number; storage?: StorageInfo };
       setStore(data.store);
+      if (data.storage) setStorage(data.storage);
+      markSynced(data.revision);
+    } catch {
+      setSync((s) => ({ ...s, error: true }));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [markSynced]);
+
+  /**
+   * Live sync: ask the server whether the shared store changed since the
+   * revision on screen, and download it only if it did. Runs while the tab is
+   * visible, and immediately when it becomes visible or regains focus.
+   */
+  const pull = React.useCallback(async () => {
+    if (revisionRef.current === null) return;
+    try {
+      const res = await fetch(`/api/state?since=${revisionRef.current}`, { cache: "no-store" });
+      if (!res.ok) throw new Error("state unavailable");
+      const data = (await res.json()) as {
+        unchanged?: boolean;
+        revision?: number;
+        store?: ClientStore;
+        storage?: StorageInfo;
+      };
+      if (!data.unchanged && data.store) setStore(data.store);
+      if (data.storage) setStorage(data.storage);
+      markSynced(data.revision);
+    } catch {
+      setSync((s) => ({ ...s, error: true }));
+    }
+  }, [markSynced]);
+
+  React.useEffect(() => {
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const start = () => {
+      if (timer || document.visibilityState !== "visible") return;
+      timer = setInterval(() => void pull(), SYNC_INTERVAL_MS);
+    };
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        void pull();
+        start();
+      } else {
+        stop();
+      }
+    };
+    const onFocus = () => void pull();
+    start();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("online", onFocus);
+    return () => {
+      stop();
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("online", onFocus);
+    };
+  }, [pull]);
 
   React.useEffect(() => {
     try {
@@ -120,8 +210,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           result?: unknown;
           error?: string;
           store?: ClientStore;
+          revision?: number;
         };
-        if (data.store) setStore(data.store);
+        if (data.store) {
+          setStore(data.store);
+          markSynced(data.revision);
+        }
         if (!res.ok || data.ok === false) {
           const message = data.error ?? "The action could not be completed";
           pushToast({ tone: "danger", title: "Action refused", body: message });
@@ -132,12 +226,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         return { ok: true, result: data.result as never };
       } catch {
-        const message = "Could not reach the evidence service";
-        pushToast({ tone: "danger", title: "Network error", body: message });
+        const message = "Could not reach the evidence service. Check your connection and try again.";
+        pushToast({ tone: "danger", title: "Not connected", body: message });
+        setSync((s) => ({ ...s, error: true }));
         return { ok: false, error: message };
       }
     },
-    [pushToast],
+    [pushToast, markSynced],
   );
 
   const verify = React.useCallback(async (scope: string) => {
@@ -179,6 +274,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     toasts,
     pushToast,
     dismissToast,
+    storage,
+    sync,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

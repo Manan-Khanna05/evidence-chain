@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { CircleDashed, MonitorPlay, TriangleAlert } from "lucide-react";
-import { connectionKind, linkLabel, useHardware, type ConnectionKind } from "@/components/providers/hardware-provider";
+import { connectionKind, useHardware, type ConnectionKind } from "@/components/providers/hardware-provider";
 import { cx } from "@/components/ui/primitives";
 
 const STYLE: Record<ConnectionKind, { wrap: string; dot: string }> = {
@@ -13,8 +13,8 @@ const STYLE: Record<ConnectionKind, { wrap: string; dot: string }> = {
 };
 
 /**
- * "● Device Connected / ○ Connecting to device… / ⚠ Device offline / Demo".
- * Shape and word carry the state as well as colour.
+ * "● PRAMAAN ONLINE / ○ Connecting to PRAMAAN… / ⚠ PRAMAAN OFFLINE / Demo".
+ * The device is named, and shape plus wording carry the state as well as colour.
  */
 export function ConnectionStatus({
   size = "md",
@@ -23,9 +23,27 @@ export function ConnectionStatus({
   size?: "sm" | "md";
   className?: string;
 }) {
-  const { state, transport } = useHardware();
+  const { state, transport, brand, isPramaan, pramaan } = useHardware();
   const kind = connectionKind(state, transport);
   const s = STYLE[kind];
+
+  const label =
+    kind === "demo"
+      ? "Demo Device"
+      : isPramaan
+        ? kind === "connected"
+          ? "PRAMAAN ONLINE"
+          : kind === "connecting"
+            ? pramaan.portOpen
+              ? "Waiting for PRAMAAN…"
+              : "Connecting to PRAMAAN…"
+            : "PRAMAAN OFFLINE"
+        : kind === "connected"
+          ? "Device Connected"
+          : kind === "connecting"
+            ? "Connecting to device…"
+            : `${brand === "PRAMAAN" ? "PRAMAAN" : "Device"} offline`;
+
   const icon =
     kind === "connected" ? (
       <span className={cx("inline-block h-2.5 w-2.5 rounded-full", s.dot)} aria-hidden="true" />
@@ -36,6 +54,7 @@ export function ConnectionStatus({
     ) : (
       <TriangleAlert size={14} aria-hidden="true" />
     );
+
   return (
     <span
       role="status"
@@ -48,7 +67,7 @@ export function ConnectionStatus({
       )}
     >
       {icon}
-      {linkLabel(state, transport)}
+      {label}
     </span>
   );
 }

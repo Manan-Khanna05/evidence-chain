@@ -92,7 +92,8 @@ export interface TriggerPayload {
  * so a record cannot later be mistaken for one it is not.
  */
 export interface HardwareObservationPayload {
-  source: "esp32" | "demo";
+  /** Which device produced these numbers. "pramaan" is the USB hardware. */
+  source: "esp32" | "pramaan" | "demo";
   transport: "wifi" | "usb" | "demo" | "none";
   device_id: string;
   firmware: string;
@@ -102,7 +103,20 @@ export interface HardwareObservationPayload {
   thermal_min_c: number | null;
   thermal_max_c: number | null;
   thermal_avg_c: number | null;
-  collector_installed: boolean;
+  /** Null when no collector switch exists on the device — not "absent". */
+  collector_installed: boolean | null;
+  /**
+   * Temperature as reported, with the input that produced it. On PRAMAAN that
+   * input is a potentiometer standing in for a temperature probe, and the
+   * payload says so rather than implying a thermal camera.
+   */
+  temperature_c?: number | null;
+  temperature_source?: "potentiometer" | "thermal_camera" | null;
+  weight_source?: "load_cell" | null;
+  /** Which button started the capture. */
+  capture_trigger?: "device_button" | "app";
+  /** The device's own sequence counter at capture. */
+  device_sequence?: number | null;
   note: string;
 }
 

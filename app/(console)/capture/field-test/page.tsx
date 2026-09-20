@@ -9,6 +9,7 @@ import {
   FlaskConical,
   Printer,
   Signature,
+  Thermometer,
 } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
@@ -34,6 +35,7 @@ import {
 } from "@/lib/domain/vocab";
 import type { EvidenceRecord, FieldTestPayload } from "@/lib/domain/types";
 import { CaptureDeviceHint, CaptureSteps, CaptureTargetBar } from "@/features/capture/capture-target";
+import { useHardware } from "@/components/providers/hardware-provider";
 import { HelpTip } from "@/components/ui/help-tip";
 import { FieldTestDocument } from "@/features/field-test/field-test-document";
 
@@ -48,6 +50,7 @@ export default function FieldTestCapturePage() {
 function FieldTestCaptureView() {
   const params = useSearchParams();
   const { store, officer, run } = useApp();
+  const hw = useHardware();
   const [busy, setBusy] = React.useState(false);
   const [created, setCreated] = React.useState<EvidenceRecord | null>(null);
 
@@ -59,6 +62,11 @@ function FieldTestCaptureView() {
   const [colour, setColour] = React.useState<string>(OBSERVED_COLOURS[0]);
   const [table, setTable] = React.useState<string>(REFERENCE_TABLES[0]);
   const [ambient, setAmbient] = React.useState("28");
+  /**
+   * Where the ambient temperature on screen came from. Typing switches it back
+   * to "manual"; a live value is never written over what an officer typed.
+   */
+  const [ambientSource, setAmbientSource] = React.useState<"manual" | "pramaan">("manual");
   const [result, setResult] = React.useState<FieldTestPayload["result_status"]>("presumptive_positive");
 
   if (!store) return null;
@@ -288,14 +296,54 @@ function FieldTestCaptureView() {
                   ))}
                 </Select>
               </Field>
-              <Field label="Ambient temperature (°C)" hint="Optional">
-                <TextInput
-                  type="number"
-                  value={ambient}
-                  onChange={(e) => setAmbient(e.target.value)}
-                  min={-10}
-                  max={60}
-                />
+              <Field
+                label="Ambient temperature (°C)"
+                hint={
+                  ambientSource === "pramaan"
+                    ? `LIVE • PRAMAAN — source: ${
+                        hw.temperature.source === "potentiometer"
+                          ? "potentiometer (simulated)"
+                          : "thermal camera"
+                      }`
+                    : "MANUAL — typed by the operator. Optional."
+                }
+              >
+                <div className="flex gap-2">
+                  <TextInput
+                    type="number"
+                    value={ambient}
+                    onChange={(e) => {
+                      setAmbient(e.target.value);
+                      setAmbientSource("manual");
+                    }}
+                    min={-10}
+                    max={60}
+                  />
+                  {hw.temperature.value !== null ? (
+                    <Button
+                      type="button"
+                      icon={<Thermometer size={15} />}
+                      onClick={() => {
+                        const v = hw.temperature.value;
+                        if (v === null) return;
+                        setAmbient(v.toFixed(1));
+                        setAmbientSource("pramaan");
+                      }}
+                      title="Copy the current PRAMAAN reading into this field"
+                    >
+                      Use live reading
+                    </Button>
+                  ) : null}
+                </div>
+                {ambientSource === "pramaan" ? (
+                  <button
+                    type="button"
+                    onClick={() => setAmbientSource("manual")}
+                    className="mt-1.5 text-[13px] font-semibold text-brand hover:underline"
+                  >
+                    Enter manually instead
+                  </button>
+                ) : null}
               </Field>
               <Field label="Operator" hint="Taken from the signed-in identity — never typed">
                 <TextInput value={officer?.officer_id ?? ""} readOnly disabled />

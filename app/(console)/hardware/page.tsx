@@ -41,6 +41,9 @@ import {
 } from "@/features/hardware/widgets";
 import { AcquisitionReview } from "@/features/hardware/acquisition-review";
 import { DEFAULT_WIFI_HOSTS } from "@/lib/hardware/client";
+import { PramaanSerialLink } from "@/lib/hardware/pramaan/serial";
+import { LiveSensors } from "@/features/hardware/live-sensors";
+import { PramaanDiagnostics } from "@/features/hardware/pramaan-diagnostics";
 import { ConnectionStatus } from "@/features/hardware/connection-status";
 import { DeviceStatusCard } from "@/features/hardware/device-status-card";
 import { HardwareGuide } from "@/features/hardware/hardware-guide";
@@ -92,31 +95,40 @@ export default function HardwarePage() {
       <PageHeader
         eyebrow="System"
         title="Hardware"
-        subtitle="The evidence device and its sensors. Live readings are not evidence — a record only exists once an officer reviews and confirms it."
+        subtitle="PRAMAAN — the evidence integrity device — and its inputs. Live readings are not evidence: a record exists only once an officer reviews and confirms it."
         status={<ConnectionStatus />}
         actions={
           <>
+            <Button
+              variant="primary"
+              icon={<Plug size={16} />}
+              busy={busy === "pramaan"}
+              disabled={!PramaanSerialLink.supported()}
+              title={PramaanSerialLink.supported() ? undefined : "Web Serial needs Chrome or Edge on a laptop"}
+              onClick={() => act("pramaan", async () => void (await hw.connectPramaan()))}
+            >
+              Connect PRAMAAN
+            </Button>
             <Button
               busy={busy === "scan"}
               icon={<RefreshCw size={16} />}
               onClick={() => act("scan", () => hw.connect())}
             >
-              Scan for device
+              Search Wi-Fi device
             </Button>
-            {hw.serialAvailable ? (
+            {!connected ? (
+              <Button icon={<Cpu size={16} />} onClick={hw.useDemoHardware}>
+                Use demo device
+              </Button>
+            ) : (
               <Button
                 icon={<Usb size={16} />}
-                busy={busy === "usb"}
-                onClick={() => act("usb", async () => void (await hw.connectUsb()))}
+                busy={busy === "dc"}
+                onClick={() => act("dc", async () => (hw.isPramaan ? hw.disconnectPramaan() : hw.disconnect()))}
               >
-                Connect USB
+                Disconnect
               </Button>
-            ) : null}
-            {!connected ? (
-              <Button variant="primary" icon={<Cpu size={16} />} onClick={hw.useDemoHardware}>
-                Use demo hardware
-              </Button>
-            ) : null}
+            )}
           </>
         }
       />
@@ -197,17 +209,19 @@ export default function HardwarePage() {
             </ol>
           </Panel>
 
+          <LiveSensors />
+
           <HardwareGuide />
         </div>
       ) : (
       <>
 
       {!connected ? (
-        <Callout tone="warn" title="No hardware connected" icon={<AlertTriangle size={13} />}>
-          The console looked for a board on {DEFAULT_WIFI_HOSTS.join(", ")} and on any serial port you
-          have already permitted. Join the board&apos;s Wi-Fi access point, plug it in over USB, or
-          run the demo device — which speaks the identical protocol and is labelled as simulated on
-          every record it produces.
+        <Callout tone="warn" title="No device connected" icon={<AlertTriangle size={13} />}>
+          Plug PRAMAAN into this laptop with the USB cable and press <strong>Connect PRAMAAN</strong>,
+          then pick its serial port. The console also looks for a Wi-Fi board on{" "}
+          {DEFAULT_WIFI_HOSTS.join(", ")}. Without hardware you can still capture evidence and type
+          values manually, or run the demo device — labelled as simulated on every record it produces.
         </Callout>
       ) : hw.transport === "demo" ? (
         <SimulatedNote>
@@ -220,10 +234,12 @@ export default function HardwarePage() {
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.45fr_1fr]">
         <div className="min-w-0 space-y-4">
           {/* ------------------------------------------------ live sensors */}
+          <LiveSensors />
+
           <Panel className="min-w-0">
             <PanelHead
-              title="Live sensor data"
-              subtitle="Throttled to 5 updates per second for display; the board samples faster."
+              title="Sensor detail"
+              subtitle="Load gauge and, where a thermal imager is fitted, its field."
               icon={<Activity size={17} />}
               right={
                 <LedMirror
@@ -241,38 +257,53 @@ export default function HardwarePage() {
               />
 
               <div className="min-w-0 space-y-3 self-center">
-                <div className="flex items-start gap-3">
-                  <ThermalMap
-                    frame={hw.thermalFrame}
-                    min={s?.thermal?.min_c ?? null}
-                    max={s?.thermal?.max_c ?? null}
-                    className="w-[132px] shrink-0"
-                  />
-                  <div className="min-w-0">
+                {hw.health?.thermal ? (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <ThermalMap
+                        frame={hw.thermalFrame}
+                        min={s?.thermal?.min_c ?? null}
+                        max={s?.thermal?.max_c ?? null}
+                        className="w-[132px] shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <div className="label">Thermal observation</div>
+                        <div className="mt-1 text-[22px] font-semibold leading-none tabular-nums text-brand-deep">
+                          {s?.thermal ? `${s.thermal.avg_c.toFixed(1)} °C` : "—"}
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          <Pill tone="neutral">min {s?.thermal ? s.thermal.min_c.toFixed(1) : "—"}</Pill>
+                          <Pill tone="neutral">max {s?.thermal ? s.thermal.max_c.toFixed(1) : "—"}</Pill>
+                        </div>
+                        <button
+                          onClick={hw.requestFrame}
+                          className="mt-2 text-[13px] font-semibold text-brand hover:underline"
+                        >
+                          Refresh thermal field
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-[12.5px] leading-relaxed text-fg-dim">
+                      A 32×24 temperature field. It provides contextual thermal observation of the
+                      sampling area — it does not detect or identify any substance.
+                    </p>
+                  </>
+                ) : (
+                  <div className="rounded-2xl border border-line bg-white px-4 py-4">
                     <div className="label">Thermal observation</div>
-                    <div className="mt-1 text-[22px] font-semibold leading-none tabular-nums text-brand-deep">
-                      {s?.thermal ? `${s.thermal.avg_c.toFixed(1)} °C` : "—"}
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      <Pill tone="neutral">
-                        min {s?.thermal ? s.thermal.min_c.toFixed(1) : "—"}
-                      </Pill>
-                      <Pill tone="neutral">
-                        max {s?.thermal ? s.thermal.max_c.toFixed(1) : "—"}
-                      </Pill>
-                    </div>
-                    <button
-                      onClick={hw.requestFrame}
-                      className="mt-2 text-[11.5px] font-semibold text-brand hover:underline"
-                    >
-                      Refresh thermal field
-                    </button>
+                    <div className="mt-2 text-[28px] font-semibold leading-none text-fg-dim">—</div>
+                    <p className="mt-2 text-[13.5px] leading-relaxed text-fg-muted">
+                      Thermal sensor unavailable. No thermal imaging sensor is fitted to this device,
+                      so no thermal field is shown or recorded.
+                    </p>
+                    {hw.temperature.source === "potentiometer" ? (
+                      <p className="mt-2 text-[13px] leading-relaxed text-fg-muted">
+                        The temperature above comes from the potentiometer — a simulated temperature
+                        input, not a measurement of the sample.
+                      </p>
+                    ) : null}
                   </div>
-                </div>
-                <p className="text-[11.5px] leading-relaxed text-fg-dim">
-                  A 32×24 temperature field. It provides contextual thermal observation of the
-                  sampling area — it does not detect or identify any substance.
-                </p>
+                )}
               </div>
             </div>
 
@@ -454,11 +485,13 @@ export default function HardwarePage() {
             </div>
           </Panel>
 
+          <PramaanDiagnostics />
+
           <Callout tone="neutral" title="What these sensors are for">
-            The load cell measures the force applied while collecting a swab, the MLX90640 measures a
-            temperature field, and the microswitch reports whether the collector is fitted. Together
-            they instrument <em>how the sample was taken</em>. None of them identifies a substance,
-            and nothing here produces a referral tier.
+            On PRAMAAN the load cell measures the force applied while collecting a swab, and the
+            potentiometer provides a simulated temperature input. Together they instrument{" "}
+            <em>how the sample was taken</em>. Neither identifies a substance, neither is a thermal
+            imager, and nothing here produces a referral tier.
           </Callout>
         </div>
       </div>

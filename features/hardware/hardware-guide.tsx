@@ -5,19 +5,19 @@ import {
   Check,
   CircleDot,
   Cpu,
+  Gauge,
   Lightbulb,
+  MonitorSmartphone,
   MousePointerClick,
-  Scale,
   Smartphone,
   Thermometer,
-  ToggleRight,
   TriangleAlert,
   Weight,
 } from "lucide-react";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { Panel, PanelHead, Pill, cx } from "@/components/ui/primitives";
 import { AssetImage } from "@/components/ui/asset-image";
-import type { SensorHealth } from "@/lib/hardware/protocol";
+
 
 type Part = {
   key: string;
@@ -27,78 +27,69 @@ type Part = {
   does: string;
   doesNot: string;
   wiring: string;
-  health?: keyof SensorHealth | "link";
+  /** Capability key reported by the device, or "link" for the connection itself. */
+  health?: string;
 };
 
 const PARTS: Part[] = [
   {
     key: "phone",
-    name: "Android phone",
+    name: "Phone or laptop",
     icon: <Smartphone size={18} />,
-    role: "The officer's device",
-    does: "Runs Evidence Chain. Shows readings, lets the officer review and confirm, then signs and saves the record.",
+    role: "The officer's console",
+    does: "Runs Evidence Chain. Shows PRAMAAN's readings, lets the officer review and confirm, then signs and saves the record.",
     doesNot: "Does not trust its own clock for exact time — trusted time comes from anchors.",
-    wiring: "Joins the device's Wi-Fi, or connects by USB cable.",
+    wiring: "USB cable to PRAMAAN. Chrome or Edge on a laptop for the USB connection.",
     health: "link",
   },
   {
     key: "esp32",
-    name: "ESP32-S3 board",
+    name: "ESP32 board",
     icon: <Cpu size={18} />,
-    role: "The gateway",
-    does: "Reads every sensor, drives the LEDs, and sends readings to the phone when ACQUIRE is pressed.",
-    doesNot: "Does not create evidence. It only reports; the officer confirms.",
-    wiring: "I²C on SDA 8 / SCL 9. Buttons on 4, 5, 6. LEDs on 15, 16, 17.",
+    role: "The PRAMAAN controller",
+    does: "Reads the potentiometer and load cell, drives the OLED and LEDs, and sends readings over USB when ACQUIRE is pressed.",
+    doesNot: "Does not create evidence. It reports; the officer confirms.",
+    wiring: "USB serial at 115200 baud, newline-delimited JSON (protocol PRAMAAN-1).",
     health: "link",
   },
   {
-    key: "nau7802",
-    name: "NAU7802 amplifier",
-    icon: <Scale size={18} />,
-    role: "Weighing electronics",
-    does: "Turns the tiny signal from the load cell into a weight reading.",
-    doesNot: "Does not weigh the seized article — only the force used while sampling.",
-    wiring: "I²C, shared bus with the thermal camera.",
-    health: "load_cell",
+    key: "potentiometer",
+    name: "Potentiometer",
+    icon: <Gauge size={18} />,
+    role: "Simulated temperature input",
+    does: "Turning the knob changes the temperature value shown and recorded. It stands in for a temperature probe so the workflow can be demonstrated end to end.",
+    doesNot: "It is not a thermal sensor and not a measurement of the sample. Every record says the value came from a potentiometer.",
+    wiring: "Analogue input on GPIO34.",
+    health: "potentiometer",
   },
   {
     key: "loadcell",
-    name: "Load cell (1 kg)",
+    name: "Load cell + amplifier",
     icon: <Weight size={18} />,
-    role: "Sampling force",
-    does: "Measures how firmly the swab was pressed, so the record shows how the sample was taken.",
+    role: "Weight / sampling force",
+    does: "Measures the weight or the force applied while collecting the sample, so the record shows how the sample was taken.",
     doesNot: "Does not identify any substance.",
-    wiring: "Four wires to the NAU7802. Calibrate with a known mass.",
+    wiring: "Load cell into the HX711-style amplifier, amplifier data and clock pins set in the firmware.",
     health: "load_cell",
   },
   {
-    key: "mlx",
-    name: "MLX90640 thermal camera",
-    icon: <Thermometer size={18} />,
-    role: "Temperature of the sampling area",
-    does: "Records a 32×24 temperature picture as context — for example, ambient temperature at the test.",
-    doesNot: "Does not detect concealment and does not identify any substance.",
-    wiring: "I²C on SDA 8 / SCL 9.",
-    health: "thermal",
-  },
-  {
-    key: "switch",
-    name: "Microswitch",
-    icon: <ToggleRight size={18} />,
-    role: "Collector fitted?",
-    does: "Reports whether the sample collector is in place before a reading.",
-    doesNot: "Does not check what is in the collector.",
-    wiring: "GPIO 4 to ground.",
-    health: "collector_switch",
+    key: "oled",
+    name: "OLED display",
+    icon: <MonitorSmartphone size={18} />,
+    role: "On-device readout",
+    does: "Shows the device state, the current sequence and the live readings, so the operator can work without looking at the phone.",
+    doesNot: "Does not store anything. It is a display only.",
+    wiring: "I²C on SDA GPIO21, SCL GPIO22, address 0x3C.",
+    health: "oled",
   },
   {
     key: "buttons",
     name: "ACQUIRE & RESET buttons",
     icon: <MousePointerClick size={18} />,
     role: "Physical controls",
-    does: "ACQUIRE takes a reading and sends it to the phone for review. RESET clears the device session.",
-    doesNot: "Pressing ACQUIRE alone never saves evidence — the officer must confirm on the phone.",
-    wiring: "ACQUIRE on GPIO 5, RESET on GPIO 6.",
+    does: "The right button (GPIO13) captures a reading and sends it for review. The left button (GPIO2) resets and moves to the next sequence.",
+    doesNot: "Pressing ACQUIRE never saves evidence by itself — the officer must confirm on screen.",
+    wiring: "Switch 1 ACQUIRE on GPIO13, Switch 2 RESET on GPIO2, both to ground.",
     health: "acquire_button",
   },
   {
@@ -106,9 +97,19 @@ const PARTS: Part[] = [
     name: "Status LEDs",
     icon: <Lightbulb size={18} />,
     role: "At-a-glance state",
-    does: "Green: ready. Amber: taking a reading or waiting for the officer. Red: a fault.",
+    does: "Yellow blinks when READY, green blinks when a reading has been ACQUIRED, red blinks briefly during RESET.",
     doesNot: "Not a verification result — only the device's own state.",
-    wiring: "Green 15, amber 16, red 17, each through a 1 kΩ resistor.",
+    wiring: "Green GPIO15, yellow GPIO16, red GPIO17, each through a resistor.",
+  },
+  {
+    key: "thermal",
+    name: "Thermal sensor",
+    icon: <Thermometer size={18} />,
+    role: "Not fitted",
+    does: "Nothing — there is no thermal imaging sensor on this device.",
+    doesNot: "The console shows thermal observation as unavailable and records no thermal values. Temperature comes from the potentiometer instead.",
+    wiring: "Not connected.",
+    health: "thermal_sensor",
   },
 ];
 
@@ -125,7 +126,12 @@ export function HardwareGuide() {
   const healthOf = (p: Part): boolean | null => {
     if (!p.health) return connected ? true : null;
     if (p.health === "link") return connected;
-    return hw.health ? hw.health[p.health] : null;
+    const cap = hw.capabilities.find((c) => c.key === p.health);
+    if (!cap) return null;
+    // A part the device simply does not have is not a fault: report "unknown"
+    // so it never shows as broken.
+    if (!cap.available && cap.note) return null;
+    return cap.available;
   };
 
   const h = healthOf(part);
@@ -134,12 +140,12 @@ export function HardwareGuide() {
     <Panel className="min-w-0">
       <PanelHead
         title="Interactive hardware guide"
-        subtitle="Tap a component to see what it does."
+        subtitle="PRAMAAN, part by part. Tap one to see what it does."
         icon={<CircleDot size={17} />}
       />
       <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="min-w-0">
-          <AssetImage name="deviceEvidence" alt="The phone and the RPF evidence device with status LEDs and ACQUIRE button" maxWidth={386} />
+          <AssetImage name="deviceEvidence" alt="The phone and the PRAMAAN device with status LEDs and ACQUIRE button" maxWidth={386} />
           <div role="tablist" aria-label="Hardware components" className="mt-4 grid grid-cols-2 gap-2">
             {PARTS.map((p) => {
               const ok = healthOf(p);
@@ -186,7 +192,9 @@ export function HardwareGuide() {
             ) : h === false ? (
               <Pill tone="danger" icon={<TriangleAlert size={11} />}>Needs attention</Pill>
             ) : (
-              <Pill tone="neutral">Connect the device to see live status</Pill>
+              <Pill tone="neutral">
+                {part.health === "thermal_sensor" ? "Not fitted on this device" : "Connect PRAMAAN to see live status"}
+              </Pill>
             )}
           </div>
           <dl className="mt-5 space-y-4">

@@ -1,11 +1,11 @@
 /**
  * Data access layer.
  *
- * HONESTY NOTE — the Implementation Plan (Step 3) targets a Postgres table with
- * an insert-only trigger. This prototype persists to a JSON file so the whole
- * thing runs with `npm run dev` and nothing else installed. Everything above
- * this file talks to the repository interface below, so swapping in Postgres is
- * a change to this one module. Nothing in the UI claims a production database.
+ * With DATABASE_URL set, the store lives in a shared Postgres database (see
+ * db.ts) and every device syncs through it; each record is also copied into an
+ * append-only ledger table guarded by an insert-only trigger. Without it, the
+ * store is a local JSON file so `npm run dev` needs nothing else installed.
+ * The UI states which of the two is in use.
  *
  * The append-only property is enforced here in `appendRecord` (records are only
  * ever pushed, never rewritten) — with one deliberate exception, `applyTamper`,
@@ -18,32 +18,56 @@ import os from "node:os";
 import path from "node:path";
 import type { ClientStore, EvidenceRecord, StoreShape } from "@/lib/domain/types";
 import { buildSeed } from "./seed";
+import { DATABASE_URL, dbLoad, dbRevision, dbSave } from "./db";
 
 /**
- * Where the store lives.
+ * Where the store lives, in order of preference:
  *
- * Locally that is `.data/` beside the project, which survives restarts. On a
- * serverless host the project directory is read-only, so the file goes to the
- * instance's temp directory instead. That is per-instance and cleared on a cold
- * start — see SERVERLESS_NOTE — so the in-memory cache below, not the file, is
- * the authority while a process is warm.
+ *   postgres  DATABASE_URL / POSTGRES_URL is set (Neon on Vercel). Shared by
+ *             every server instance and every device — the synced mode.
+ *   file      local development: `.data/evidence-store.json`, survives restarts.
+ *   memory    a serverless host with no database: per-instance and reset on a
+ *             cold start. Labelled as such rather than pretending to persist.
  */
 const IS_SERVERLESS = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+export const BACKEND: "postgres" | "file" | "memory" = DATABASE_URL
+  ? "postgres"
+  : IS_SERVERLESS
+    ? "memory"
+    : "file";
+
 const DATA_DIR = IS_SERVERLESS
   ? path.join(os.tmpdir(), "evidence-chain")
   : path.join(process.cwd(), ".data");
 const DATA_FILE = path.join(DATA_DIR, "evidence-store.json");
 
-export const STORAGE_LABEL = IS_SERVERLESS
-  ? "Local prototype storage — JSON file in the instance temp directory"
-  : "Local prototype storage — JSON file (.data/evidence-store.json)";
+export const STORAGE_LABEL =
+  BACKEND === "postgres"
+    ? "Shared Postgres database (Neon) — every device sees the same store"
+    : BACKEND === "memory"
+      ? "Local prototype storage — in memory on this server instance"
+      : "Local prototype storage — JSON file (.data/evidence-store.json)";
 export const STORAGE_TARGET = "Production target: PostgreSQL append-only table with an insert-only trigger";
 
-export const SERVERLESS_NOTE = IS_SERVERLESS
-  ? "Running on a serverless host: the evidence store is held in memory and mirrored to a temporary file. It re-seeds on a cold start, and separate instances do not share it. Run locally for a persistent store."
-  : null;
+export const SERVERLESS_NOTE =
+  BACKEND === "memory"
+    ? "Running on a serverless host without a database: the evidence store is held in memory. It re-seeds on a cold start, and separate instances do not share it. Set DATABASE_URL to share it."
+    : null;
+
+/** What the browser is told about storage, so the honesty strip is accurate. */
+export function storageInfo() {
+  return {
+    backend: BACKEND,
+    label: BACKEND === "postgres" ? "Shared Database" : "Local Prototype Storage",
+    detail: STORAGE_LABEL,
+  };
+}
+
+/* ------------------------------------------------------ file / memory */
 
 let cache: StoreShape | null = null;
+/** Local revision counter, so clients can poll for changes in every mode. */
+let localRevision = 1;
 let writeQueue: Promise<unknown> = Promise.resolve();
 
 async function readFromDisk(): Promise<StoreShape | null> {
@@ -72,7 +96,7 @@ async function writeToDisk(store: StoreShape): Promise<void> {
   }
 }
 
-export async function getStore(): Promise<StoreShape> {
+async function localGet(): Promise<StoreShape> {
   if (cache) return cache;
   const onDisk = await readFromDisk();
   if (onDisk && onDisk.version === 1) {
@@ -85,14 +109,68 @@ export async function getStore(): Promise<StoreShape> {
   return seeded;
 }
 
-/** Serialised read-modify-write. Every mutation in the app goes through this. */
+/* ----------------------------------------------------------- postgres */
+
+/** Load the shared store, seeding it once if the database is empty. */
+async function remoteGet(): Promise<{ store: StoreShape; revision: number }> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const { revision, data } = await dbLoad();
+    if (data && data.version === 1) return { store: data, revision };
+    const seeded = await buildSeed();
+    const next = await dbSave(revision, seeded);
+    if (next !== null) return { store: seeded, revision: next };
+    // Another instance seeded first — read theirs.
+  }
+  throw new Error("The shared evidence store could not be initialised");
+}
+
+const MAX_ATTEMPTS = 8;
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/* ------------------------------------------------------------- public */
+
+export async function getStore(): Promise<StoreShape> {
+  if (BACKEND === "postgres") return (await remoteGet()).store;
+  return localGet();
+}
+
+/** The store plus its revision, for change polling. */
+export async function getStoreWithRevision(): Promise<{ store: StoreShape; revision: number }> {
+  if (BACKEND === "postgres") return remoteGet();
+  return { store: await localGet(), revision: localRevision };
+}
+
+export async function getRevision(): Promise<number> {
+  if (BACKEND === "postgres") return dbRevision();
+  await localGet();
+  return localRevision;
+}
+
+/**
+ * Serialised read-modify-write. Every mutation in the app goes through this.
+ *
+ * Against Postgres, `fn` runs on a fresh copy and the write only lands if no
+ * other device wrote in between; otherwise it re-reads and runs again. `fn`
+ * must therefore depend only on the store it is given — which every action does.
+ */
 export async function mutate<T>(fn: (store: StoreShape) => Promise<T> | T): Promise<T> {
   const run = async (): Promise<T> => {
-    const store = await getStore();
+    if (BACKEND === "postgres") {
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        const { store, revision } = await remoteGet();
+        const result = await fn(store);
+        const next = await dbSave(revision, store);
+        if (next !== null) return result;
+        await pause(40 + Math.random() * 120 * (attempt + 1));
+      }
+      throw new Error("The evidence store is busy. Please try again in a moment.");
+    }
+    const store = await localGet();
     const result = await fn(store);
     // Cache first: the mutation has already happened in memory, and persistence
     // is best-effort. Writing first would discard the change on a failed write.
     cache = store;
+    localRevision += 1;
     await writeToDisk(store);
     return result;
   };
@@ -103,7 +181,16 @@ export async function mutate<T>(fn: (store: StoreShape) => Promise<T> | T): Prom
 
 export async function resetStore(): Promise<StoreShape> {
   const seeded = await buildSeed();
+  if (BACKEND === "postgres") {
+    await mutate((store) => {
+      // Replace the whole document in place so mutate's write carries it.
+      for (const k of Object.keys(store)) delete (store as unknown as Record<string, unknown>)[k];
+      Object.assign(store, seeded);
+    });
+    return seeded;
+  }
   cache = seeded;
+  localRevision += 1;
   await writeToDisk(seeded);
   return seeded;
 }

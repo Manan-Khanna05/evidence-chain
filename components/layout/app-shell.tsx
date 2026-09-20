@@ -10,8 +10,10 @@ import {
   Camera,
   CheckCircle2,
   CircleDashed,
+  CloudOff,
   CloudUpload,
   Cpu,
+  Database,
   FileBadge,
   FolderOpen,
   Info,
@@ -21,6 +23,7 @@ import {
   MonitorPlay,
   MoreHorizontal,
   PlayCircle,
+  RefreshCw,
   ShieldCheck,
   Smartphone,
   TriangleAlert,
@@ -321,6 +324,7 @@ function SidebarBody({ pathname }: { pathname: string }) {
 function GlobalHeader({ onOpenNav }: { onOpenNav: () => void }) {
   const pathname = usePathname();
   const full = pathname === "/dashboard";
+  const { storage } = useApp();
 
   return (
     <header className="relative mb-6 overflow-hidden rounded-[24px] border border-white shadow-hero">
@@ -403,17 +407,23 @@ function GlobalHeader({ onOpenNav }: { onOpenNav: () => void }) {
 
       {/* Standing honesty strip — never dismissible. */}
       <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/80 bg-white/80 px-4 py-1.5 text-[11.5px] text-fg-muted sm:px-6 lg:px-7">
-        {[
-          "Mock Sensor",
-          "Simulated TSA",
-          "Demo Signatures",
-          "Local Prototype Storage",
-        ].map((t) => (
+        {["Mock Sensor", "Simulated TSA", "Demo Signatures"].map((t) => (
           <span key={t} className="inline-flex items-center gap-1.5">
             <CircleDashed size={11} className="text-sim" />
             {t}
           </span>
         ))}
+        {storage?.backend === "postgres" ? (
+          <span className="inline-flex items-center gap-1.5" title={storage.detail}>
+            <Database size={11} className="text-ok" />
+            Shared Database
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5" title={storage?.detail}>
+            <CircleDashed size={11} className="text-sim" />
+            Local Prototype Storage
+          </span>
+        )}
       </div>
     </header>
   );
@@ -537,6 +547,40 @@ function Notifications() {
  * Operator + system status. Holds the network toggle that used to hide behind
  * the bell: "Simulate offline" is a demo control and is labelled as one.
  */
+function SyncRow() {
+  const { sync, storage } = useApp();
+  const [, tick] = React.useReducer((x: number) => x + 1, 0);
+  React.useEffect(() => {
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, []);
+  const age = sync.lastSyncedAt ? Math.max(0, Math.round((Date.now() - sync.lastSyncedAt) / 1000)) : null;
+  const shared = storage?.backend === "postgres";
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[13px] text-fg-muted">{shared ? "Shared database" : "Evidence store"}</span>
+      <span
+        className={cx(
+          "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
+          sync.error
+            ? "border-warn/30 bg-warn/[0.1] text-[#B45309]"
+            : "border-ok/25 bg-ok/[0.08] text-[#15803D]",
+        )}
+        title={storage?.detail}
+      >
+        {sync.error ? <CloudOff size={13} /> : <RefreshCw size={13} />}
+        {sync.error
+          ? "Can't reach server"
+          : age === null
+            ? "Syncing…"
+            : age < 5
+              ? "Synced just now"
+              : `Synced ${age}s ago`}
+      </span>
+    </div>
+  );
+}
+
 function SystemStatus() {
   const { store, officer, session, run } = useApp();
   const pathname = usePathname();
@@ -586,7 +630,7 @@ function SystemStatus() {
               <ConnectionStatus size="sm" />
             </div>
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[13px] text-fg-muted">Server connection</span>
+              <span className="text-[13px] text-fg-muted">Capture network (demo)</span>
               <span
                 className={cx(
                   "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
@@ -597,6 +641,7 @@ function SystemStatus() {
                 {online ? "Online" : "Offline"}
               </span>
             </div>
+            <SyncRow />
           </div>
 
           <div className="mt-4 border-t border-line pt-3">

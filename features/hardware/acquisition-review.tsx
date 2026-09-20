@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Check, Thermometer, TriangleAlert, Weight, X } from "lucide-react";
+import { AlertTriangle, Check, Cpu, Thermometer, TriangleAlert, Weight, X } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { useHardware } from "@/components/providers/hardware-provider";
 import {
@@ -36,7 +36,7 @@ import type { EvidenceRecord, FieldTestResult } from "@/lib/domain/types";
  */
 export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => void }) {
   const { store, officer, run } = useApp();
-  const { pending, clearPending, reset, isReal, transport } = useHardware();
+  const { pending, clearPending, reset, brand } = useHardware();
 
   const [caseRef, setCaseRef] = React.useState("");
   const [kit, setKit] = React.useState<string>(KIT_TYPES[0]);
@@ -61,8 +61,14 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
   if (!pending || !store) return null;
 
   const obs = pending.observation;
-  const collectorMissing = !obs.collector_installed;
+  // Null means the device has no collector switch at all — that is not the
+  // same as a collector reported absent, and it must not raise a warning.
+  const collectorMissing = obs.collector_installed === false;
   const blocked = collectorMissing && !ackCollector;
+  const temperature = obs.temperature_c ?? obs.thermal_avg_c ?? null;
+  const temperatureSource =
+    obs.temperature_source ?? (obs.thermal_avg_c !== null ? "thermal_camera" : null);
+  const deviceName = obs.source === "pramaan" ? "PRAMAAN" : brand === "PRAMAAN" ? "PRAMAAN" : "Device";
   const device =
     store.devices.find((d) => d.assigned_officer_id === officer?.officer_id) ??
     store.devices.find((d) => d.force === "RPF") ??
@@ -83,8 +89,10 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
         expiry_date: expiry,
         observed_colour: colour,
         reference_table: table,
-        // Real instrument value, not a typed one: the MLX90640 field average.
-        ambient_temperature_c: obs.thermal_avg_c,
+        // A real instrument value, not a typed one. Its source travels with the
+        // hardware block, so a potentiometer reading is never mistaken for a
+        // thermal measurement.
+        ambient_temperature_c: temperature,
         result_status: result,
         hardware: obs,
       },
@@ -121,7 +129,11 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
             </h2>
           </div>
           <div className="flex items-center gap-2">
-            <Pill tone={isReal ? "ok" : "sim"}>{isReal ? "Real sensor" : "Simulated sensor"}</Pill>
+            {/* Describes the reading in hand, not the current link state: a
+                capture stays real even if the cable is pulled a second later. */}
+            <Pill tone={obs.source === "demo" ? "sim" : "ok"}>
+              {obs.source === "demo" ? "Simulated sensor" : `LIVE • ${deviceName}`}
+            </Pill>
             <button
               aria-label="Discard"
               onClick={clearPending}
@@ -137,28 +149,50 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
             <Measure
               icon={<Weight size={17} />}
               tone="brand"
-              label="Force"
+              label="Weight"
               value={obs.load_cell_g === null ? "—" : `${obs.load_cell_g.toFixed(1)} g`}
-              note={obs.load_cell_stable ? "Stable" : "Unsettled"}
+              note={
+                obs.load_cell_g === null
+                  ? "Load cell unavailable"
+                  : obs.weight_source === "load_cell"
+                    ? "Load cell"
+                    : obs.load_cell_stable
+                      ? "Stable"
+                      : "Unsettled"
+              }
             />
             <Measure
               icon={<Thermometer size={17} />}
               tone="warn"
-              label="Thermal avg"
-              value={obs.thermal_avg_c === null ? "—" : `${obs.thermal_avg_c.toFixed(1)} °C`}
+              label="Temperature"
+              value={temperature === null ? "—" : `${temperature.toFixed(1)} °C`}
               note={
-                obs.thermal_min_c !== null && obs.thermal_max_c !== null
-                  ? `${obs.thermal_min_c.toFixed(1)}–${obs.thermal_max_c.toFixed(1)}`
-                  : "Unavailable"
+                temperatureSource === "potentiometer"
+                  ? "Potentiometer (simulated)"
+                  : temperatureSource === "thermal_camera"
+                    ? obs.thermal_min_c !== null && obs.thermal_max_c !== null
+                      ? `Thermal ${obs.thermal_min_c.toFixed(1)}–${obs.thermal_max_c.toFixed(1)}`
+                      : "Thermal camera"
+                    : "Unavailable"
               }
             />
-            <Measure
-              icon={obs.collector_installed ? <Check size={17} /> : <AlertTriangle size={17} />}
-              tone={obs.collector_installed ? "ok" : "danger"}
-              label="Collector"
-              value={obs.collector_installed ? "Fitted" : "Absent"}
-              note={obs.acquisition_id}
-            />
+            {obs.collector_installed === null ? (
+              <Measure
+                icon={<Cpu size={17} />}
+                tone="brand"
+                label="Sequence"
+                value={obs.device_sequence === null || obs.device_sequence === undefined ? "—" : `#${obs.device_sequence}`}
+                note={obs.capture_trigger === "app" ? "App Acquire" : "Device button"}
+              />
+            ) : (
+              <Measure
+                icon={obs.collector_installed ? <Check size={17} /> : <AlertTriangle size={17} />}
+                tone={obs.collector_installed ? "ok" : "danger"}
+                label="Collector"
+                value={obs.collector_installed ? "Fitted" : "Absent"}
+                note={obs.acquisition_id}
+              />
+            )}
           </div>
 
           {collectorMissing ? (
@@ -183,9 +217,12 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
               <AlertTriangle size={14} />
               {PRESUMPTIVE_NOTICE}
             </div>
-            <p className="mt-1 text-[11.5px] leading-relaxed text-fg-muted">
-              Force, temperature and collector state describe how the sample was taken. They are not
-              a detection and identify nothing.
+            <p className="mt-1 text-[12.5px] leading-relaxed text-fg-muted">
+              Weight and temperature describe how the sample was taken. They are not a detection and
+              identify nothing.
+              {temperatureSource === "potentiometer"
+                ? " The temperature comes from a potentiometer standing in for a temperature probe, and the record says so."
+                : ""}
             </p>
           </div>
 
@@ -267,24 +304,35 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
                   className="h-[44px] w-full rounded-xl border border-line-strong bg-white/85 px-3.5 text-[14px] text-fg shadow-chip"
                 />
               </Field>
-              <KeyValue k="Ambient (from sensor)">
-                {obs.thermal_avg_c === null ? "Unavailable" : `${obs.thermal_avg_c.toFixed(1)} °C`}
+              <KeyValue k="Temperature (from device)">
+                {temperature === null
+                  ? "Unavailable"
+                  : `${temperature.toFixed(1)} °C · ${
+                      temperatureSource === "potentiometer" ? "potentiometer (simulated)" : "thermal camera"
+                    }`}
               </KeyValue>
             </div>
           </details>
 
-          {!isReal ? (
+          {obs.source === "demo" ? (
             <SimulatedNote>
               These values came from the in-browser demo device, not a board. The record will carry
               <span className="mono"> source: &quot;demo&quot;</span> inside its signed payload, so it
               can never be mistaken for a real measurement.
             </SimulatedNote>
           ) : (
-            <div className="rounded-xl border border-ok/25 bg-ok/[0.07] px-3.5 py-2.5 text-[12px] leading-relaxed text-fg-muted">
+            <div className="rounded-xl border border-ok/25 bg-ok/[0.07] px-3.5 py-2.5 text-[12.5px] leading-relaxed text-fg-muted">
               Measured on <span className="mono text-fg">{obs.device_id}</span> over{" "}
-              {transport === "wifi" ? "Wi-Fi" : "USB serial"}, firmware{" "}
+              {obs.transport === "wifi" ? "Wi-Fi" : "USB serial"}, firmware{" "}
               <span className="mono text-fg">{obs.firmware}</span>. Recorded as{" "}
-              <span className="mono">source: &quot;esp32&quot;</span>.
+              <span className="mono">source: &quot;{obs.source}&quot;</span>
+              {temperatureSource === "potentiometer" ? (
+                <>
+                  {" "}with{" "}
+                  <span className="mono">temperature_source: &quot;potentiometer&quot;</span>
+                </>
+              ) : null}
+              .
             </div>
           )}
         </div>

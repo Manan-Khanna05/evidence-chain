@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getStore, mutate, resetStore, toClientStore } from "@/lib/store/store";
+import { getStore, getStoreWithRevision, mutate, resetStore, toClientStore } from "@/lib/store/store";
 import {
   WorkflowError,
   anchorTree,
@@ -193,16 +193,20 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: `Unknown action "${body.action}"` }, { status: 400 });
     }
 
-    const store = await getStore();
-    return NextResponse.json({ ok: true, result, store: toClientStore(store) });
+    const { store, revision } = await getStoreWithRevision();
+    return NextResponse.json({ ok: true, result, store: toClientStore(store), revision });
   } catch (error) {
     const message =
       error instanceof WorkflowError || error instanceof Error
         ? error.message
         : "Unexpected error";
-    const store = await getStore();
+    const current = await getStoreWithRevision().catch(() => null);
     return NextResponse.json(
-      { ok: false, error: message, store: toClientStore(store) },
+      {
+        ok: false,
+        error: message,
+        ...(current ? { store: toClientStore(current.store), revision: current.revision } : {}),
+      },
       { status: error instanceof WorkflowError ? 409 : 500 },
     );
   }

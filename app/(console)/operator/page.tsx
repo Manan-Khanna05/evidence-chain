@@ -6,6 +6,7 @@ import {
   Check,
   CircleDashed,
   MonitorPlay,
+  Plug,
   RefreshCw,
   RotateCcw,
   ScanLine,
@@ -62,18 +63,27 @@ export default function OperatorPage() {
         <Panel className="mx-auto mb-4 w-full max-w-[880px] overflow-hidden">
           <div className="grid items-center gap-5 p-5 sm:grid-cols-[auto_minmax(0,1fr)]">
             <div className="mx-auto w-full max-w-[260px] sm:w-[220px]">
-              <AssetImage name="deviceEvidence" alt="The phone and the RPF evidence device" />
+              <AssetImage name="deviceEvidence" alt="The phone and the PRAMAAN evidence device" />
             </div>
             <div>
               <h2 className="text-[20px] font-semibold text-fg">
-                {hw.state === "connecting" || hw.state === "searching" ? "Connecting to device…" : "No device connected"}
+                {hw.state === "connecting" || hw.state === "searching"
+                  ? "Connecting to PRAMAAN…"
+                  : "PRAMAAN not connected"}
               </h2>
               <p className="mt-1.5 text-[15px] leading-relaxed text-fg-muted">
-                Switch the evidence device on and keep it near this phone. It connects by itself.
+                Plug PRAMAAN into this laptop with the USB cable, press Connect PRAMAAN and choose its
+                port. You can still capture evidence and type values manually without it.
               </p>
+              {hw.pramaan.error ? (
+                <p className="mt-2 text-[14px] font-medium text-[#B45309]">{hw.pramaan.error}</p>
+              ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
-                <Button variant="primary" size="lg" icon={<RefreshCw size={18} />} onClick={() => void hw.connect()}>
-                  Try again
+                <Button variant="primary" size="lg" icon={<Plug size={18} />} onClick={() => void hw.connectPramaan()}>
+                  Connect PRAMAAN
+                </Button>
+                <Button size="lg" icon={<RefreshCw size={18} />} onClick={() => void hw.connect()}>
+                  Search Wi-Fi device
                 </Button>
                 <Button size="lg" icon={<MonitorPlay size={18} />} onClick={hw.useDemoHardware}>
                   Use demo device
@@ -125,7 +135,7 @@ export default function OperatorPage() {
                         : "No device"}
                   </div>
                   <div className="mono mt-1.5 text-[13px] text-fg-muted">
-                    {hw.deviceId ?? "Searching for hardware…"}
+                    {hw.deviceId ?? "Searching for PRAMAAN…"}
                   </div>
                 </div>
               </div>
@@ -158,25 +168,35 @@ export default function OperatorPage() {
               <Reading
                 icon={<Thermometer size={18} />}
                 tone="warn"
-                label="Thermal"
-                value={
-                  s?.thermal ? `${s.thermal.avg_c.toFixed(1)} °C` : hw.health?.thermal === false ? "N/A" : "—"
-                }
+                label="Temperature"
+                value={hw.temperature.value === null ? "—" : `${hw.temperature.value.toFixed(1)} °C`}
                 sub={
-                  hw.health?.thermal === false
-                    ? "Sensor unavailable"
-                    : s?.thermal
-                      ? `${s.thermal.min_c.toFixed(1)}–${s.thermal.max_c.toFixed(1)} °C`
-                      : "Waiting"
+                  hw.temperature.source === "potentiometer"
+                    ? "Potentiometer (simulated)"
+                    : hw.temperature.source === "thermal_camera"
+                      ? "Thermal camera"
+                      : hw.state === "connected"
+                        ? "Waiting"
+                        : "Unavailable"
                 }
               />
-              <Reading
-                icon={s?.collector_installed ? <Check size={18} /> : <AlertTriangle size={18} />}
-                tone={s?.collector_installed ? "ok" : "danger"}
-                label="Collector"
-                value={s?.collector_installed ? "Fitted" : "Absent"}
-                sub={s?.collector_installed ? "Ready to sample" : "Fit the collector"}
-              />
+              {s?.collector_installed === null || s?.collector_installed === undefined ? (
+                <Reading
+                  icon={<Weight size={18} />}
+                  tone="brand"
+                  label="Sequence"
+                  value={hw.pramaan.seq === null ? "—" : `#${hw.pramaan.seq}`}
+                  sub={hw.pramaan.state ? hw.pramaan.state : "Waiting"}
+                />
+              ) : (
+                <Reading
+                  icon={s.collector_installed ? <Check size={18} /> : <AlertTriangle size={18} />}
+                  tone={s.collector_installed ? "ok" : "danger"}
+                  label="Collector"
+                  value={s.collector_installed ? "Fitted" : "Absent"}
+                  sub={s.collector_installed ? "Ready to sample" : "Fit the collector"}
+                />
+              )}
             </div>
           </div>
 

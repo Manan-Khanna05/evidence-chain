@@ -28,7 +28,7 @@ import { REFERRAL_TIERS } from "@/lib/domain/vocab";
 import { DeviceStatusCard } from "@/features/hardware/device-status-card";
 
 export default function DeviceStatusPage() {
-  const { store, officer } = useApp();
+  const { store, officer, storage } = useApp();
   const [selected, setSelected] = React.useState<string | null>(null);
 
   if (!store) return null;
@@ -239,20 +239,42 @@ export default function DeviceStatusPage() {
               icon={<Database size={16} />}
             />
             <div className="space-y-4 p-5">
-              <div className="grid grid-cols-2 gap-x-5 gap-y-4">
-                <KeyValue k="Implemented">JSON file on disk</KeyValue>
-                <KeyValue k="Path">
-                  <span className="mono text-[11.5px]">.data/evidence-store.json</span>
-                </KeyValue>
-                <KeyValue k="Append-only">Enforced in the data-access layer</KeyValue>
-                <KeyValue k="Production target">PostgreSQL, insert-only trigger</KeyValue>
-              </div>
-              <SimulatedNote>
-                This is local prototype storage, not production infrastructure. The whole application
-                talks to one repository module, so connecting PostgreSQL is a change to that module
-                and nothing above it. The database trigger is defence in depth either way — the chain
-                is what proves tampering.
-              </SimulatedNote>
+              {storage?.backend === "postgres" ? (
+                <>
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                    <KeyValue k="Implemented">Shared PostgreSQL (Neon)</KeyValue>
+                    <KeyValue k="Sync">Every device, every few seconds</KeyValue>
+                    <KeyValue k="Append-only">
+                      <span className="mono text-[12px]">evidence_ledger</span> — insert-only trigger
+                    </KeyValue>
+                    <KeyValue k="Concurrency">Optimistic — a stale write is retried, never lost</KeyValue>
+                  </div>
+                  <Callout tone="ok" title="All devices share one store">
+                    Records captured on any phone appear on every other device. Each record is also
+                    copied, as first signed, into a ledger table the database refuses to update or
+                    delete. The tamper demo edits the working store, never the ledger.
+                  </Callout>
+                </>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                    <KeyValue k="Implemented">
+                      {storage?.backend === "memory" ? "In memory (this server instance)" : "JSON file on disk"}
+                    </KeyValue>
+                    <KeyValue k="Path">
+                      <span className="mono text-[11.5px]">
+                        {storage?.backend === "memory" ? "—" : ".data/evidence-store.json"}
+                      </span>
+                    </KeyValue>
+                    <KeyValue k="Append-only">Enforced in the data-access layer</KeyValue>
+                    <KeyValue k="Production target">PostgreSQL, insert-only trigger</KeyValue>
+                  </div>
+                  <SimulatedNote>
+                    This is local prototype storage and is not shared between devices. Set
+                    DATABASE_URL to switch to the shared PostgreSQL store with its insert-only ledger.
+                  </SimulatedNote>
+                </>
+              )}
             </div>
           </Panel>
 

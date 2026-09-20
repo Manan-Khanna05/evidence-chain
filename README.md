@@ -165,8 +165,16 @@ device id beginning  / .
 
 ## Hardware
 
-An ESP32-S3 gateway instruments the sampling act and feeds the field-test record.
-Full pin map, protocol, build sheet and demo script: [`docs/HARDWARE.md`](docs/HARDWARE.md).
+**PRAMAAN** is the evidence integrity device: an ESP32 with a load cell (weight),
+a potentiometer used as a simulated temperature input, an OLED, ACQUIRE/RESET
+buttons and status LEDs. It connects over USB serial (115200 baud, newline-delimited
+JSON, protocol `PRAMAAN-1`) and its readings populate the field-test record after the
+officer reviews and confirms them. There is no thermal imaging sensor, and the console
+shows thermal observation as unavailable rather than inventing values.
+Wiring, protocol, flashing, calibration and tests: [`docs/PRAMAAN.md`](docs/PRAMAAN.md).
+
+The earlier ESP32-S3 Wi-Fi gateway still works alongside it —
+full pin map and protocol: [`docs/HARDWARE.md`](docs/HARDWARE.md).
 
 ```bash
 npm run sim:esp32     # protocol-identical device, no board required

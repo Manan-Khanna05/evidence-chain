@@ -16,8 +16,14 @@ import {
   type SensorHealth,
   type SensorSample,
   type TransportKind,
+  type DeviceBrand,
   isSimulatedDeviceId,
+  PROTOCOL,
 } from "@/lib/hardware/protocol";
+import { usePramaan, pramaanStore } from "@/lib/hardware/pramaan/use-pramaan";
+import { pramaanObservation } from "@/lib/hardware/pramaan/evidence";
+import { PramaanSerialLink } from "@/lib/hardware/pramaan/serial";
+import type { PramaanState } from "@/lib/hardware/pramaan/types";
 
 /**
  * Hardware state for the UI.
@@ -71,6 +77,33 @@ interface HardwareContextValue {
   host: string;
   setHost: (h: string) => void;
   serialAvailable: boolean;
+
+  /* ------------------------------------------------------------ PRAMAAN */
+  /** Which device the console is talking to, for naming in the UI. */
+  brand: DeviceBrand;
+  /** True while PRAMAAN is the attached device. */
+  isPramaan: boolean;
+  /** Raw PRAMAAN state, for diagnostics and PRAMAAN-specific screens. */
+  pramaan: PramaanState;
+  /** What the attached device actually has. Empty when nothing is attached. */
+  capabilities: DeviceCapability[];
+  /** Live temperature with its real source. */
+  temperature: { value: number | null; source: "potentiometer" | "thermal_camera" | null };
+  /** Live weight with its real source. */
+  weight: { value: number | null; source: "load_cell" | null };
+  /** Open the PRAMAAN USB serial port. Must be called from a user gesture. */
+  connectPramaan: (opts?: { reuseGranted?: boolean }) => Promise<boolean>;
+  disconnectPramaan: () => Promise<void>;
+  clearPramaanError: () => void;
+}
+
+/** Capabilities in the shape the UI lists them, whichever device is attached. */
+export interface DeviceCapability {
+  key: string;
+  label: string;
+  available: boolean;
+  /** Why it is unavailable, when that is known. Never guessed. */
+  note?: string;
 }
 
 const Ctx = React.createContext<HardwareContextValue | null>(null);
@@ -90,6 +123,8 @@ export function HardwareProvider({ children }: { children: React.ReactNode }) {
   const [packets, setPackets] = React.useState(0);
   const [pending, setPending] = React.useState<PendingAcquisition | null>(null);
   const [host, setHostState] = React.useState("");
+
+  const pramaan = usePramaan();
 
   const clientRef = React.useRef<HardwareClient | null>(null);
   const pendingSample = React.useRef<SensorSample | null>(null);
@@ -154,6 +189,40 @@ export function HardwareProvider({ children }: { children: React.ReactNode }) {
         break;
     }
   }, []);
+
+  /**
+   * A PRAMAAN acquisition takes the same path as every other one: it becomes a
+   * pending acquisition that an officer reviews and confirms. Telemetry on its
+   * own never creates one.
+   */
+  React.useEffect(
+    () =>
+      pramaanStore.onAcquisition((acq) => {
+        const observation = pramaanObservation(acq);
+        setPending({
+          message: {
+            protocol: PROTOCOL,
+            type: "acquisition",
+            device_id: acq.event.device_id,
+            acquisition_id: observation.acquisition_id,
+            uptime_ms: 0,
+            sensors: {
+              load_cell_g: acq.event.weight_g,
+              load_cell_stable: acq.event.weight_g !== null,
+              thermal: null,
+              // No collector microswitch on PRAMAAN: unknown, not "absent".
+              collector_installed: null,
+              temperature_c: acq.event.temperature,
+              temperature_source: observation.temperature_source ?? null,
+            },
+            collector_ok: true,
+          },
+          observation,
+          receivedAt: new Date(acq.receivedAt).toISOString(),
+        });
+      }),
+    [],
+  );
 
   const onState = React.useCallback(
     (s: LinkState, t: TransportKind, d?: string) => {
@@ -266,37 +335,172 @@ export function HardwareProvider({ children }: { children: React.ReactNode }) {
     if (demo) setThermalFrame(demo.frame());
   }, []);
 
+  /* ---------------------------------------------------------- PRAMAAN */
+
+  const connectPramaan = React.useCallback(
+    async (opts: { reuseGranted?: boolean } = {}) => {
+      // Only one device at a time holds the acquisition path.
+      await clientRef.current?.dispose();
+      clientRef.current = new HardwareClient({ onState, onMessage });
+      setState("disconnected");
+      setTransport("none");
+      transportRef.current = "none";
+      return pramaanStore.connect(opts);
+    },
+    [onMessage, onState],
+  );
+
+  const disconnectPramaan = React.useCallback(async () => {
+    await pramaanStore.disconnect();
+  }, []);
+
+  /** PRAMAAN wins whenever its port is open: it is the device in the operator's hand. */
+  const isPramaan = pramaan.portOpen || pramaan.connected;
+  const brand: DeviceBrand = isPramaan ? "PRAMAAN" : "Evidence device";
+
+  const mergedState: LinkState = isPramaan
+    ? pramaan.connected
+      ? "connected"
+      : pramaan.connectionState === "error"
+        ? "error"
+        : "connecting"
+    : state;
+  const mergedTransport: TransportKind = isPramaan ? "usb" : transport;
+  const mergedDeviceId = isPramaan ? pramaan.deviceId : deviceId;
+  const mergedFirmware = isPramaan ? pramaan.firmware : firmware;
+  const mergedStatus: DeviceStatus = isPramaan
+    ? pramaan.state === "ACQUIRED"
+      ? "ACQUIRING"
+      : pramaan.connected
+        ? "READY"
+        : "BOOTING"
+    : status;
+
+  const mergedSample: SensorSample | null = isPramaan
+    ? pramaan.connected
+      ? {
+          load_cell_g: pramaan.weightGrams,
+          load_cell_stable: pramaan.weightGrams !== null,
+          thermal: null,
+          collector_installed: null,
+          temperature_c: pramaan.temperature,
+          temperature_source:
+            pramaan.sources.temperature === "thermal_sensor"
+              ? "thermal_camera"
+              : pramaan.sources.temperature === "potentiometer"
+                ? "potentiometer"
+                : null,
+        }
+      : null
+    : sample;
+
+  const mergedHealth: SensorHealth | null = isPramaan
+    ? pramaan.capabilities
+      ? {
+          load_cell: pramaan.capabilities.load_cell,
+          thermal: pramaan.capabilities.thermal_sensor,
+          // PRAMAAN has no collector switch; it is reported as a capability
+          // the device does not have rather than as a failed sensor.
+          collector_switch: false,
+          acquire_button: pramaan.capabilities.acquire_button,
+          reset_button: pramaan.capabilities.reset_button,
+        }
+      : null
+    : health;
+
+  const capabilities: DeviceCapability[] = isPramaan
+    ? pramaan.capabilities
+      ? [
+          { key: "potentiometer", label: "Potentiometer", available: pramaan.capabilities.potentiometer, note: "Simulated temperature input" },
+          { key: "load_cell", label: "Load Cell", available: pramaan.capabilities.load_cell },
+          { key: "oled", label: "OLED", available: pramaan.capabilities.oled },
+          { key: "acquire_button", label: "Acquire", available: pramaan.capabilities.acquire_button },
+          { key: "reset_button", label: "Reset", available: pramaan.capabilities.reset_button },
+          { key: "thermal_sensor", label: "Thermal Sensor", available: pramaan.capabilities.thermal_sensor, note: "Not fitted on this device" },
+        ]
+      : []
+    : health
+      ? [
+          { key: "load_cell", label: "Load cell", available: health.load_cell },
+          { key: "thermal", label: "Thermal camera", available: health.thermal },
+          { key: "collector_switch", label: "Collector switch", available: health.collector_switch },
+          { key: "acquire_button", label: "Acquire button", available: health.acquire_button },
+          { key: "reset_button", label: "Reset button", available: health.reset_button },
+        ]
+      : [];
+
+  const temperature = {
+    value: mergedSample?.temperature_c ?? mergedSample?.thermal?.avg_c ?? null,
+    source:
+      (mergedSample?.temperature_source ??
+        (mergedSample?.thermal ? ("thermal_camera" as const) : null)) ?? null,
+  };
+  const weight = {
+    value: mergedSample?.load_cell_g ?? null,
+    source: (mergedSample?.load_cell_g ?? null) === null ? null : ("load_cell" as const),
+  };
+
+  const mergedAcquire = React.useCallback(async () => {
+    if (pramaanStore.getSnapshot().connected) {
+      await pramaanStore.requestAcquire();
+      return;
+    }
+    await acquire();
+  }, [acquire]);
+
+  const mergedReset = React.useCallback(async () => {
+    if (pramaanStore.getSnapshot().connected) {
+      await pramaanStore.requestReset();
+      return;
+    }
+    await reset();
+  }, [reset]);
+
   const value: HardwareContextValue = {
-    state,
-    transport,
-    detail,
-    isReal:
-      (transport === "wifi" || transport === "usb") &&
-      Boolean(deviceId) &&
-      !isSimulatedDeviceId(deviceId as string),
-    deviceId,
-    firmware,
-    health,
-    status,
-    sample,
-    thermalFrame,
-    lastFault,
-    lastAckAt,
-    packets,
+    state: mergedState,
+    transport: mergedTransport,
+    detail: isPramaan ? (pramaan.error ?? "USB serial") : detail,
+    isReal: isPramaan
+      ? pramaan.connected
+      : (transport === "wifi" || transport === "usb") &&
+        Boolean(deviceId) &&
+        !isSimulatedDeviceId(deviceId as string),
+    deviceId: mergedDeviceId,
+    firmware: mergedFirmware,
+    health: mergedHealth,
+    status: mergedStatus,
+    sample: mergedSample,
+    thermalFrame: isPramaan ? null : thermalFrame,
+    lastFault: isPramaan
+      ? pramaan.error
+        ? { code: "PRAMAAN", detail: pramaan.error }
+        : null
+      : lastFault,
+    lastAckAt: isPramaan ? pramaan.lastSeen : lastAckAt,
+    packets: isPramaan ? pramaan.telemetryCount : packets,
     pending,
     clearPending: () => setPending(null),
     connect,
     connectUsb,
     useDemoHardware,
     disconnect,
-    acquire,
-    reset,
+    acquire: mergedAcquire,
+    reset: mergedReset,
     tare,
     calibrate,
     requestFrame,
     host,
     setHost,
-    serialAvailable: serialSupported(),
+    serialAvailable: serialSupported() || PramaanSerialLink.supported(),
+    brand,
+    isPramaan,
+    pramaan,
+    capabilities,
+    temperature,
+    weight,
+    connectPramaan,
+    disconnectPramaan,
+    clearPramaanError: () => pramaanStore.clearError(),
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
