@@ -14,6 +14,7 @@ import {
   History,
   Info,
   ShieldCheck,
+  Camera,
 } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
@@ -43,6 +44,8 @@ import { EvidencePipeline, type PipelineNodeKey } from "@/features/case/pipeline
 import { IntervalBar } from "@/features/time/interval";
 import { RecordDrawer } from "@/features/records/record-drawer";
 import { CheckList, Verdict } from "@/features/verification/checks";
+import { ImmutableBadge, useActiveCase } from "@/features/case/case-context";
+import { caseChain } from "@/lib/domain/records";
 import { HandoffDocument } from "@/features/handoff/handoff-document";
 
 export default function CaseDetailPage() {
@@ -53,6 +56,7 @@ export default function CaseDetailPage() {
   const [result, setResult] = React.useState<VerificationResult | null>(null);
   const [drawerRecord, setDrawerRecord] = React.useState<EvidenceRecord | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const { setCase: setActiveCase } = useActiveCase();
 
   const stamp = store
     ? `${store.records.length}:${store.anchors.length}:${store.tamper.length}:${store.certificates.length}`
@@ -79,6 +83,11 @@ export default function CaseDetailPage() {
     recordParam.current = null;
     if (r) setDrawerRecord(r);
   }, [store]);
+
+  // Opening a case makes it the one capture screens will append to.
+  React.useEffect(() => {
+    if (caseRef) setActiveCase(caseRef);
+  }, [caseRef, setActiveCase]);
 
   const sectionRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
   const scrollTo = (key: PipelineNodeKey) => {
@@ -114,6 +123,7 @@ export default function CaseDetailPage() {
   }
 
   const summary = summariseCase(store, kase);
+  const chainLength = caseChain(store.records, caseRef).length;
   const certificate = store.certificates.find((c) => c.case_ref === caseRef) ?? null;
   const handoff = summary.handoff;
   const transfer = summary.records.find((r) => r.type === "handoff_transfer") ?? null;
@@ -174,6 +184,11 @@ export default function CaseDetailPage() {
         subtitle={`${kase.title} · ${kase.place}`}
         status={
           <>
+            <Pill tone={summary.record_count === 0 ? "brand" : "neutral"}>
+              {summary.record_count === 0
+                ? "New case · chain empty"
+                : `Existing case · ${summary.record_count} record${summary.record_count === 1 ? "" : "s"}`}
+            </Pill>
             <StagePill stage={summary.stage} />
             {result ? <VerificationPill verified={result.verified} degraded={result.degraded} /> : null}
           </>
@@ -204,6 +219,41 @@ export default function CaseDetailPage() {
           </>
         }
       />
+
+      {/* --------------------------------------------------- case workspace */}
+      <Panel className="mb-5">
+        <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-[18px] font-semibold text-fg">Case workspace</h2>
+              <ImmutableBadge />
+            </div>
+            <p className="mt-1 text-[14px] leading-relaxed text-fg-muted">
+              {chainLength === 0
+                ? "This case has no records yet. The first capture becomes position 1 of its own chain."
+                : `Append-only. The next capture becomes position ${chainLength + 1}; positions 1–${chainLength} cannot be edited, reordered or deleted.`}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink
+              href={`/capture/trigger?case=${encodeURIComponent(caseRef)}`}
+              variant="primary"
+              icon={<Camera size={16} />}
+            >
+              Capture Evidence
+            </ButtonLink>
+            <ButtonLink href={`/capture/field-test?case=${encodeURIComponent(caseRef)}`} icon={<FlaskConical size={16} />}>
+              Field Test
+            </ButtonLink>
+            <ButtonLink href={`/verification?case=${encodeURIComponent(caseRef)}`} icon={<ShieldCheck size={16} />}>
+              Verify Chain
+            </ButtonLink>
+            <ButtonLink href="/handoff" icon={<ArrowLeftRight size={16} />}>
+              Handoff
+            </ButtonLink>
+          </div>
+        </div>
+      </Panel>
 
       {/* ----------------------------------------------------- case summary */}
       <Panel className="mb-5">

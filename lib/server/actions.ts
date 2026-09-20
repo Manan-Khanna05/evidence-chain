@@ -7,7 +7,14 @@ import { hashCanonical } from "@/lib/crypto/hash";
 import { signMessage, tsaSigningInput } from "@/lib/crypto/keys";
 import { leafHash, merkleRoot } from "@/lib/crypto/merkle";
 import { buildCertificate } from "@/lib/domain/certificate";
-import { buildSignedRecord, recordHash, serverLog } from "@/lib/domain/records";
+import {
+  buildSignedRecord,
+  caseChain,
+  nextCaseSeq,
+  previousCaseHashFor,
+  recordHash,
+  serverLog,
+} from "@/lib/domain/records";
 import type {
   Anchor,
   Device,
@@ -23,7 +30,7 @@ import type {
   TriggerPayload,
   TsaToken,
 } from "@/lib/domain/types";
-import { appendRecord } from "@/lib/store/store";
+import { appendRecord, ChainSafetyError } from "@/lib/store/store";
 
 export class WorkflowError extends Error {}
 
@@ -73,12 +80,51 @@ async function captureRecord(
   caseRef: string,
 ): Promise<EvidenceRecord> {
   const device = deviceOrThrow(store, base.device_id);
+
+  // A record may only ever be appended to a case that exists.
+  const kase = store.cases.find((c) => c.case_ref === caseRef);
+  if (!kase) {
+    throw new WorkflowError(
+      `CHAIN SAFETY CHECK FAILED — no case ${caseRef} exists. Create the case first.`,
+    );
+  }
+
+  // Device chain: where this record sits in the history of this handset.
   const chain = store.records
     .filter((r) => r.device_id === device.device_id)
     .sort((a, b) => a.seq - b.seq);
   const last = chain[chain.length - 1];
   const seq = last ? last.seq + 1 : 1;
   const prev_hash = last ? await recordHash(last) : null;
+
+  // Case chain: where it sits in the history of THIS CASE, counted from 1 and
+  // never borrowed from another case.
+  const priorInCase = caseChain(store.records, caseRef);
+  const case_seq = nextCaseSeq(store.records, caseRef);
+  const case_prev_hash = await previousCaseHashFor(store.records, caseRef);
+
+  // Guards — refuse rather than repair.
+  const predecessor = priorInCase[priorInCase.length - 1];
+  if (predecessor && predecessor.case_ref !== caseRef) {
+    throw new ChainSafetyError(
+      "CHAIN SAFETY CHECK FAILED — the previous record belongs to a different case.",
+    );
+  }
+  if (predecessor && case_prev_hash === null) {
+    throw new ChainSafetyError(
+      `CHAIN SAFETY CHECK FAILED — ${caseRef} already has records, so this cannot be a case-genesis record.`,
+    );
+  }
+  if (!predecessor && case_prev_hash !== null) {
+    throw new ChainSafetyError(
+      `CHAIN SAFETY CHECK FAILED — ${caseRef} has no records, so there is nothing to link to.`,
+    );
+  }
+  if (last && last.device_id !== device.device_id) {
+    throw new ChainSafetyError(
+      "CHAIN SAFETY CHECK FAILED — the previous record belongs to a different device.",
+    );
+  }
 
   const record = await buildSignedRecord({
     record_id: nextRecordId(store),
@@ -90,10 +136,54 @@ async function captureRecord(
     payload,
     seq,
     prev_hash,
+    case_seq,
+    case_prev_hash,
     status: "queued",
   });
   appendRecord(store, record);
   return record;
+}
+
+/* ----------------------------------------------------------- case creation */
+
+export interface CreateCaseInput {
+  officer_id: string;
+  device_id: string;
+  place: string;
+  place_kind?: string;
+  purpose?: string;
+  notes?: string;
+}
+
+/**
+ * Open a new case.
+ *
+ * A case is created explicitly, before any evidence is captured into it, and
+ * starts an empty chain of its own: its first record will be case_seq 1 with
+ * no predecessor, whatever any other case contains.
+ */
+export function createCase(store: StoreShape, input: CreateCaseInput) {
+  if (!input.place.trim()) throw new WorkflowError("A place is required to open a case");
+  const officer = store.officers.find((o) => o.officer_id === input.officer_id);
+  if (!officer) throw new WorkflowError(`Unknown officer ${input.officer_id}`);
+  deviceOrThrow(store, input.device_id);
+
+  const case_ref = nextCaseRef(store);
+  if (store.cases.some((c) => c.case_ref === case_ref)) {
+    throw new ChainSafetyError(`CHAIN SAFETY CHECK FAILED — case ${case_ref} already exists.`);
+  }
+
+  const kase = {
+    case_ref,
+    title: input.purpose?.trim() || `Evidence case — ${input.place_kind ?? "railway premises"}`,
+    place: input.place.trim(),
+    opened_at: new Date().toISOString(),
+    opened_by_officer_id: input.officer_id,
+    device_id: input.device_id,
+    notes: input.notes?.trim() || "Opened from Case Management. New chain, no records yet.",
+  };
+  store.cases.push(kase);
+  return kase;
 }
 
 export interface TriggerInput extends CaptureBase {
@@ -108,8 +198,22 @@ export interface TriggerInput extends CaptureBase {
 
 export async function captureTrigger(store: StoreShape, input: TriggerInput) {
   if (!input.place.trim()) throw new WorkflowError("Place is required");
-  const caseRef = input.case_ref?.trim() || nextCaseRef(store);
-  if (!store.cases.some((c) => c.case_ref === caseRef)) {
+  /*
+   * A named case must already exist. Only an unnamed capture opens a case, and
+   * it opens a NEW one — a reference that does not exist is refused rather than
+   * conjured into being, so a typo can never create a case or split a chain.
+   */
+  const named = input.case_ref?.trim();
+  let caseRef: string;
+  if (named) {
+    if (!store.cases.some((c) => c.case_ref === named)) {
+      throw new WorkflowError(
+        `CHAIN SAFETY CHECK FAILED — no case ${named} exists. Open it from Cases, or create a new case first.`,
+      );
+    }
+    caseRef = named;
+  } else {
+    caseRef = nextCaseRef(store);
     store.cases.push({
       case_ref: caseRef,
       title: `Trigger event — ${input.place_kind}`,

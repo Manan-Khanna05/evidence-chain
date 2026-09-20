@@ -658,6 +658,9 @@ export async function buildSeed(): Promise<StoreShape> {
   // --- build the signed records ------------------------------------------
   const seqByDevice = new Map<string, number>();
   const prevByDevice = new Map<string, string | null>();
+  // Each case counts from 1 and links only to its own previous record.
+  const seqByCase = new Map<string, number>();
+  const prevByCase = new Map<string, string | null>();
   const records: EvidenceRecord[] = [];
 
   for (let i = 0; i < plan.length; i++) {
@@ -666,6 +669,9 @@ export async function buildSeed(): Promise<StoreShape> {
     const seq = (seqByDevice.get(p.device) ?? 0) + 1;
     seqByDevice.set(p.device, seq);
     const prev_hash = prevByDevice.get(p.device) ?? null;
+    const case_seq = (seqByCase.get(p.case_ref) ?? 0) + 1;
+    seqByCase.set(p.case_ref, case_seq);
+    const case_prev_hash = prevByCase.get(p.case_ref) ?? null;
 
     const record = await buildSignedRecord({
       record_id: recId(i + 1),
@@ -677,10 +683,14 @@ export async function buildSeed(): Promise<StoreShape> {
       payload: p.payload,
       seq,
       prev_hash,
+      case_seq,
+      case_prev_hash,
       status: p.disposition === "queued" ? "queued" : "pushed",
     });
     if (p.disposition !== "queued") record.received_at = plusMinutes(p.claimed, 2);
-    prevByDevice.set(p.device, await recordHash(record));
+    const identity = await recordHash(record);
+    prevByDevice.set(p.device, identity);
+    prevByCase.set(p.case_ref, identity);
     records.push(record);
   }
 

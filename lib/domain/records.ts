@@ -9,12 +9,19 @@
  */
 
 import { hashCanonical } from "@/lib/crypto/hash";
-import { recordSigningInput, signMessage } from "@/lib/crypto/keys";
+import { recordSigningInputV2, signMessage } from "@/lib/crypto/keys";
 import type { Device, EvidenceRecord, RecordPayload, RecordType } from "./types";
 
-/** Identity hash of a whole record — the value the next record links to. */
+/**
+ * Identity hash of a whole record — the value the next record links to.
+ *
+ * Records that carry a case-chain position hash it too, so their place in the
+ * case cannot be altered without breaking both chains. Records written before
+ * per-case chaining hash exactly as they always did, so their stored links
+ * keep verifying.
+ */
 export async function recordHash(record: EvidenceRecord): Promise<string> {
-  return hashCanonical({
+  const base = {
     record_id: record.record_id,
     type: record.type,
     case_ref: record.case_ref,
@@ -25,7 +32,49 @@ export async function recordHash(record: EvidenceRecord): Promise<string> {
     prev_hash: record.prev_hash,
     payload_hash: record.payload_hash,
     signature: record.signature,
+  };
+  if (record.case_seq === null || record.case_seq === undefined) return hashCanonical(base);
+  return hashCanonical({
+    ...base,
+    case_seq: record.case_seq,
+    case_prev_hash: record.case_prev_hash ?? null,
   });
+}
+
+/* ------------------------------------------------------------ case chain */
+
+/** Every record of one case, in its own chain order. */
+export function caseChain(records: EvidenceRecord[], caseRef: string): EvidenceRecord[] {
+  return records
+    .filter((r) => r.case_ref === caseRef)
+    .sort((a, b) => {
+      const ac = a.case_seq ?? 0;
+      const bc = b.case_seq ?? 0;
+      if (ac !== bc) return ac - bc;
+      // Records from before per-case chaining fall back to device order.
+      return a.seq - b.seq;
+    });
+}
+
+/**
+ * The next position in a case chain. Always 1 for a case with no records,
+ * whatever any other case or device has reached.
+ */
+export function nextCaseSeq(records: EvidenceRecord[], caseRef: string): number {
+  const chain = caseChain(records, caseRef);
+  if (chain.length === 0) return 1;
+  const highest = chain.reduce((acc, r, i) => Math.max(acc, r.case_seq ?? i + 1), 0);
+  return highest + 1;
+}
+
+/** The hash the next record of this case must link to, or null at genesis. */
+export async function previousCaseHashFor(
+  records: EvidenceRecord[],
+  caseRef: string,
+): Promise<string | null> {
+  const chain = caseChain(records, caseRef);
+  if (chain.length === 0) return null;
+  return recordHash(chain[chain.length - 1]);
 }
 
 export function deviceChain(records: EvidenceRecord[], deviceId: string): EvidenceRecord[] {
@@ -60,6 +109,9 @@ export interface BuildRecordInput {
   payload: RecordPayload;
   seq: number;
   prev_hash: string | null;
+  /** Position in this case's chain. Required for every new record. */
+  case_seq: number;
+  case_prev_hash: string | null;
   status: EvidenceRecord["status"];
 }
 
@@ -69,9 +121,18 @@ export interface BuildRecordInput {
  */
 export async function buildSignedRecord(input: BuildRecordInput): Promise<EvidenceRecord> {
   const payload_hash = await hashCanonical(input.payload);
+  // v2: the signature also covers the case reference and the record's place in
+  // that case's chain, so a signed record cannot be moved between cases.
   const signature = await signMessage(
     input.device.privateKeyJwk,
-    recordSigningInput(payload_hash, input.prev_hash, input.seq),
+    recordSigningInputV2(
+      payload_hash,
+      input.prev_hash,
+      input.seq,
+      input.case_ref,
+      input.case_seq,
+      input.case_prev_hash,
+    ),
   );
   return {
     record_id: input.record_id,
@@ -82,6 +143,8 @@ export async function buildSignedRecord(input: BuildRecordInput): Promise<Eviden
     claimed_time: input.claimed_time,
     seq: input.seq,
     prev_hash: input.prev_hash,
+    case_seq: input.case_seq,
+    case_prev_hash: input.case_prev_hash,
     payload: input.payload,
     payload_hash,
     signature,

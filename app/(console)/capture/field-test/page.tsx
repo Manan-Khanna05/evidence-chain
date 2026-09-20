@@ -35,6 +35,7 @@ import {
 } from "@/lib/domain/vocab";
 import type { EvidenceRecord, FieldTestPayload } from "@/lib/domain/types";
 import { CaptureDeviceHint, CaptureSteps, CaptureTargetBar } from "@/features/capture/capture-target";
+import { CaseContextBar, useActiveCase } from "@/features/case/case-context";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { HelpTip } from "@/components/ui/help-tip";
 import { FieldTestDocument } from "@/features/field-test/field-test-document";
@@ -54,7 +55,7 @@ function FieldTestCaptureView() {
   const [busy, setBusy] = React.useState(false);
   const [created, setCreated] = React.useState<EvidenceRecord | null>(null);
 
-  const [caseRef, setCaseRef] = React.useState(params.get("case") ?? "");
+  const { caseRef, setCase } = useActiveCase();
   const [kit, setKit] = React.useState<string>(KIT_TYPES[0]);
   const [manufacturer, setManufacturer] = React.useState<string>(MANUFACTURERS[0]);
   const [lot, setLot] = React.useState("LOT-26A91");
@@ -195,6 +196,10 @@ function FieldTestCaptureView() {
       </div>
 
       <div className="mt-4">
+        <CaseContextBar caseRef={caseRef} onPick={setCase} />
+      </div>
+
+      <div className="mt-4">
         <CaptureDeviceHint />
       </div>
 
@@ -207,22 +212,6 @@ function FieldTestCaptureView() {
 
       <div className="mt-4 grid gap-5 xl:grid-cols-[1.1fr_1fr]">
         <div className="min-w-0 space-y-5">
-          <Panel className="min-w-0">
-            <PanelHead title="Case" subtitle="A field test always belongs to an existing event." />
-            <div className="p-5">
-              <Field label="Case reference" required>
-                <Select value={caseRef} onChange={(e) => setCaseRef(e.target.value)}>
-                  <option value="">Select a case…</option>
-                  {candidateCases.map((c) => (
-                    <option key={c.case_ref} value={c.case_ref}>
-                      {c.case_ref} — {c.place}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            </div>
-          </Panel>
-
           <Panel className="min-w-0">
             <PanelHead
               title="Kit and lot"
@@ -410,8 +399,8 @@ function FieldTestCaptureView() {
                 Create signed field-test record
               </Button>
               {!caseRef ? (
-                <p className="text-[12px] text-fg-dim">
-                  Select the case this test belongs to before signing.
+                <p className="text-[13px] text-fg-muted">
+                  Choose the case this test belongs to, or start a new one, before signing.
                 </p>
               ) : null}
             </div>

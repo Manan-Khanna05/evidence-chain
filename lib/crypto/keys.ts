@@ -85,6 +85,28 @@ export function recordSigningInput(payloadHash: string, prevHash: string | null,
   return `v1|${payloadHash}|${prevHash ?? "GENESIS"}|${seq}`;
 }
 
+/**
+ * The bytes a record signature covers once a record also carries its position
+ * in its own case chain.
+ *
+ * v1 covered the device chain only (payload_hash + prev_hash + seq). v2 adds
+ * the case reference and the case-chain position, so a record cannot be moved
+ * to another case, renumbered inside its case, or re-pointed at a different
+ * predecessor without breaking its signature. Records written before this
+ * existed keep verifying under v1 — the verifier picks by what the record
+ * carries, never by guesswork.
+ */
+export function recordSigningInputV2(
+  payloadHash: string,
+  prevHash: string | null,
+  seq: number,
+  caseRef: string,
+  caseSeq: number,
+  casePrevHash: string | null,
+): string {
+  return `v2|${payloadHash}|${prevHash ?? "GENESIS"}|${seq}|${caseRef}|${caseSeq}|${casePrevHash ?? "CASE_GENESIS"}`;
+}
+
 /** The bytes a simulated timestamp-authority token covers. */
 export function tsaSigningInput(treeHead: string, treeSize: number, anchorTime: string): string {
   return `rfc3161-sim|v1|${treeHead}|${treeSize}|${anchorTime}`;

@@ -195,10 +195,45 @@ export async function resetStore(): Promise<StoreShape> {
   return seeded;
 }
 
-/** Append-only insert. */
+/** Raised when a write would corrupt a chain. Never repaired silently. */
+export class ChainSafetyError extends Error {}
+
+/**
+ * Append-only insert, with the checks that make the chains trustworthy.
+ *
+ * Nothing in the application updates or deletes a record; this is the single
+ * door through which a record enters the log, and it refuses anything that
+ * would duplicate an identifier, reuse a position in a case or on a device, or
+ * attach a record to a case that does not exist.
+ */
 export function appendRecord(store: StoreShape, record: EvidenceRecord): EvidenceRecord {
   if (store.records.some((r) => r.record_id === record.record_id)) {
-    throw new Error(`Duplicate record rejected: ${record.record_id} already exists in the log`);
+    throw new ChainSafetyError(
+      `CHAIN SAFETY CHECK FAILED — record ${record.record_id} already exists in the log.`,
+    );
+  }
+  if (!store.cases.some((c) => c.case_ref === record.case_ref)) {
+    throw new ChainSafetyError(
+      `CHAIN SAFETY CHECK FAILED — no case ${record.case_ref} exists.`,
+    );
+  }
+  if (record.case_seq != null) {
+    const clash = store.records.find(
+      (r) => r.case_ref === record.case_ref && r.case_seq === record.case_seq,
+    );
+    if (clash) {
+      throw new ChainSafetyError(
+        `CHAIN SAFETY CHECK FAILED — sequence conflict: ${record.case_ref} already has a record at position ${record.case_seq} (${clash.record_id}).`,
+      );
+    }
+  }
+  const deviceClash = store.records.find(
+    (r) => r.device_id === record.device_id && r.seq === record.seq,
+  );
+  if (deviceClash) {
+    throw new ChainSafetyError(
+      `CHAIN SAFETY CHECK FAILED — device ${record.device_id} already has a record at sequence ${record.seq} (${deviceClash.record_id}).`,
+    );
   }
   store.records.push(record);
   return record;

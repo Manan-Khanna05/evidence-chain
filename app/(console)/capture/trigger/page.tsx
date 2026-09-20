@@ -30,6 +30,7 @@ import { MOCK_SENSOR_PILL, RecordStatusPill } from "@/components/ui/status";
 import { OFFICER_ACTIONS, PLACE_KINDS, REFERRAL_TIERS, SEARCH_OUTCOMES } from "@/lib/domain/vocab";
 import type { EvidenceRecord, SensorReading, TriggerPayload } from "@/lib/domain/types";
 import { CaptureDeviceHint, CaptureSteps, CaptureTargetBar } from "@/features/capture/capture-target";
+import { CaseContextBar, useActiveCase } from "@/features/case/case-context";
 
 export default function TriggerCapturePage() {
   const { store, officer, run } = useApp();
@@ -38,8 +39,10 @@ export default function TriggerCapturePage() {
   const [busy, setBusy] = React.useState(false);
   const [created, setCreated] = React.useState<EvidenceRecord | null>(null);
 
-  const [caseMode, setCaseMode] = React.useState<"new" | "existing">("new");
-  const [caseRef, setCaseRef] = React.useState("");
+  // The case is chosen once, up front, and shown in the context bar. It is
+  // never a plain dropdown inside the form: an existing case must be opened
+  // deliberately, not fallen into.
+  const { caseRef, setCase } = useActiveCase();
   const [place, setPlace] = React.useState("Platform 3, Demo Junction (DMJ)");
   const [placeKind, setPlaceKind] = React.useState<string>(PLACE_KINDS[0]);
   const [locRef, setLocRef] = React.useState("PF-03");
@@ -77,7 +80,7 @@ export default function TriggerCapturePage() {
     if (!device || !officer || !reading) return;
     setBusy(true);
     const res = await run<EvidenceRecord>("capture.trigger", {
-      case_ref: caseMode === "existing" ? caseRef : null,
+      case_ref: caseRef,
       device_id: device.device_id,
       officer_id: officer.officer_id,
       place,
@@ -194,6 +197,10 @@ export default function TriggerCapturePage() {
       <CaptureTargetBar />
 
       <div className="mt-4">
+        <CaseContextBar caseRef={caseRef} onPick={setCase} />
+      </div>
+
+      <div className="mt-4">
         <CaptureDeviceHint />
       </div>
 
@@ -206,32 +213,6 @@ export default function TriggerCapturePage() {
 
       <div className="mt-4 grid gap-5 xl:grid-cols-[1.1fr_1fr]">
         <div className="min-w-0 space-y-5">
-          <Panel className="min-w-0">
-            <PanelHead title="Case" subtitle="Group this record with the event it belongs to." />
-            <div className="space-y-4 p-5">
-              <OptionGroup
-                value={caseMode}
-                onChange={setCaseMode}
-                options={[
-                  { value: "new", label: "Open a new case", hint: "A case reference is allocated" },
-                  { value: "existing", label: "Add to an existing case", hint: "Same case_ref" },
-                ]}
-              />
-              {caseMode === "existing" ? (
-                <Field label="Case reference" required>
-                  <Select value={caseRef} onChange={(e) => setCaseRef(e.target.value)}>
-                    <option value="">Select a case…</option>
-                    {store.cases.map((c) => (
-                      <option key={c.case_ref} value={c.case_ref}>
-                        {c.case_ref} — {c.place}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              ) : null}
-            </div>
-          </Panel>
-
           <Panel className="min-w-0">
             <PanelHead title="Place" subtitle="Where the stop happened." />
             <div className="space-y-4 p-5">
@@ -406,7 +387,7 @@ export default function TriggerCapturePage() {
                 size="lg"
                 className="w-full"
                 busy={busy}
-                disabled={!canCapture || !reading || (caseMode === "existing" && !caseRef)}
+                disabled={!canCapture || !reading || !caseRef}
                 onClick={submit}
                 icon={<Signature size={16} />}
               >

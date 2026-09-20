@@ -181,6 +181,14 @@ export interface EvidenceRecord {
   seq: number;
   /** record_hash of the previous record on this device, or null at genesis. */
   prev_hash: string | null;
+  /**
+   * Position in this case's own chain: 1 for the first record of the case.
+   * Independent of every other case and of the device counter.
+   * Null only on records written before per-case chaining existed.
+   */
+  case_seq?: number | null;
+  /** record_hash of the previous record IN THE SAME CASE, null at case genesis. */
+  case_prev_hash?: string | null;
   payload: RecordPayload;
   /** SHA-256 over the canonicalised payload. */
   payload_hash: string;

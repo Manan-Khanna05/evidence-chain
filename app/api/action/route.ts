@@ -6,6 +6,7 @@ import {
   applyTamper,
   captureFieldTest,
   captureTrigger,
+  createCase,
   createTransfer,
   generateCertificate,
   pushQueue,
@@ -44,6 +45,21 @@ export async function POST(request: Request) {
           };
           return store.connectivity;
         });
+        break;
+      }
+
+      /* -------------------------------------------------------------- case */
+      case "case.create": {
+        result = await mutate((store) =>
+          createCase(store, {
+            officer_id: (p as Record<string, string>).officer_id,
+            device_id: (p as Record<string, string>).device_id,
+            place: (p as Record<string, string>).place,
+            place_kind: (p as Record<string, string | undefined>).place_kind,
+            purpose: (p as Record<string, string | undefined>).purpose,
+            notes: (p as Record<string, string | undefined>).notes,
+          }),
+        );
         break;
       }
 

@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check, FolderOpen, Radio, Search, X } from "lucide-react";
+import { Check, FolderOpen, FolderPlus, Radio, Search, X } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import { Button, ButtonLink, EmptyState, Panel, Pill, cx } from "@/components/ui/primitives";
 import { TextInput } from "@/components/ui/form";
 import { AnchorPill, HandoffPill, RecordTypePill } from "@/components/ui/status";
 import { summariseAll } from "@/lib/domain/status";
+import { NewCaseDialog } from "@/features/case/case-context";
+import { useRouter } from "next/navigation";
 import { fmtDate, fmtRelative } from "@/lib/format";
 import type { CaseVerdict } from "@/app/api/verify/route";
 
@@ -37,6 +39,8 @@ export default function CasesPage() {
   const [query, setQuery] = React.useState("");
   const [filter, setFilter] = React.useState<Filter>("all");
   const [officerFilter, setOfficerFilter] = React.useState<string | null>(null);
+  const [newOpen, setNewOpen] = React.useState(false);
+  const router = useRouter();
 
   // Global search links here as /cases?officer=<id>.
   React.useEffect(() => {
@@ -105,11 +109,16 @@ export default function CasesPage() {
       <PageHeader
         eyebrow="Evidence chain"
         title="Cases"
-        subtitle="Every case, with where its evidence is right now. Open a case for its full timeline."
+        subtitle="Every case, with where its evidence is right now. Open a case for its full timeline. New records are always appended — nothing already recorded can change."
         actions={
-          <ButtonLink href="/capture/trigger" variant="primary" icon={<Radio size={16} />}>
-            New capture
-          </ButtonLink>
+          <>
+            <Button variant="primary" icon={<FolderPlus size={16} />} onClick={() => setNewOpen(true)}>
+              New Case
+            </Button>
+            <ButtonLink href="/capture/trigger" icon={<Radio size={16} />}>
+              Capture Evidence
+            </ButtonLink>
+          </>
         }
       />
 
@@ -236,6 +245,9 @@ export default function CasesPage() {
                       <div className="text-[14px] font-semibold text-fg">
                         <span className="label mr-2 lg:hidden">Evidence</span>
                         {s.record_count}
+                        <span className="mono ml-2 text-[12px] font-normal text-fg-dim">
+                          {s.record_count ? `→ #${s.record_count}` : "empty"}
+                        </span>
                         <span className="ml-1 text-[12.5px] font-normal text-fg-dim lg:hidden">records</span>
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
@@ -258,6 +270,12 @@ export default function CasesPage() {
           </>
         )}
       </Panel>
+
+      <NewCaseDialog
+        open={newOpen}
+        onClose={() => setNewOpen(false)}
+        onCreated={(ref) => router.push(`/cases/${ref}`)}
+      />
     </>
   );
 }

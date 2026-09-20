@@ -19,6 +19,7 @@ import {
   FileText,
   FlaskConical,
   FolderOpen,
+  FolderPlus,
   MonitorPlay,
   Repeat,
   ScanLine,
@@ -50,6 +51,7 @@ import { HelpTip } from "@/components/ui/help-tip";
 import { TechnicalDetailsDrawer } from "@/components/ui/tech-drawer";
 import { EvidenceFlow, FLOW_ICONS, type FlowState } from "@/features/dashboard/evidence-flow";
 import { DeviceStatusCard } from "@/features/hardware/device-status-card";
+import { NewCaseDialog } from "@/features/case/case-context";
 import { summariseAll } from "@/lib/domain/status";
 import { fmtInterval, fmtRelative } from "@/lib/format";
 import type { AssetKey } from "@/lib/assets";
@@ -70,6 +72,7 @@ export default function DashboardPage() {
   const [global, setGlobal] = React.useState<VerificationResult | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [hello, setHello] = React.useState("Welcome");
+  const [newCaseOpen, setNewCaseOpen] = React.useState(false);
 
   // Time of day is read on the client only, so server and client render agree.
   React.useEffect(() => setHello(greeting()), []);
@@ -343,6 +346,63 @@ export default function DashboardPage() {
           href="/verification"
         />
       </div>
+
+      {/* ------------------------------------------------------------ cases */}
+      <Panel className="mb-6 min-w-0">
+        <PanelHead
+          title="Cases"
+          subtitle="Start a new case, or open an existing one to see its full history."
+          icon={<FolderOpen size={17} />}
+          right={
+            <Link
+              href="/cases"
+              className="inline-flex min-h-[44px] items-center gap-1.5 text-[13.5px] font-semibold text-brand hover:underline"
+            >
+              View all cases <ArrowRight size={15} />
+            </Link>
+          }
+        />
+        <div className="px-5 py-5">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary" size="lg" icon={<FolderPlus size={18} />} onClick={() => setNewCaseOpen(true)}>
+              New Case
+            </Button>
+            <ButtonLink href="/cases" size="lg" icon={<FolderOpen size={18} />}>
+              Existing Cases
+            </ButtonLink>
+          </div>
+
+          <div className="label mt-5 mb-2">Recent cases</div>
+          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {summaries.slice(0, 3).map((s) => {
+              const v = verdicts?.find((x) => x.case_ref === s.case_ref);
+              return (
+                <li key={s.case_ref}>
+                  <Link
+                    href={`/cases/${s.case_ref}`}
+                    className="hover-lift block rounded-2xl border border-line bg-white px-4 py-3.5 hover:shadow-chip"
+                  >
+                    <div className="mono text-[14px] font-semibold text-fg">{s.case_ref}</div>
+                    <div className="mt-0.5 truncate text-[13px] text-fg-muted">{s.place}</div>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <Pill tone="neutral">
+                        {s.record_count} record{s.record_count === 1 ? "" : "s"}
+                      </Pill>
+                      {v ? (
+                        v.verified ? (
+                          <Pill tone="ok" icon={<Check size={11} />}>Verified</Pill>
+                        ) : (
+                          <Pill tone="danger" icon={<X size={11} />}>Chain broken</Pill>
+                        )
+                      ) : null}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </Panel>
 
       {/* ------------------------------------------------ recent + actions */}
       <div className="mb-6 grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -661,6 +721,12 @@ export default function DashboardPage() {
           <ButtonLink href="/hardware" size="sm" icon={<Cpu size={15} />}>Hardware Guide</ButtonLink>
         </div>
       </Panel>
+
+      <NewCaseDialog
+        open={newCaseOpen}
+        onClose={() => setNewCaseOpen(false)}
+        onCreated={(ref) => router.push(`/cases/${ref}`)}
+      />
 
       <p className="mt-4 text-[12.5px] leading-relaxed text-fg-dim">
         No map, heatmap, live alert feed, behavioural analytics or patrol routing — each was tested

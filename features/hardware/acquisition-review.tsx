@@ -24,6 +24,12 @@ import {
   RESULT_STATUSES,
 } from "@/lib/domain/vocab";
 import type { EvidenceRecord, FieldTestResult } from "@/lib/domain/types";
+import {
+  CasePickerDialog,
+  NewCaseDialog,
+  useActiveCase,
+  useCasePosition,
+} from "@/features/case/case-context";
 
 /**
  * The review step.
@@ -38,7 +44,9 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
   const { store, officer, run } = useApp();
   const { pending, clearPending, reset, brand } = useHardware();
 
-  const [caseRef, setCaseRef] = React.useState("");
+  const { caseRef, setCase } = useActiveCase();
+  const [pickOpen, setPickOpen] = React.useState(false);
+  const [newOpen, setNewOpen] = React.useState(false);
   const [kit, setKit] = React.useState<string>(KIT_TYPES[0]);
   const [manufacturer, setManufacturer] = React.useState<string>(MANUFACTURERS[0]);
   const [lot, setLot] = React.useState("LOT-26A91");
@@ -48,15 +56,9 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
   const [result, setResult] = React.useState<FieldTestResult>("presumptive_positive");
   const [ackCollector, setAckCollector] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  const casePosition = useCasePosition(caseRef);
 
-  React.useEffect(() => {
-    if (pending && !caseRef && store?.cases.length) {
-      const withRecords = store.cases.filter((c) =>
-        store.records.some((r) => r.case_ref === c.case_ref),
-      );
-      setCaseRef(withRecords[0]?.case_ref ?? store.cases[0].case_ref);
-    }
-  }, [pending, caseRef, store]);
+
 
   if (!pending || !store) return null;
 
@@ -65,6 +67,7 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
   // same as a collector reported absent, and it must not raise a warning.
   const collectorMissing = obs.collector_installed === false;
   const blocked = collectorMissing && !ackCollector;
+  const { count: caseCount, nextPosition, isNew: caseIsNew } = casePosition;
   const temperature = obs.temperature_c ?? obs.thermal_avg_c ?? null;
   const temperatureSource =
     obs.temperature_source ?? (obs.thermal_avg_c !== null ? "thermal_camera" : null);
@@ -114,6 +117,7 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
       <div className="absolute inset-0 bg-[#102A56]/35 backdrop-blur-sm" onClick={clearPending} />
       <Panel
@@ -228,14 +232,27 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
 
           {/* ----------------------------------------- what only a human knows */}
           <div className="grid gap-3.5 sm:grid-cols-2">
-            <Field label="Case" required>
-              <Select value={caseRef} onChange={(e) => setCaseRef(e.target.value)}>
-                {store.cases.map((c) => (
-                  <option key={c.case_ref} value={c.case_ref}>
-                    {c.case_ref}
-                  </option>
-                ))}
-              </Select>
+            <Field label="Case" required hint={caseRef ? `Appended as position ${nextPosition}` : undefined}>
+              <div className="flex flex-wrap items-center gap-2">
+                {caseRef ? (
+                  <>
+                    <span className="mono rounded-lg border border-line-strong bg-white px-2.5 py-2 text-[14px] font-semibold text-fg">
+                      {caseRef}
+                    </span>
+                    <Pill tone={caseIsNew ? "brand" : "neutral"}>
+                      {caseIsNew ? "New case" : `${caseCount} record${caseCount === 1 ? "" : "s"}`}
+                    </Pill>
+                  </>
+                ) : (
+                  <span className="text-[13.5px] font-medium text-[#B45309]">No case selected</span>
+                )}
+                <Button size="sm" type="button" onClick={() => setPickOpen(true)}>
+                  {caseRef ? "Change" : "Choose case"}
+                </Button>
+                <Button size="sm" type="button" onClick={() => setNewOpen(true)}>
+                  New case
+                </Button>
+              </div>
             </Field>
             <Field label="Observed colour" required hint="Fixed vocabulary — never free text">
               <Select value={colour} onChange={(e) => setColour(e.target.value)}>
@@ -363,6 +380,9 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
         </div>
       </Panel>
     </div>
+      <CasePickerDialog open={pickOpen} onClose={() => setPickOpen(false)} onPick={setCase} />
+      <NewCaseDialog open={newOpen} onClose={() => setNewOpen(false)} onCreated={setCase} />
+    </>
   );
 }
 

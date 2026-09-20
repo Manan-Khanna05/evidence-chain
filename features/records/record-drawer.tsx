@@ -18,6 +18,7 @@ import { canonicalise } from "@/lib/crypto/hash";
 import { fmtDateTime, fmtInterval, fmtTime } from "@/lib/format";
 import { intervalFor } from "@/lib/domain/status";
 import { Button, Callout, HashChip, KeyValue, Panel, Pill, cx } from "@/components/ui/primitives";
+import { ImmutableBadge } from "@/features/case/case-context";
 import { DEMO_SIGNATURE_PILL, RecordStatusPill, RecordTypePill } from "@/components/ui/status";
 import { PayloadView } from "./payload-view";
 
@@ -98,7 +99,9 @@ export function RecordDrawer({
                 <Pill tone="danger" icon={<AlertTriangle size={12} />}>
                   Altered in storage
                 </Pill>
-              ) : null}
+              ) : (
+                <ImmutableBadge />
+              )}
             </div>
           </div>
           <button
@@ -130,6 +133,11 @@ export function RecordDrawer({
               <KeyValue k="Record type">{RECORD_TYPE_TEXT[record.type]}</KeyValue>
               <KeyValue k="Case reference">
                 <span className="mono">{record.case_ref}</span>
+              </KeyValue>
+              <KeyValue k="Position in case" hint="Counted from 1 within this case">
+                <span className="mono">
+                  {record.case_seq == null ? "—" : `#${record.case_seq}`}
+                </span>
               </KeyValue>
               <KeyValue k="Sequence" hint="Monotonic counter, per device">
                 <span className="mono">#{record.seq}</span>
@@ -196,6 +204,15 @@ export function RecordDrawer({
               <Binary size={13} /> Cryptographic fields
             </div>
             <div className="space-y-3.5">
+              <KeyValue k="Previous record in this case" hint="Hash of the preceding record of the SAME case">
+                {record.case_prev_hash ? (
+                  <HashChip value={record.case_prev_hash} full tone="neutral" />
+                ) : (
+                  <span className="text-[13px] text-fg-muted">
+                    {record.case_seq == null ? "—" : "First record of this case"}
+                  </span>
+                )}
+              </KeyValue>
               <KeyValue k="Previous hash" hint="Hash of the preceding record on this device">
                 {record.prev_hash ? (
                   <HashChip value={record.prev_hash} full tone="neutral" />
@@ -208,7 +225,7 @@ export function RecordDrawer({
               </KeyValue>
               <KeyValue
                 k="Signature"
-                hint="ECDSA P-256 over payload_hash + prev_hash + seq"
+                hint={record.case_seq == null ? "ECDSA P-256 over payload_hash + prev_hash + seq" : "ECDSA P-256 over payload_hash + prev_hash + seq + case_ref + case position"}
               >
                 <HashChip value={record.signature} full tone="sim" />
                 <div className="mt-2">{DEMO_SIGNATURE_PILL}</div>

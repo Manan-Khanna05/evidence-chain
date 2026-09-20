@@ -7,7 +7,12 @@
  */
 
 import { hashCanonical } from "@/lib/crypto/hash";
-import { recordSigningInput, tsaSigningInput, verifyMessage } from "@/lib/crypto/keys";
+import {
+  recordSigningInput,
+  recordSigningInputV2,
+  tsaSigningInput,
+  verifyMessage,
+} from "@/lib/crypto/keys";
 import {
   inclusionProof,
   leafHash,
@@ -23,7 +28,7 @@ import type {
   HandoffTransferPayload,
   StoreShape,
 } from "./types";
-import { deviceChain, recordHash, serverLog } from "./records";
+import { caseChain, deviceChain, recordHash, serverLog } from "./records";
 
 export type CheckStatus = "pass" | "fail" | "degraded" | "not_applicable";
 
@@ -103,15 +108,27 @@ export async function verifyStore(
       sigFailures.push({ record_id: r.record_id, reason: `Unknown device ${r.device_id}` });
       continue;
     }
-    const valid = await verifyMessage(
-      device.publicKeyJwk,
-      recordSigningInput(r.payload_hash, r.prev_hash, r.seq),
-      r.signature,
-    );
+    // A record that carries a case position was signed over it (v2); one
+    // written before per-case chaining was signed without it (v1).
+    const signedInput =
+      r.case_seq === null || r.case_seq === undefined
+        ? recordSigningInput(r.payload_hash, r.prev_hash, r.seq)
+        : recordSigningInputV2(
+            r.payload_hash,
+            r.prev_hash,
+            r.seq,
+            r.case_ref,
+            r.case_seq,
+            r.case_prev_hash ?? null,
+          );
+    const valid = await verifyMessage(device.publicKeyJwk, signedInput, r.signature);
     if (!valid) {
       sigFailures.push({
         record_id: r.record_id,
-        reason: `Signature does not verify over payload_hash + prev_hash + seq for key ${r.device_id}`,
+        reason:
+          r.case_seq === null || r.case_seq === undefined
+            ? `Signature does not verify over payload_hash + prev_hash + seq for key ${r.device_id}`
+            : `Signature does not verify over payload_hash + prev_hash + seq + case_ref + case_seq + case_prev_hash for key ${r.device_id}`,
       });
     }
   }
@@ -164,6 +181,86 @@ export async function verifyStore(
       ? `${linkFailures.length} broken link(s) across ${store.devices.length} device chain(s)`
       : `${linkChecked} record(s) link cleanly across ${store.devices.length} device chain(s)`,
     failures: linkFailures,
+  });
+
+  // 3b — case chain (per case, isolated) ---------------------------------
+  const caseFailures: CheckResult["failures"] = [];
+  const casesInScope =
+    scope === "all"
+      ? store.cases.map((c) => c.case_ref)
+      : store.cases.filter((c) => c.case_ref === scope).map((c) => c.case_ref);
+  let caseRecordsChecked = 0;
+  let legacyCaseRecords = 0;
+
+  for (const caseRef of casesInScope) {
+    const chain = caseChain(store.records, caseRef);
+    let expectedSeq = 1;
+    let expectedPrev: string | null = null;
+    const seen = new Set<number>();
+
+    for (const r of chain) {
+      caseRecordsChecked += 1;
+
+      if (r.case_ref !== caseRef) {
+        caseFailures.push({
+          record_id: r.record_id,
+          reason: `Record is filed under ${r.case_ref} but appears in the chain of ${caseRef}`,
+        });
+        continue;
+      }
+
+      if (r.case_seq === null || r.case_seq === undefined) {
+        // Written before per-case chaining; the device chain still covers it.
+        legacyCaseRecords += 1;
+        expectedPrev = await recordHash(r);
+        continue;
+      }
+
+      if (seen.has(r.case_seq)) {
+        caseFailures.push({
+          record_id: r.record_id,
+          reason: `Duplicate position ${r.case_seq} in ${caseRef} — two records claim the same place in the chain`,
+        });
+      }
+      seen.add(r.case_seq);
+
+      if (r.case_seq !== expectedSeq) {
+        caseFailures.push({
+          record_id: r.record_id,
+          reason:
+            r.case_seq > expectedSeq
+              ? `Missing record in ${caseRef} — expected position ${expectedSeq}, found ${r.case_seq}. Record${r.case_seq - expectedSeq > 1 ? "s" : ""} ${expectedSeq}${r.case_seq - expectedSeq > 1 ? `–${r.case_seq - 1}` : ""} ${r.case_seq - expectedSeq > 1 ? "are" : "is"} not in the log`
+              : `Out-of-order record in ${caseRef} — expected position ${expectedSeq}, found ${r.case_seq}`,
+        });
+      }
+
+      if ((r.case_prev_hash ?? null) !== expectedPrev) {
+        caseFailures.push({
+          record_id: r.record_id,
+          reason:
+            expectedPrev === null
+              ? `Integrity failure at position ${r.case_seq} of ${caseRef} — this is the first record of the case, so it must not link to a previous one. Expected: none. Found: ${short(r.case_prev_hash as string)}`
+              : `Integrity failure at position ${r.case_seq} of ${caseRef} — expected prev_hash ${short(expectedPrev)}, found ${r.case_prev_hash ? short(r.case_prev_hash) : "none"}`,
+        });
+      }
+
+      expectedPrev = await recordHash(r);
+      expectedSeq = r.case_seq + 1;
+    }
+  }
+
+  checks.push({
+    id: "case_chain",
+    label: "Case chain",
+    description:
+      "Each case counted from 1 on its own, with every record linked to the previous record of the SAME case.",
+    status: caseFailures.length ? "fail" : "pass",
+    detail: caseFailures.length
+      ? `${caseFailures.length} problem(s) across ${casesInScope.length} case chain(s)`
+      : `${caseRecordsChecked} record(s) link cleanly across ${casesInScope.length} case chain(s)${
+          legacyCaseRecords ? ` (${legacyCaseRecords} predate per-case chaining)` : ""
+        }`,
+    failures: caseFailures,
   });
 
   // 4 — Merkle inclusion --------------------------------------------------
