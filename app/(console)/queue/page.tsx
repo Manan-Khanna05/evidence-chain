@@ -2,14 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  Anchor as AnchorIcon,
-  ArrowRight,
-  Check,
-  CloudOff,
-  ListChecks,
-  UploadCloud,
-} from "lucide-react";
+import { ArrowRight, CloudOff, ListChecks } from "lucide-react";
+import { Anchor as AnchorIcon, Check, UploadCloud } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -229,6 +223,7 @@ export default function QueuePage() {
             />
             {waiting.length === 0 ? (
               <EmptyState
+                scene
                 icon={<Check size={22} />}
                 title="Nothing is waiting to sync"
                 body="Every record you captured has reached the server. Records captured while offline will wait here."

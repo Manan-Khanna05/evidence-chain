@@ -1,7 +1,18 @@
 "use client";
 
 import * as React from "react";
-import { Boxes, Cpu, Database, FileCode2, KeyRound, Network, ShieldCheck, Wrench } from "lucide-react";
+import {
+  Boxes,
+  Database,
+  FileCode2,
+  Network,
+} from "lucide-react";
+import {
+  Cpu,
+  KeyRound,
+  ShieldCheck,
+  Wrench,
+} from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/app-shell";
 import { Panel, PanelHead, Pill } from "@/components/ui/primitives";
 import { useApp } from "@/components/providers/app-provider";

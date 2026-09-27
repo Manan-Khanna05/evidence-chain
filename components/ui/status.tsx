@@ -2,20 +2,22 @@
 
 import * as React from "react";
 import {
-  AlertTriangle,
-  Anchor as AnchorIcon,
-  ArrowLeftRight,
   CheckCircle2,
   CircleDashed,
   CloudOff,
   FileSignature,
-  FlaskConical,
   Radio,
-  ShieldCheck,
-  UploadCloud,
   XCircle,
   Flag,
 } from "lucide-react";
+import {
+  AlertTriangle,
+  Anchor as AnchorIcon,
+  ArrowLeftRight,
+  FlaskConical,
+  ShieldCheck,
+  UploadCloud,
+} from "@/components/ui/icons";
 import { Pill, type Tone } from "./primitives";
 import type { AnchorState } from "@/lib/domain/status";
 import type { CaseStage, Handoff, RecordStatus, RecordType } from "@/lib/domain/types";

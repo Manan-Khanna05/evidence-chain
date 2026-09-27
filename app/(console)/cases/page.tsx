@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check, FolderOpen, FolderPlus, Radio, Search, X } from "lucide-react";
+import { FolderPlus, Radio } from "lucide-react";
+import {
+  Check,
+  FolderOpen,
+  Search,
+  X,
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import { Button, ButtonLink, EmptyState, Panel, Pill, cx } from "@/components/ui/primitives";
@@ -206,7 +212,19 @@ export default function CasesPage() {
       ) : null}
 
       <Panel className="overflow-hidden">
-        {filtered.length === 0 ? (
+        {store.cases.length === 0 ? (
+          <EmptyState
+            scene
+            icon={<FolderOpen size={22} />}
+            title="No Active Cases"
+            body="Create a new evidence case to begin. Each case starts its own append-only chain."
+            action={
+              <Button variant="primary" icon={<FolderPlus size={17} />} onClick={() => setNewOpen(true)}>
+                New Case
+              </Button>
+            }
+          />
+        ) : filtered.length === 0 ? (
           <EmptyState
             icon={<FolderOpen size={22} />}
             title="No cases match"

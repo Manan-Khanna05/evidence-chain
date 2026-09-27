@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { CircleDashed, MonitorPlay, TriangleAlert } from "lucide-react";
+import { CircleDashed } from "lucide-react";
+import { MonitorPlay, TriangleAlert } from "@/components/ui/icons";
 import { connectionKind, useHardware, type ConnectionKind } from "@/components/providers/hardware-provider";
 import { cx } from "@/components/ui/primitives";
 

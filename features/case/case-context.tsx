@@ -3,7 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, FolderOpen, FolderPlus, Search, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, FolderPlus } from "lucide-react";
+import {
+  FolderOpen,
+  Search,
+  ShieldCheck,
+  X,
+} from "@/components/ui/icons";
 import { createPortal } from "react-dom";
 import { useApp } from "@/components/providers/app-provider";
 import { useHardware } from "@/components/providers/hardware-provider";

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Check, CircleDashed, Minus, TriangleAlert, X } from "lucide-react";
+import { CircleDashed, Minus } from "lucide-react";
+import { Check, TriangleAlert, X } from "@/components/ui/icons";
 import type { CheckResult, VerificationResult } from "@/lib/domain/verify";
 import { HashChip, Pill, cx } from "@/components/ui/primitives";
 import { fmtTime } from "@/lib/format";

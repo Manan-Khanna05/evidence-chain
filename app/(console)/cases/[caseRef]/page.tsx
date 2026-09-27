@@ -4,18 +4,20 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  AlertTriangle,
   ArrowLeft,
+  GitCommitVertical,
+  History,
+  Info,
+} from "lucide-react";
+import {
+  AlertTriangle,
   ArrowLeftRight,
   Clock3,
   FileBadge,
   FlaskConical,
-  GitCommitVertical,
-  History,
-  Info,
   ShieldCheck,
   Camera,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -185,9 +187,19 @@ export default function CaseDetailPage() {
         status={
           <>
             <Pill tone={summary.record_count === 0 ? "brand" : "neutral"}>
+              <span className="uppercase tracking-[0.06em]">
+                {summary.record_count === 0 ? "New case" : "Existing case"}
+              </span>
+            </Pill>
+            <Pill
+              tone={summary.record_count === 0 ? "neutral" : result && !result.verified ? "danger" : "ok"}
+              icon={<span className="h-1.5 w-1.5 rounded-full bg-current" />}
+            >
               {summary.record_count === 0
-                ? "New case · chain empty"
-                : `Existing case · ${summary.record_count} record${summary.record_count === 1 ? "" : "s"}`}
+                ? "Chain empty"
+                : result && !result.verified
+                  ? "Chain needs attention"
+                  : "Chain active"}
             </Pill>
             <StagePill stage={summary.stage} />
             {result ? <VerificationPill verified={result.verified} degraded={result.degraded} /> : null}

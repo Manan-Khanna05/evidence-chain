@@ -3,7 +3,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, CloudOff, FlaskConical, Radio, ScanLine, UploadCloud } from "lucide-react";
+import { CloudOff, Radio, ScanLine } from "lucide-react";
+import { Check, FlaskConical, UploadCloud } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { Pill, cx } from "@/components/ui/primitives";
 import { AssetImage } from "@/components/ui/asset-image";

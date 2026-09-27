@@ -3,15 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { RefreshCw, RotateCcw, Siren } from "lucide-react";
 import {
   Check,
   MonitorPlay,
-  RefreshCw,
-  RotateCcw,
-  Siren,
   TriangleAlert,
   X,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -85,6 +83,9 @@ function VerificationView() {
     { id: "payload_hash", ok: "Record contents match what was captured", bad: "Record contents were changed" },
     { id: "signature", ok: "Officer device signatures are valid", bad: "A signature does not match" },
     { id: "chain_linkage", ok: "Records link correctly, in order", bad: "A link in the chain is broken" },
+    { id: "case_chain", ok: "Each case's own chain is unbroken", bad: "A case's chain is broken" },
+    { id: "merkle_inclusion", ok: "Every synced record is in the Merkle log", bad: "A record is missing from the Merkle log" },
+    { id: "merkle_consistency", ok: "The Merkle log only ever grew", bad: "The Merkle log history was rewritten" },
     { id: "tsa_anchor", ok: "Trusted-time anchors are confirmed", bad: "A trusted-time anchor failed" },
     { id: "handoff", ok: "RPF → GRP handoff signatures match", bad: "The handoff does not match" },
   ];
@@ -141,18 +142,19 @@ function VerificationView() {
                       result.verified ? (result.degraded ? "bg-warn/15 text-warn" : "bg-ok/15 text-ok") : "bg-danger/15 text-danger",
                     )}
                   >
-                    {result.verified ? <Check size={36} strokeWidth={3} /> : <X size={36} strokeWidth={3} />}
+                    {result.verified ? <Check size={36} strokeWidth={3} /> : <TriangleAlert size={34} strokeWidth={2.4} />}
                   </span>
                   <div>
                     <div
                       className={cx(
-                        "text-[32px] font-bold leading-none tracking-tight",
+                        "font-display text-[30px] font-bold leading-tight tracking-tight",
                         result.verified ? (result.degraded ? "text-[#855A14]" : "text-ok") : "text-danger",
                       )}
                     >
-                      {result.verified ? "Yes — intact" : "No — changed"}
+                      {result.verified ? "Evidence chain verified" : "Integrity attention"}
                     </div>
                     <div className="mt-1.5 text-[14px] text-fg-muted">
+                      {result.verified ? "Intact — " : "A record no longer matches what was signed — "}
                       {scopeLabel} · {result.record_count} record{result.record_count === 1 ? "" : "s"} checked
                     </div>
                   </div>

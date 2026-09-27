@@ -3,8 +3,6 @@
 import * as React from "react";
 import {
   Activity,
-  AlertTriangle,
-  Cpu,
   Gauge,
   Link2,
   Plug,
@@ -12,10 +10,10 @@ import {
   RotateCcw,
   ScanLine,
   Scale,
-  Thermometer,
   Usb,
   Wifi,
 } from "lucide-react";
+import { AlertTriangle, Cpu } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { linkLabel, useHardware } from "@/components/providers/hardware-provider";
 import { PageHeader } from "@/components/layout/app-shell";

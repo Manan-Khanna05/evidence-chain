@@ -4,14 +4,16 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
   Flag,
   Info,
-  MonitorPlay,
   RotateCcw,
+} from "lucide-react";
+import {
+  Check,
+  MonitorPlay,
   Train,
   TriangleAlert,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -161,7 +163,7 @@ export default function TteScreeningPage() {
         }
       />
 
-      <Callout tone="sim" title="No TTE hardware is connected" icon={<Info size={13} />}>
+      <Callout tone="sim" title="DEMO MODE — synthetic data is being used. No TTE hardware is connected." icon={<Info size={13} />}>
         There is no Travelling Ticket Examiner device in this build. Seats, cues and timings below are
         generated in the browser and marked <span className="mono">demo</span> inside every record
         they produce. Nothing here measures or identifies a substance.
@@ -226,7 +228,7 @@ export default function TteScreeningPage() {
 
             <div className="mt-4 flex flex-wrap gap-3 text-[13px] text-fg-muted">
               <span className="inline-flex items-center gap-1.5">
-                <Check size={14} className="text-ok" /> Screened — looked at, not chemically cleared
+                <Check size={14} className="text-ok" /> Screened — looked at; implies no finding
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <TriangleAlert size={14} className="text-warn" /> Attention — a cue to review

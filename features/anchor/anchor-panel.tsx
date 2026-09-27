@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Anchor as AnchorIcon, Check, RefreshCw, ShieldOff, TriangleAlert } from "lucide-react";
+import { RefreshCw, ShieldOff } from "lucide-react";
+import { Anchor as AnchorIcon, Check, TriangleAlert } from "@/components/ui/icons";
 import type { ClientStore } from "@/lib/domain/types";
 import { fmtTime, minutesBetween } from "@/lib/format";
 import { useApp } from "@/components/providers/app-provider";

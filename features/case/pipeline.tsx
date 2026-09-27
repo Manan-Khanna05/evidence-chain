@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { GitCommitVertical, Radio, Sigma } from "lucide-react";
 import {
   Anchor as AnchorIcon,
   ArrowLeftRight,
@@ -8,10 +9,7 @@ import {
   Clock3,
   FileBadge,
   FlaskConical,
-  GitCommitVertical,
-  Radio,
-  Sigma,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { cx } from "@/components/ui/primitives";
 
 export type PipelineNodeKey =

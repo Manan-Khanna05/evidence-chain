@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "@/components/ui/icons";
 import { ACCESS_CLASSES, SCREENING_CUES } from "@/lib/domain/vocab";
 import type {
   ClientStore,

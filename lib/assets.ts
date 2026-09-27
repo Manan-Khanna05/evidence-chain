@@ -5,6 +5,10 @@
  * regenerated or replaced — and every reference in the app goes through this
  * table so a missing file is one grep away. Sizes are the intrinsic pixel
  * dimensions: layouts must not display an image wider than its own width.
+ *
+ * `optimize` marks the large generated files (1–2 MB). They are still served
+ * from /assets unchanged; Next's image optimiser sends the browser a resized
+ * copy for the size actually on screen, so a 44 px crest does not cost 1.2 MB.
  */
 export const ASSETS = {
   railwayHero: { src: "/assets/railway-hero.jpg", w: 2048, h: 768 },
@@ -19,6 +23,10 @@ export const ASSETS = {
   helpSync: { src: "/assets/help-sync.png", w: 328, h: 250 },
   helpVerify: { src: "/assets/help-verify.png", w: 333, h: 250 },
   extraIcons: { src: "/assets/extra-icons.png", w: 477, h: 250 },
-} as const;
+  // V2 complete pack, reference-specific/ — production-safe and generated art.
+  crest: { src: "/assets/production-safe-crest.png", w: 1208, h: 1302, optimize: true },
+  pramaanDevice: { src: "/assets/pramaan-device-hero.png", w: 1536, h: 1024, optimize: true },
+  railwayFooter: { src: "/assets/reference-railway-footer.png", w: 250, h: 189 },
+} as const satisfies Record<string, { src: string; w: number; h: number; optimize?: boolean }>;
 
 export type AssetKey = keyof typeof ASSETS;

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Clock3, TriangleAlert } from "lucide-react";
+import { Clock3, TriangleAlert } from "@/components/ui/icons";
 import { fmtTime, minutesBetween } from "@/lib/format";
 import { cx } from "@/components/ui/primitives";
 

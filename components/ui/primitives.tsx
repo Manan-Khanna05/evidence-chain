@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Check, ChevronRight, Copy, Loader2 } from "lucide-react";
+import { Copy, Loader2 } from "lucide-react";
+import { Check, ChevronRight } from "@/components/ui/icons";
+import { ASSETS } from "@/lib/assets";
 
 export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(" ");
@@ -327,20 +329,41 @@ export function EmptyState({
   title,
   body,
   action,
+  scene = false,
 }: {
   icon?: React.ReactNode;
   title: string;
   body: string;
   action?: React.ReactNode;
+  /** Show the supplied railway-light platform scene above the message. */
+  scene?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
-      {icon ? (
+    <div className="flex flex-col items-center justify-center gap-3 px-6 pb-14 pt-10 text-center">
+      {scene ? (
+        <div
+          aria-hidden="true"
+          className="relative mb-1 aspect-[464/200] w-full max-w-[380px] overflow-hidden rounded-2xl border border-line"
+          style={{
+            backgroundImage: `url(${ASSETS.railwayLight.src})`,
+            // Framed on the train; the station signboard on the left stays out of view.
+            backgroundSize: "185% auto",
+            backgroundPosition: "right 62%",
+          }}
+        >
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,253,248,0.1) 40%, rgba(255,253,248,0.85) 100%)" }} />
+          {icon ? (
+            <span className="absolute bottom-3 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl border border-line bg-white text-brand shadow-chip">
+              {icon}
+            </span>
+          ) : null}
+        </div>
+      ) : icon ? (
         <IconContainer tone="neutral" size="lg">
           {icon}
         </IconContainer>
       ) : null}
-      <div className="text-[15px] font-semibold text-fg">{title}</div>
+      <div className={scene ? "font-display text-[19px] font-bold text-brand-deep" : "text-[15px] font-semibold text-fg"}>{title}</div>
       <p className="max-w-md text-[13.5px] leading-relaxed text-fg-muted">{body}</p>
       {action}
     </div>

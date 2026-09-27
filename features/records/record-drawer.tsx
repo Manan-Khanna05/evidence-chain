@@ -2,16 +2,18 @@
 
 import * as React from "react";
 import {
-  AlertTriangle,
   Binary,
-  Clock,
   Fingerprint,
   GitBranch,
   Link2,
-  ShieldCheck,
   Sigma,
-  X,
 } from "lucide-react";
+import {
+  AlertTriangle,
+  Clock,
+  ShieldCheck,
+  X,
+} from "@/components/ui/icons";
 import type { ClientStore, EvidenceRecord } from "@/lib/domain/types";
 import type { InclusionProof } from "@/lib/crypto/merkle";
 import { canonicalise } from "@/lib/crypto/hash";

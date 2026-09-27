@@ -1,15 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { Database, Fingerprint, Radio } from "lucide-react";
 import {
   Cpu,
-  Database,
-  Fingerprint,
   KeyRound,
-  Radio,
   ShieldAlert,
   Smartphone,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {

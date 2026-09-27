@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { Info, PenLine } from "lucide-react";
 import {
   ArrowLeftRight,
   Check,
-  Info,
-  PenLine,
   Smartphone,
   TriangleAlert,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -29,6 +28,7 @@ import { summariseAll } from "@/lib/domain/status";
 import type { EvidenceRecord, SealState } from "@/lib/domain/types";
 import { HandoffDocument } from "@/features/handoff/handoff-document";
 import { RecordDrawer } from "@/features/records/record-drawer";
+import { RailIcon, type RailIconName } from "@/components/ui/rail-icon";
 import { AssetImage } from "@/components/ui/asset-image";
 import { HelpTip } from "@/components/ui/help-tip";
 
@@ -189,21 +189,6 @@ export default function HandoffPage() {
               <h2 className="text-[20px] font-semibold text-fg">How a handoff works</h2>
               <HelpTip term="handoff" />
             </div>
-            <ol className="mt-4 grid gap-3 sm:grid-cols-3">
-              {[
-                ["RPF signs the transfer", "Samples, seal marks and weight — on the RPF device."],
-                ["GRP checks the samples", "Counts packets and inspects seals against the transfer."],
-                ["GRP signs the receipt", "On a different device. Any mismatch is recorded, not hidden."],
-              ].map(([t, b], i) => (
-                <li key={t} className="rounded-2xl border border-line bg-white px-4 py-3.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-[13px] font-bold text-white">
-                    {i + 1}
-                  </span>
-                  <span className="mt-2 block text-[15px] font-semibold text-fg">{t}</span>
-                  <span className="mt-0.5 block text-[13.5px] leading-relaxed text-fg-muted">{b}</span>
-                </li>
-              ))}
-            </ol>
             <p className="mt-4 flex items-start gap-2 text-[13.5px] leading-relaxed text-fg-muted">
               <Info size={16} className="mt-0.5 shrink-0 text-brand" />
               <span>
@@ -215,6 +200,44 @@ export default function HandoffPage() {
             </p>
           </div>
         </div>
+        <div className="border-t border-line bg-ink-850/60 px-5 py-4 lg:px-6">
+        {/* The custody path, in order. Two signatures, two devices. */}
+        <ol aria-label="Custody path" className="grid gap-3 md:grid-cols-5 md:gap-2.5">
+          {(
+            [
+              { icon: "user", t: "RPF", b: "Seizing officer, Device A", tone: "brand" },
+              { icon: "handoff", t: "Transfer", b: "RPF signs: samples, seals, weight", tone: "gold" },
+              { icon: "lock", t: "Evidence Package", b: "Sealed packets move together", tone: "gold" },
+              { icon: "user", t: "GRP", b: "Receiving officer, Device B", tone: "brand" },
+              { icon: "certificates", t: "Receipt", b: "GRP checks and signs", tone: "ok" },
+            ] as { icon: RailIconName; t: string; b: string; tone: "brand" | "gold" | "ok" }[]
+          ).map((step, i, all) => (
+            <li key={step.t} className="relative flex items-center gap-3 rounded-2xl border border-line bg-white px-3.5 py-3 md:flex-col md:items-start md:gap-2">
+              <span
+                className={cx(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                  step.tone === "brand" && "bg-brand-soft text-brand-deep",
+                  step.tone === "gold" && "bg-gold-soft text-[#9A5F12]",
+                  step.tone === "ok" && "bg-ok/[0.1] text-ok",
+                )}
+              >
+                <RailIcon name={step.icon} size={18} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[14.5px] font-semibold text-fg">{step.t}</span>
+                <span className="block text-[12.5px] leading-snug text-fg-muted">{step.b}</span>
+              </span>
+              {i < all.length - 1 ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute -bottom-[13px] left-[30px] z-[1] text-fg-dim md:-right-[13px] md:bottom-auto md:left-auto md:top-1/2 md:-translate-y-1/2"
+                >
+                  <RailIcon name="chevron-right" size={16} className="rotate-90 md:rotate-0" />
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>        </div>
       </Panel>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_1.15fr]">

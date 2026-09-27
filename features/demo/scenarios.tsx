@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Check, CircleDashed, Play, TriangleAlert } from "lucide-react";
+import { ArrowRight, CircleDashed, Play } from "lucide-react";
+import { Check, TriangleAlert } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { Button, Panel, PanelHead, Pill, cx } from "@/components/ui/primitives";

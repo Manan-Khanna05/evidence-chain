@@ -4,16 +4,19 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Check,
-  Cpu,
-  FileBadge,
   FolderTree,
   Link2,
   Palette,
-  ShieldCheck,
-  Train,
   Wifi,
 } from "lucide-react";
+import {
+  BookOpen,
+  Check,
+  Cpu,
+  FileBadge,
+  ShieldCheck,
+  Train,
+} from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/app-shell";
 import { Panel, PanelHead, Pill } from "@/components/ui/primitives";
 
@@ -28,8 +31,33 @@ type Change = { title: string; points: string[]; note?: string };
 
 const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Change[] }[] = [
   {
+    id: "design",
+    title: "New railway theme",
+    icon: <Palette size={18} />,
+    changes: [
+      {
+        title: "A railway operations console",
+        points: [
+          "Warm ivory pages, forest green for navigation and primary actions, brass for pending states, terracotta for attention and demo markers, red only for genuine integrity failures.",
+          "The brand block carries a railway-evidence crest, with titles set in a serif display face.",
+          "The dashboard masthead shows the station, four quick actions, and a bilingual slogan panel: सुरक्षित यात्रा, विश्वसनीय प्रमाण — Safer Railways, Stronger India.",
+          "A product image of the PRAMAAN unit on the dashboard, Device Status and the hardware guide; a railway illustration at the foot of the navigation and the sign-in card.",
+        ],
+        note: "The crest is a generated railway-evidence mark, not an official emblem. This is an SIH prototype and does not claim to be an Indian Railways system.",
+      },
+      {
+        title: "Easier to read and operate",
+        points: [
+          "One icon set, supplied with the V2 asset pack, across navigation, actions and status.",
+          "Status is never carried by colour alone: every state has a word and a shape.",
+          "Skeletons while loading instead of spinners; no horizontal scrolling on phone-width screens.",
+        ],
+      },
+    ],
+  },
+  {
     id: "cases",
-    title: "Case management",
+    title: "Case isolation",
     icon: <FolderTree size={18} />,
     changes: [
       {
@@ -41,10 +69,11 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
         ],
       },
       {
-        title: "Append-only continuation",
+        title: "Append-only chains",
         points: [
           "An existing case can receive new records, appended at the end.",
           "Records already in a case cannot be edited, reordered or deleted through the application.",
+          "An existing case is labelled EXISTING CASE, with “Historical records are immutable” in its workspace.",
         ],
       },
     ],
@@ -68,6 +97,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
           "A signature now covers the case reference and the record's position, so a record cannot be moved between cases or renumbered.",
           "Verification reports the exact position that failed, with the expected and actual link.",
           "Writes are refused — never silently repaired — when a case is unknown or a position is already taken.",
+          "The server log follows the order records were accepted, never any clock, so an odd device time cannot reorder anchored history.",
         ],
         note: "Records written before V2 keep their original signatures and are verified the way they were signed.",
       },
@@ -75,21 +105,22 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
   },
   {
     id: "pramaan",
-    title: "PRAMAAN",
+    title: "PRAMAAN protocol and telemetry",
     icon: <Cpu size={18} />,
     changes: [
       {
         title: "USB connection over a defined protocol",
         points: [
           "PRAMAAN-1: newline-delimited JSON at 115200 baud, with an identity handshake before the device is called connected.",
-          "Live weight from the load cell and live temperature from the potentiometer, each labelled with its real source.",
+          "Live weight from the load cell, and a simulated temperature from the potentiometer, each labelled with its real source.",
           "Diagnostics show every serial line, including ones the console could not understand.",
         ],
         note: "The potentiometer is a simulated temperature input. There is no thermal sensor on this hardware, and the console shows thermal observation as unavailable.",
       },
       {
-        title: "Telemetry is not evidence",
+        title: "Source-aware telemetry",
         points: [
+          "Every reading carries its source badge: LIVE • Load Cell, SIMULATED • Potentiometer, or UNAVAILABLE.",
           "Readings stream continuously, but only ACQUIRE followed by your confirmation creates a record.",
           "A capture records where each number came from, so a potentiometer reading can never be read back as a measurement of the sample.",
         ],
@@ -114,7 +145,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
   },
   {
     id: "offline",
-    title: "Offline and sync",
+    title: "Offline sync",
     icon: <Wifi size={18} />,
     changes: [
       {
@@ -133,11 +164,18 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
     icon: <ShieldCheck size={18} />,
     changes: [
       {
-        title: "A plain answer first",
+        title: "Improved verification",
         points: [
-          "Verification answers one question — is this evidence chain intact? — with the technical checks behind a drawer.",
+          "One headline first — “Evidence chain verified” or “Integrity attention” — with the technical checks behind a drawer.",
+          "Checks listed in plain words: record contents, signatures, device chain, case chain, Merkle inclusion and consistency, trusted time, handoff.",
           "The tamper demonstration is still a real change to stored data, labelled DEMO / TRAINING.",
-          "RPF → GRP handoff still needs two officers, two devices and two signatures; a receipt cannot exist without its transfer.",
+        ],
+      },
+      {
+        title: "Improved handoff",
+        points: [
+          "The custody path is drawn in full: RPF → Transfer → Evidence Package → GRP → Receipt.",
+          "Still two officers, two devices and two signatures; a receipt cannot exist without its transfer.",
         ],
       },
     ],
@@ -164,6 +202,20 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
     ],
   },
   {
+    id: "guide",
+    title: "Improved guide",
+    icon: <BookOpen size={18} />,
+    changes: [
+      {
+        title: "Picture-led How to Use",
+        points: [
+          "Opens with capture, sync and verify as pictures, then every step in order: new case, existing case, capture, PRAMAAN, field test, offline, sync, verification, handoff, certificate, TTE demo, diagnostics and troubleshooting.",
+          "Each step says what to do, what you should see, and what happens next.",
+        ],
+      },
+    ],
+  },
+  {
     id: "certificates",
     title: "Certificates",
     icon: <FileBadge size={18} />,
@@ -173,29 +225,6 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
         points: [
           "Section 63 certificates are filled from the verified records, always with SHA-256.",
           "Part B is left blank for the expert. The system never invents a signature or a conclusion.",
-        ],
-      },
-    ],
-  },
-  {
-    id: "design",
-    title: "Design",
-    icon: <Palette size={18} />,
-    changes: [
-      {
-        title: "Railway visual system",
-        points: [
-          "Railway green for navigation and primary actions, brass for pending states, terracotta for attention and demo markers, red only for genuine integrity failures.",
-          "A dark-green brand block, a shared utility header with search and system state, and the station hero on the dashboard.",
-          "One icon set across navigation and actions, supplied with the V2 asset pack.",
-        ],
-      },
-      {
-        title: "Easier to read and operate",
-        points: [
-          "Status is never carried by colour alone: every state has a word and a shape.",
-          "Every reading shows its source — LIVE, SIMULATED or UNAVAILABLE — next to the value.",
-          "Skeletons while loading instead of spinners; no horizontal scrolling on phone-width screens.",
         ],
       },
     ],

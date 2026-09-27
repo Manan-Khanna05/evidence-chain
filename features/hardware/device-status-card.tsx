@@ -2,16 +2,18 @@
 
 import * as React from "react";
 import {
-  Check,
-  Cpu,
   Minus,
-  MonitorPlay,
   Plug,
   RefreshCw,
   ScanLine,
-  TriangleAlert,
   Usb,
 } from "lucide-react";
+import {
+  Check,
+  Cpu,
+  MonitorPlay,
+  TriangleAlert,
+} from "@/components/ui/icons";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { useApp } from "@/components/providers/app-provider";
 import {
@@ -294,8 +296,19 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
         </div>
 
         {showImage ? (
-          <div className="hidden sm:block">
-            <AssetImage name="deviceEvidence" alt="The phone and the PRAMAAN evidence device" maxWidth={240} />
+          <div className="hidden w-[260px] sm:block">
+            <div className="aspect-[3/2] overflow-hidden rounded-2xl border border-line bg-[#EFE7D6]">
+              <AssetImage
+                name="pramaanDevice"
+                alt="The PRAMAAN evidence unit with its load cell, status display and ACQUIRE buttons"
+                rounded={false}
+                fit="cover"
+                sizes="260px"
+              />
+            </div>
+            <p className="mt-2 text-[12px] leading-snug text-fg-dim">
+              Temperature on this unit comes from a potentiometer — a simulated input, not a thermal sensor.
+            </p>
           </div>
         ) : null}
       </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, ArrowDown, GitCommitVertical, Sigma } from "lucide-react";
+import { ArrowDown, GitCommitVertical, Sigma } from "lucide-react";
+import { AlertTriangle } from "@/components/ui/icons";
 import type { ClientStore, EvidenceRecord } from "@/lib/domain/types";
 import { HashChip, Pill, cx } from "@/components/ui/primitives";
 import { RECORD_TYPE_META } from "@/components/ui/status";

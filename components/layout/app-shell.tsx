@@ -4,43 +4,24 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowLeftRight,
-  Bell,
-  BookOpen,
-  Camera,
   CheckCircle2,
   CircleDashed,
   CloudOff,
-  CloudUpload,
-  Cpu,
   Database,
-  FileBadge,
-  FolderOpen,
   Info,
-  LayoutDashboard,
   LogOut,
-  Menu,
-  MonitorPlay,
-  MoreHorizontal,
-  PlayCircle,
   RefreshCw,
-  ShieldCheck,
-  Smartphone,
-  Sparkles,
-  Layers,
-  Train,
-  TriangleAlert,
   Wifi,
   WifiOff,
-  X,
 } from "lucide-react";
+import { CloudUpload, TriangleAlert, X } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { Button, IconContainer, cx } from "@/components/ui/primitives";
-import { EvidenceChainMark } from "@/components/brand/marks";
 import { ConnectionStatus } from "@/features/hardware/connection-status";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { OnboardingProvider, useReplayGuide } from "@/components/onboarding/onboarding";
 import { ASSETS } from "@/lib/assets";
+import { AssetImage } from "@/components/ui/asset-image";
 import { RailIcon, type RailIconName } from "@/components/ui/rail-icon";
 
 type NavItem = {
@@ -112,7 +93,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen" aria-busy="true" aria-label="Loading the evidence store">
         <div className="hidden w-[268px] shrink-0 flex-col border-r border-line bg-ink-850 lg:flex">
-          <div className="h-[92px]" style={{ background: "linear-gradient(160deg, #14532D 0%, #0B3B27 100%)" }} />
+          <div className="h-[84px] border-b border-line" />
           <div className="space-y-2 p-4">
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="h-9 animate-pulse rounded-xl bg-ink-750" />
@@ -120,9 +101,9 @@ function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex-1">
-          <div className="h-[64px] border-b border-line bg-ink-900" />
+          <div className="h-[64px] border-b border-line bg-ink-900 lg:h-[84px]" />
           <div className="mx-auto max-w-[1480px] space-y-5 px-4 py-6 lg:px-8">
-            <div className="h-[190px] animate-pulse rounded-[22px] bg-ink-750" />
+            <div className="h-[280px] animate-pulse rounded-[22px] bg-ink-750" />
             <div className="h-9 w-72 animate-pulse rounded-lg bg-ink-750" />
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {Array.from({ length: 4 }).map((_, i) => (
@@ -170,7 +151,7 @@ function Shell({ children }: { children: React.ReactNode }) {
               <SidebarBrand />
               <button
                 aria-label="Close navigation"
-                className="absolute right-2 top-3 flex h-11 w-11 items-center justify-center rounded-xl text-white/80 hover:bg-white/10 hover:text-white"
+                className="absolute right-2 top-3.5 flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted hover:bg-ink-750 hover:text-fg"
                 onClick={() => setNavOpen(false)}
               >
                 <RailIcon name="close" size={19} />
@@ -205,21 +186,30 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 /* --------------------------------------------------------------- sidebar */
 
+/**
+ * The console's identity: the supplied production-safe crest (a generated
+ * railway-evidence device, not an official emblem) and the product name set
+ * in the display serif, on the same ivory as the page.
+ */
 function SidebarBrand() {
   return (
     <Link
       href="/dashboard"
-      className="relative flex items-center gap-3 overflow-hidden px-5 pb-5 pt-5 text-white"
-      style={{ background: "linear-gradient(160deg, #14532D 0%, #0B3B27 100%)" }}
+      aria-label="Evidence Chain — Railway Evidence Console, V2, SIH 2026. Go to dashboard."
+      className="relative flex h-[84px] shrink-0 items-center gap-3 border-b border-line px-5"
     >
-      {/* A thin brass rule along the bottom edge, the only ornament. */}
-      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[3px] bg-gold/80" />
-      <EvidenceChainMark size={44} tone="gold" />
-      <span className="leading-tight">
-        <span className="block text-[18px] font-bold tracking-tight">Evidence Chain</span>
-        <span className="block text-[12.5px] font-medium text-white/80">Railway Evidence Console</span>
-        <span className="mt-0.5 block text-[11.5px] font-semibold text-gold-soft">V2 • SIH 2026</span>
+      <span className="w-[42px] shrink-0">
+        <AssetImage name="crest" alt="" rounded={false} sizes="42px" priority />
       </span>
+      <span className="min-w-0 leading-tight">
+        <span className="block font-display text-[22px] font-bold leading-none tracking-tight text-brand-deep">
+          Evidence Chain
+        </span>
+        <span className="mt-1 block text-[12.5px] font-medium text-fg-muted">Railway Evidence Console</span>
+        <span className="mt-0.5 block text-[11.5px] font-semibold text-[#8A5F16]">V2 • SIH 2026</span>
+      </span>
+      {/* Brass rule: the one ornament, as on a platform nameboard. */}
+      <span aria-hidden="true" className="absolute inset-x-5 bottom-[-1px] h-[2px] rounded-full bg-gold/70" />
     </Link>
   );
 }
@@ -288,7 +278,7 @@ function SidebarBody({ pathname }: { pathname: string }) {
   );
 
   return (
-    <nav aria-label="Main" className="flex min-h-full flex-col gap-5 px-3.5 pb-5 pt-1">
+    <nav aria-label="Main" className="flex min-h-full flex-col gap-5 px-3.5 pb-5 pt-4">
       <Section title="Main" items={NAV_MAIN} />
       <Section title="System" items={NAV_SYSTEM} />
       <div>
@@ -304,30 +294,27 @@ function SidebarBody({ pathname }: { pathname: string }) {
       </div>
 
       <div className="mt-auto pt-2">
-        {/* Railway context, kept small and at the foot of the navigation. */}
-        <div className="relative overflow-hidden rounded-2xl border border-line">
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            style={{
-              backgroundImage: `url(${ASSETS.railwayLight.src})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center 55%",
-            }}
-          />
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            style={{ background: "linear-gradient(180deg, rgba(255,253,248,0.94) 0%, rgba(255,253,248,0.78) 100%)" }}
-          />
-          <div className="relative px-4 py-3.5">
-            <div className="tricolour mb-2 h-[3px] w-10 rounded-full" />
-            <p className="text-[13px] font-semibold leading-snug text-brand-deep">
-              Safer Journeys
-              <br />
-              Stronger Railways
-            </p>
-            <p className="mt-0.5 text-[12px] leading-snug text-fg-muted">Through trusted evidence</p>
+        {/* Railway context: the supplied footer illustration, cropped to the
+            drawing itself (the file also carries a button and a caption). */}
+        <div className="overflow-hidden rounded-2xl border border-line bg-[#F8F2E6]">
+          <div className="relative aspect-[250/104]">
+            <AssetImage
+              name="railwayFooter"
+              alt=""
+              rounded={false}
+              fit="cover"
+              className="absolute inset-0 h-full object-cover"
+              style={{ objectPosition: "50% 44%" }}
+            />
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-0 top-0 h-8"
+              style={{ background: "linear-gradient(180deg, #F8F2E6 0%, rgba(248,242,230,0) 100%)" }}
+            />
+          </div>
+          <div className="px-4 pb-3 pt-1">
+            <p className="font-display text-[14px] font-semibold leading-snug text-brand-deep">Railway evidence handling</p>
+            <p className="text-[12px] leading-snug text-fg-muted">People • Safety • Integrity</p>
           </div>
         </div>
       </div>
@@ -344,7 +331,7 @@ function SidebarBody({ pathname }: { pathname: string }) {
 function UtilityHeader({ onOpenNav }: { onOpenNav: () => void }) {
   return (
     <header className="sticky top-0 z-[50] border-b border-line bg-ink-900/92 backdrop-blur-md">
-      <div className="mx-auto flex h-[64px] w-full max-w-[1480px] items-center gap-3 px-4 lg:px-8">
+      <div className="mx-auto flex h-[64px] w-full max-w-[1480px] items-center gap-3 px-4 lg:h-[84px] lg:px-8">
         <button
           aria-label="Open navigation"
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-fg-muted hover:text-fg lg:hidden"
@@ -352,13 +339,35 @@ function UtilityHeader({ onOpenNav }: { onOpenNav: () => void }) {
         >
           <RailIcon name="menu" size={20} />
         </button>
-        <GlobalSearch className="min-w-0 flex-1 lg:max-w-[520px]" />
+        {/* On phones and tablets the sidebar is hidden, so the crest rides here. */}
+        <Link href="/dashboard" aria-label="Evidence Chain dashboard" className="hidden w-[30px] shrink-0 sm:block lg:hidden">
+          <AssetImage name="crest" alt="" rounded={false} sizes="30px" />
+        </Link>
+        <RailwayContext />
+        <GlobalSearch className="min-w-0 flex-1 lg:max-w-[460px]" />
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Notifications />
           <SystemStatus />
         </div>
       </div>
     </header>
+  );
+}
+
+/**
+ * The railway line under the brand, as in the reference masthead. Words only:
+ * no emblem, no claim to be an official Indian Railways system.
+ */
+function RailwayContext() {
+  return (
+    <div className="hidden shrink-0 items-center gap-3 text-[12.5px] font-medium text-fg-muted xl:flex">
+      <span aria-hidden="true" className="tricolour h-[3px] w-7 rounded-full" />
+      <span>Safer Railways</span>
+      <span aria-hidden="true" className="h-3.5 w-px bg-line-strong" />
+      <span>Stronger India</span>
+      <span aria-hidden="true" className="h-3.5 w-px bg-line-strong" />
+      <span>Trusted Evidence</span>
+    </div>
   );
 }
 
@@ -393,19 +402,21 @@ function HonestyStrip() {
 }
 
 /**
- * The dashboard masthead.
+ * The dashboard masthead, after the reference: title on the left over a cream
+ * wash, the station in the middle, and a bilingual slogan panel on the right.
  *
- * The supplied railway-hero.jpg is used as delivered; a warm cream wash on the
- * left keeps the live title readable over the artwork's own tagline, and a
- * light amber tint on the right brings the cool sky toward the reference's
- * station-at-sunset warmth without altering the file.
+ * railway-hero.jpg is used as delivered. A sepia filter and amber multiply
+ * bring its cool morning light toward the reference's warm platform, and the
+ * slogan panel sits over the artwork's own top-right badge and signboard so
+ * the console never displays an official railway mark. On phones the image
+ * is positioned to keep the train and leave that corner out of frame.
  */
 function RailwayHero() {
-  const tiles: { href: string; icon: RailIconName; title: string; sub: string }[] = [
-    { href: "/capture/trigger", icon: "capture", title: "Capture", sub: "Collect evidence" },
-    { href: "/cases", icon: "shield", title: "Secure", sub: "Keep it tamper-proof" },
-    { href: "/verification", icon: "verification", title: "Verify", sub: "Validate integrity" },
-    { href: "/handoff", icon: "handoff", title: "Handoff", sub: "Transfer to GRP" },
+  const tiles: { href: string; icon: RailIconName; title: string; sub: string; tint: string }[] = [
+    { href: "/capture/trigger", icon: "capture", title: "Capture", sub: "Collect evidence", tint: "bg-gold-soft text-[#9A5F12]" },
+    { href: "/capture/field-test", icon: "field-test", title: "Field Test", sub: "Record result", tint: "bg-terracotta-soft text-sim" },
+    { href: "/handoff", icon: "handoff", title: "Handoff", sub: "RPF to GRP", tint: "bg-gold-soft text-[#9A5F12]" },
+    { href: "/verification", icon: "verification", title: "Verify", sub: "Check integrity", tint: "bg-brand-soft text-brand-deep" },
   ];
   return (
     <section
@@ -414,56 +425,82 @@ function RailwayHero() {
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0"
+        className="absolute inset-0 bg-[length:auto_100%] bg-[position:77%_70%] bg-no-repeat md:bg-cover md:bg-[position:right_60%]"
         style={{
           backgroundImage: `url(${ASSETS.railwayHero.src})`,
-          backgroundSize: "cover",
-          backgroundPosition: "right 60%",
-          backgroundRepeat: "no-repeat",
+          filter: "sepia(0.32) saturate(0.95) brightness(1.02)",
         }}
       />
       <div
         aria-hidden="true"
         className="absolute inset-0 mix-blend-multiply"
-        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 40%, rgba(236,196,140,0.45) 100%)" }}
+        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 35%, rgba(236,190,128,0.42) 100%)" }}
       />
       <div
         aria-hidden="true"
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(250,245,234,0.98) 0%, rgba(250,245,234,0.95) 38%, rgba(250,245,234,0.55) 60%, rgba(250,245,234,0) 82%)",
+            "linear-gradient(90deg, rgba(250,245,234,0.98) 0%, rgba(250,245,234,0.95) 36%, rgba(250,245,234,0.55) 56%, rgba(250,245,234,0) 74%)",
         }}
       />
-      <div className="relative px-5 py-6 sm:px-7 lg:py-8">
-        <div className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-brand">Evidence Chain V2</div>
-        <h1
-          id="hero-title"
-          className="mt-1.5 max-w-[640px] text-[26px] font-bold leading-[1.12] tracking-tight text-brand-deep sm:text-[32px] lg:text-[38px]"
+
+      <div className="relative flex min-h-[250px] items-stretch lg:min-h-[280px]">
+        <div className="min-w-0 flex-1 px-5 py-6 sm:px-8 lg:py-8">
+          <div className="text-[12.5px] font-bold uppercase tracking-[0.22em] text-brand">Evidence Chain</div>
+          <h1
+            id="hero-title"
+            className="mt-2 max-w-[520px] font-display text-[30px] font-bold leading-[1.06] tracking-tight text-brand-deep sm:text-[38px] lg:text-[44px]"
+          >
+            Railway Evidence Integrity Console
+          </h1>
+          <p className="mt-2.5 font-display text-[17px] font-semibold text-fg sm:text-[19px]">
+            Trusted Evidence. Safer Journeys.
+          </p>
+          <ul className="mt-5 grid max-w-[700px] grid-cols-2 gap-2.5 md:grid-cols-4">
+            {tiles.map((t) => (
+              <li key={t.title}>
+                <Link
+                  href={t.href}
+                  className="hover-lift flex h-full items-center gap-2.5 rounded-2xl border border-white/70 bg-white/90 px-2.5 py-2.5 shadow-chip backdrop-blur-sm hover:shadow-lift"
+                >
+                  <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", t.tint)}>
+                    <RailIcon name={t.icon} size={19} />
+                  </span>
+                  <span className="min-w-0 leading-tight">
+                    <span className="block text-[14px] font-semibold text-fg">{t.title}</span>
+                    <span className="block text-[12px] leading-snug text-fg-muted">{t.sub}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <aside
+          aria-label="Slogan"
+          className="relative hidden w-[240px] shrink-0 flex-col justify-center px-6 text-center md:flex lg:w-[270px]"
+          style={{
+            background:
+              "linear-gradient(90deg, rgba(250,244,232,0) 0%, rgba(250,244,232,0.9) 22%, rgba(250,244,232,0.97) 45%)",
+          }}
         >
-          Railway Evidence Integrity Console
-        </h1>
-        <p className="mt-2 text-[15.5px] font-medium text-fg-muted sm:text-[17px]">
-          Trusted Evidence. Safer Journeys.
-        </p>
-        <ul className="mt-5 grid max-w-[720px] grid-cols-2 gap-2.5 sm:grid-cols-4">
-          {tiles.map((t) => (
-            <li key={t.title}>
-              <Link
-                href={t.href}
-                className="hover-lift flex h-full items-center gap-2.5 rounded-2xl border border-line bg-white/92 px-3 py-2.5 shadow-chip hover:shadow-lift"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-[#855A14]">
-                  <RailIcon name={t.icon} size={19} />
-                </span>
-                <span className="min-w-0 leading-tight">
-                  <span className="block text-[14px] font-semibold text-fg">{t.title}</span>
-                  <span className="block truncate text-[12px] text-fg-muted">{t.sub}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+          <p lang="hi" className="font-deva text-[25px] font-bold leading-[1.35] text-[#7A3B17] lg:text-[28px]">
+            सुरक्षित यात्रा
+            <br />
+            विश्वसनीय प्रमाण
+          </p>
+          <div aria-hidden="true" className="mx-auto mt-3 flex h-[3px] w-28 overflow-hidden rounded-full">
+            <span className="flex-1 bg-[#E07B24]" />
+            <span className="flex-1 bg-[#2E7D52]" />
+          </div>
+          <p className="mt-3 text-[13px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-fg">
+            Safer Railways
+            <br />
+            Stronger India
+          </p>
+          <p className="sr-only">Hindi: Safe journeys, trustworthy evidence.</p>
+        </aside>
       </div>
     </section>
   );
@@ -885,7 +922,7 @@ export function PageHeader({
       <div className="min-w-0">
         {eyebrow ? <div className="label mb-1.5">{eyebrow}</div> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px] lg:text-[36px]">
+          <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px] lg:text-[36px]">
             {title}
           </h1>
           {status}

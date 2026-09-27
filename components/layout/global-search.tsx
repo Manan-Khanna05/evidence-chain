@@ -3,7 +3,14 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { Cpu, FileText, FolderOpen, Search, User, X } from "lucide-react";
+import { FileText } from "lucide-react";
+import {
+  Cpu,
+  FolderOpen,
+  Search,
+  User,
+  X,
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { cx } from "@/components/ui/primitives";
 import { RailIcon } from "@/components/ui/rail-icon";

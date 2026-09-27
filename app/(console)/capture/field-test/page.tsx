@@ -2,15 +2,13 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
+import { Printer, Signature, Thermometer } from "lucide-react";
 import {
   AlertTriangle,
   ArrowLeftRight,
   Check,
   FlaskConical,
-  Printer,
-  Signature,
-  Thermometer,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -183,16 +181,30 @@ function FieldTestCaptureView() {
 
       <CaptureTargetBar />
 
-      <div role="note" className="mt-4 rounded-2xl border-2 border-warn/50 bg-warn/[0.10] px-5 py-4">
-        <div className="flex items-center gap-2.5 text-[16px] font-bold uppercase tracking-[0.05em] text-[#855A14] sm:text-[18px]">
-          <AlertTriangle size={20} className="shrink-0" />
-          {PRESUMPTIVE_NOTICE}
-          <HelpTip term="presumptive" />
+      <div
+        role="note"
+        aria-label={PRESUMPTIVE_NOTICE}
+        className="mt-4 flex gap-4 overflow-hidden rounded-2xl border border-sim/35 bg-terracotta-soft/70 py-4 pl-0 pr-5"
+      >
+        <span aria-hidden="true" className="w-1.5 shrink-0 rounded-r-full bg-sim" />
+        <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-sim shadow-chip">
+          <AlertTriangle size={22} />
+        </span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-[17px] font-bold uppercase tracking-[0.06em] text-[#8E4331] sm:text-[19px]">
+              Presumptive result
+            </span>
+            <HelpTip term="presumptive" />
+          </div>
+          <div className="text-[14px] font-bold uppercase tracking-[0.08em] text-[#9A5F12] sm:text-[15px]">
+            Not a chemical identification
+          </div>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-fg-muted">
+            A colour test screens; it does not identify. Nothing on this screen will record a
+            substance as confirmed, identified or detected. Only a laboratory can identify a substance.
+          </p>
         </div>
-        <p className="mt-1.5 text-[14px] leading-relaxed text-fg-muted">
-          A colour test screens; it does not identify. Nothing on this screen will record a
-          substance as confirmed, identified or detected. Only a laboratory can identify a substance.
-        </p>
       </div>
 
       <div className="mt-4">
@@ -289,11 +301,9 @@ function FieldTestCaptureView() {
                 label="Ambient temperature (°C)"
                 hint={
                   ambientSource === "pramaan"
-                    ? `LIVE • PRAMAAN — source: ${
-                        hw.temperature.source === "potentiometer"
-                          ? "potentiometer (simulated)"
-                          : "thermal camera"
-                      }`
+                    ? hw.temperature.source === "potentiometer"
+                      ? "SIMULATED • PRAMAAN potentiometer — not a thermal sensor"
+                      : "LIVE • PRAMAAN thermal sensor"
                     : "MANUAL — typed by the operator. Optional."
                 }
               >

@@ -4,32 +4,26 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Anchor as AnchorIcon,
-  ArrowLeftRight,
   ArrowRight,
+  Database,
+  FileText,
+  FolderPlus,
+  Repeat,
+  ScanLine,
+  Workflow,
+} from "lucide-react";
+import {
+  Anchor as AnchorIcon,
   BookOpen,
   Camera,
   Check,
-  CircleDashed,
   Clock,
-  CloudUpload,
   Cpu,
-  Database,
   FileBadge,
-  FileText,
-  FlaskConical,
   FolderOpen,
-  FolderPlus,
-  MonitorPlay,
-  Repeat,
-  ScanLine,
-  ShieldCheck,
   TriangleAlert,
-  Wifi,
-  WifiOff,
-  Workflow,
   X,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import {
   Button,
@@ -233,7 +227,12 @@ export default function DashboardPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {now ? (
-            <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13.5px] text-fg-muted">
+            <span className="inline-flex h-10 flex-wrap items-center gap-x-2 rounded-xl border border-line bg-white px-3 text-[13.5px] text-fg-muted">
+              <span className={cx("inline-flex items-center gap-1.5 font-semibold", store.connectivity.online ? "text-[#1F6A43]" : "text-[#855A14]")}>
+                <span className={cx("h-2 w-2 rounded-full", store.connectivity.online ? "bg-ok" : "bg-warn")} />
+                {store.connectivity.online ? "System Online" : "Working Offline"}
+              </span>
+              <span className="text-line-strong">|</span>
               <RailIcon name="calendar" size={16} />
               {now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
               <span className="text-line-strong">|</span>
@@ -657,7 +656,7 @@ export default function DashboardPage() {
         <div className="grid gap-4 px-5 py-5 md:grid-cols-3">
           {(
             [
-              { img: "helpCapture", title: "Capture evidence", body: "Select the case, press ACQUIRE, review, confirm.", href: "/help#capture-trigger" },
+              { img: "helpCapture", title: "Capture evidence", body: "Select the case, press ACQUIRE, review, confirm.", href: "/help#capture" },
               { img: "helpSync", title: "Offline to online", body: "Records wait safely on the device and sync later.", href: "/help#sync" },
               { img: "helpVerify", title: "Verify evidence", body: "One check tells you whether the chain is intact.", href: "/help#verify" },
             ] as { img: AssetKey; title: string; body: string; href: string }[]

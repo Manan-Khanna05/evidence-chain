@@ -62,12 +62,14 @@ export function RailIcon({
   size = 20,
   strokeWidth = 1.8,
   className,
+  style,
   title,
 }: {
   name: RailIconName;
   size?: number;
   strokeWidth?: number;
   className?: string;
+  style?: React.CSSProperties;
   /** Accessible name. Omit for decorative icons next to a text label. */
   title?: string;
 }) {
@@ -83,6 +85,7 @@ export function RailIcon({
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={style}
       role={title ? "img" : undefined}
       aria-label={title}
       aria-hidden={title ? undefined : true}

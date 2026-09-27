@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Check, X } from "@/components/ui/icons";
 import { AssetImage } from "@/components/ui/asset-image";
 import { Button, cx } from "@/components/ui/primitives";
 import type { AssetKey } from "@/lib/assets";
@@ -11,10 +12,10 @@ const KEY = "evidence-chain.onboarding.v1";
 
 const STEPS: { image: AssetKey; alt: string; title: string; body: string }[] = [
   {
-    image: "deviceEvidence",
-    alt: "Phone showing Evidence Chain connected to the evidence device",
-    title: "Connect your device",
-    body: "Turn on the evidence device. The phone connects by itself — look for “Device Connected” at the top of the screen. No settings to change.",
+    image: "pramaanDevice",
+    alt: "The PRAMAAN evidence unit with its load cell, status display and ACQUIRE buttons",
+    title: "Connect PRAMAAN",
+    body: "Plug PRAMAAN in with its USB cable and press Connect PRAMAAN. Once it identifies itself you will see PRAMAAN ONLINE, with each reading labelled LIVE, SIMULATED or UNAVAILABLE. Capture still works without it.",
   },
   {
     image: "helpCapture",

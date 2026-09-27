@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Activity, Check, Minus, Thermometer, Weight } from "lucide-react";
+import { Activity, Gauge, Thermometer, Weight } from "lucide-react";
 import { useHardware } from "@/components/providers/hardware-provider";
-import { Panel, PanelHead, Pill, cx } from "@/components/ui/primitives";
+import { Panel, PanelHead, cx } from "@/components/ui/primitives";
+import { SourceBadge } from "@/components/ui/badges";
 import { LedMirror } from "@/features/hardware/widgets";
 
 /**
@@ -47,11 +48,12 @@ export function LiveSensors() {
           value={weight.value === null ? null : `${weight.value.toFixed(1)} g`}
           available={connected && weight.value !== null}
           sourceLabel={weight.source === "load_cell" ? "Load Cell" : null}
-          caption={connected && weight.value !== null ? "Live" : has("load_cell") ? "Waiting for a reading" : "Load cell unavailable"}
+          caption={connected && weight.value !== null ? "Measured by the load cell" : has("load_cell") ? "Waiting for a reading" : "Load cell unavailable"}
           tone="brand"
+          demo={hw.transport === "demo"}
         />
         <Reading
-          icon={<Thermometer size={18} />}
+          icon={temperature.source === "potentiometer" ? <Gauge size={18} /> : <Thermometer size={18} />}
           label="Temperature"
           value={temperature.value === null ? null : `${temperature.value.toFixed(1)} °C`}
           available={connected && temperature.value !== null}
@@ -64,7 +66,7 @@ export function LiveSensors() {
           }
           caption={
             temperature.source === "potentiometer"
-              ? "Simulated temperature input"
+              ? "Simulated input — not a thermal sensor"
               : temperature.source === "thermal_camera"
                 ? "Measured temperature"
                 : has("potentiometer")
@@ -72,6 +74,8 @@ export function LiveSensors() {
                   : "Temperature input unavailable"
           }
           tone="warn"
+          simulated={temperature.source === "potentiometer"}
+          demo={hw.transport === "demo"}
         />
         <Reading
           icon={<Thermometer size={18} />}
@@ -99,6 +103,8 @@ function Reading({
   sourceLabel,
   caption,
   tone,
+  simulated = false,
+  demo = false,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -107,6 +113,9 @@ function Reading({
   sourceLabel: string | null;
   caption: string;
   tone: "brand" | "warn" | "neutral";
+  /** A stand-in input (the potentiometer), never a measurement. */
+  simulated?: boolean;
+  demo?: boolean;
 }) {
   const ground = {
     brand: "border-brand/20 bg-brand/[0.05]",
@@ -130,15 +139,10 @@ function Reading({
         {available && value ? value : "—"}
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {sourceLabel ? (
-          <Pill tone={available ? "ok" : "neutral"} icon={available ? <Check size={11} /> : <Minus size={11} />}>
-            {sourceLabel}
-          </Pill>
-        ) : (
-          <Pill tone="neutral" icon={<Minus size={11} />}>
-            Unavailable
-          </Pill>
-        )}
+        <SourceBadge
+          state={!available ? "UNAVAILABLE" : demo ? "DEMO" : simulated ? "SIMULATED" : "LIVE"}
+          source={available && sourceLabel ? sourceLabel : undefined}
+        />
       </div>
       <p className="mt-2 text-[13px] leading-snug text-fg-muted">{caption}</p>
     </div>

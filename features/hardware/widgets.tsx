@@ -3,19 +3,19 @@
 import * as React from "react";
 import {
   Activity,
-  ArrowRight,
-  Check,
   CircleDashed,
-  Clock,
-  Cpu,
   Radio,
   Thermometer,
-  TriangleAlert,
   Usb,
   Wifi,
   WifiOff,
-  X,
 } from "lucide-react";
+import {
+  Check,
+  Clock,
+  Cpu,
+  X,
+} from "@/components/ui/icons";
 import { Pill, cx, type Tone } from "@/components/ui/primitives";
 import { linkLabel, useHardware } from "@/components/providers/hardware-provider";
 import type { LinkState, TransportKind } from "@/lib/hardware/protocol";

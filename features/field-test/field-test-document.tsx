@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, BadgeCheck } from "lucide-react";
+import { BadgeCheck } from "lucide-react";
+import { AlertTriangle } from "@/components/ui/icons";
 import type { ClientStore, EvidenceRecord, FieldTestPayload } from "@/lib/domain/types";
 import { fmtDate, fmtInterval, fmtTime } from "@/lib/format";
 import { intervalFor } from "@/lib/domain/status";

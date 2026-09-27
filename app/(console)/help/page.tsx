@@ -2,7 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Eye, ListChecks, PlayCircle, Route } from "lucide-react";
+import {
+  ArrowRight,
+  Eye,
+  ListChecks,
+  Route,
+} from "lucide-react";
+import { PlayCircle } from "@/components/ui/icons";
 import { PageHeader } from "@/components/layout/app-shell";
 import { Button, Panel, cx } from "@/components/ui/primitives";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -24,8 +30,8 @@ const SECTIONS: Section[] = [
   {
     id: "getting-started",
     title: "Getting Started",
-    image: "railwayBranding",
-    alt: "Evidence Chain — Railway Evidence Integrity Console: capture, secure, verify, handoff",
+    image: "evidenceFlow",
+    alt: "Evidence flow: capture, secure on the device, sync, verify, hand over",
     todo: [
       "Sign in with your officer ID.",
       "Look at the top of the screen: it shows whether you are online and whether the evidence device is connected.",
@@ -36,36 +42,22 @@ const SECTIONS: Section[] = [
     link: { href: "/dashboard", label: "Open Dashboard" },
   },
   {
-    id: "connect-device",
-    title: "Connect Device",
-    image: "deviceEvidence",
-    alt: "The phone showing Connected next to the RPF evidence device",
-    todo: [
-      "Switch the evidence device on (connect the power bank).",
-      "Keep it near the phone. It connects by itself.",
-      "If asked, join the “EvidenceChain” Wi-Fi, or plug in the USB cable.",
-    ],
-    see: "“● Device Connected” at the top, and a green LED on the device.",
-    next: "The device is ready. Press ACQUIRE when you are ready to take a reading.",
-    link: { href: "/hardware", label: "Open Hardware" },
-  },
-  {
-    id: "start-case",
-    title: "Start a Case",
+    id: "new-case",
+    title: "New Case",
     image: "helpCapture",
     alt: "Capture evidence steps: select the case, press Acquire, wait, review, save",
     todo: [
-      "Open Capture.",
-      "Choose “New case” for a new stop, or pick an existing case to add to it.",
-      "Enter where it happened — platform, train or location reference.",
+      "Open Cases and press Create New Case.",
+      "Enter where it happened — platform, train or location reference. The case number is generated for you.",
+      "Press Create Case. It opens in its own workspace.",
     ],
-    see: "The step guide at the top, with Select Case highlighted.",
-    next: "Record what caused the stop in the same screen.",
-    link: { href: "/capture/trigger", label: "Open Capture" },
+    see: "NEW CASE and “Chain empty” beside the case number. Its first record will be position 1 of its own chain.",
+    next: "Capture the trigger, then the field test, from the case workspace.",
+    link: { href: "/cases", label: "Open Cases" },
   },
   {
     id: "existing-case",
-    title: "Opening an Existing Case",
+    title: "Existing Case",
     image: "evidenceFlow",
     alt: "Evidence flow from capture to certificate",
     todo: [
@@ -78,8 +70,8 @@ const SECTIONS: Section[] = [
     link: { href: "/cases", label: "Open Cases" },
   },
   {
-    id: "capture-trigger",
-    title: "Capture Trigger",
+    id: "capture",
+    title: "Capture",
     image: "helpCapture",
     alt: "An officer pressing Acquire on the evidence device",
     todo: [
@@ -89,20 +81,6 @@ const SECTIONS: Section[] = [
     ],
     see: "The reading appears with a “Mock sensor” or device label — you never type it.",
     next: "Review everything, then Sign and save.",
-  },
-  {
-    id: "field-test",
-    title: "Field Test",
-    image: "deviceEvidence",
-    alt: "Evidence device with a sample jar and swab",
-    todo: [
-      "Open Field Test and select the case.",
-      "Pick the kit, lot and expiry, and the colour you saw — all from lists.",
-      "Choose the result: presumptive positive, presumptive negative, or inconclusive.",
-    ],
-    see: "A large notice: PRESUMPTIVE RESULT — NOT A CHEMICAL IDENTIFICATION.",
-    next: "Only a laboratory can identify a substance. The record says so on its face.",
-    link: { href: "/capture/field-test", label: "Open Field Test" },
   },
   {
     id: "review-save",
@@ -118,8 +96,36 @@ const SECTIONS: Section[] = [
     next: "The record is signed and chained. Nothing can change it later without verification noticing.",
   },
   {
+    id: "pramaan",
+    title: "PRAMAAN",
+    image: "pramaanDevice",
+    alt: "The PRAMAAN evidence unit: load cell, status display, indicator lights and ACQUIRE buttons",
+    todo: [
+      "Plug PRAMAAN into the laptop with its USB cable. Use Chrome or Edge.",
+      "Press Connect PRAMAAN and choose its serial port.",
+      "Wait for the handshake: the console only says connected once the device has identified itself.",
+    ],
+    see: "PRAMAAN ONLINE, its device ID and firmware, Weight “LIVE • Load Cell” and Temperature “SIMULATED • Potentiometer”.",
+    next: "Readings stream live but never become evidence by themselves. Press ACQUIRE, review, and confirm to save a record.",
+    link: { href: "/hardware", label: "Open PRAMAAN" },
+  },
+  {
+    id: "field-test",
+    title: "Field Test",
+    image: "helpCapture",
+    alt: "Capture steps: select the case, press Acquire, review, save",
+    todo: [
+      "Open Field Test and select the case.",
+      "Pick the kit, lot and expiry, and the colour you saw — all from lists.",
+      "Choose the result: presumptive positive, presumptive negative, or inconclusive.",
+    ],
+    see: "A large notice: PRESUMPTIVE RESULT — NOT A CHEMICAL IDENTIFICATION.",
+    next: "Only a laboratory can identify a substance. The record says so on its face.",
+    link: { href: "/capture/field-test", label: "Open Field Test" },
+  },
+  {
     id: "offline",
-    title: "Offline Mode",
+    title: "Offline",
     image: "helpSync",
     alt: "Laptop showing Saved Offline with two records queued",
     todo: [
@@ -145,6 +151,16 @@ const SECTIONS: Section[] = [
     link: { href: "/queue", label: "Open Pending Sync" },
   },
   {
+    id: "verify",
+    title: "Verification",
+    image: "helpVerify",
+    alt: "Laptop showing Evidence Verified with four checks passed",
+    todo: ["Open Verification.", "Pick a case, or the whole log.", "Read the answer."],
+    see: "“Evidence chain verified” with green checks — or “Integrity attention”, naming the changed record.",
+    next: "If it needs attention, open that record. Technical Details show exactly which check failed.",
+    link: { href: "/verification", label: "Open Verification" },
+  },
+  {
     id: "handoff",
     title: "Handoff",
     image: "handoff",
@@ -156,16 +172,6 @@ const SECTIONS: Section[] = [
     see: "The handoff document with both signatures, or a clear mismatch if counts or seals differ.",
     next: "A receipt cannot exist without its transfer. The case is ready for its certificate.",
     link: { href: "/handoff", label: "Open Handoff" },
-  },
-  {
-    id: "verify",
-    title: "Verify",
-    image: "helpVerify",
-    alt: "Laptop showing Evidence Verified with four checks passed",
-    todo: ["Open Verification.", "Pick a case, or the whole log.", "Read the answer."],
-    see: "“Is this evidence chain intact?” — Yes, with green checks; or No, naming the changed record.",
-    next: "If it says No, open that record. Technical Details show exactly which check failed.",
-    link: { href: "/verification", label: "Open Verification" },
   },
   {
     id: "certificate",
@@ -181,10 +187,38 @@ const SECTIONS: Section[] = [
     link: { href: "/certificate", label: "Open Certificates" },
   },
   {
+    id: "tte",
+    title: "TTE Demo",
+    image: "railwayLight",
+    alt: "A railway platform in soft light",
+    todo: [
+      "Open TTE Screening. Everything there is a demonstration — there is no TTE device.",
+      "Select a seat in the coach to see its synthetic screening state.",
+      "If a cue warrants it, choose the cue and the access, then flag it for RPF.",
+    ],
+    see: "A DEMO MODE badge on every screen, and “SCREENING CUE — NOT A DETECTION”.",
+    next: "A flag becomes a signed record in a demo case, referred to RPF. It is not a detection, and “screened” only means someone looked.",
+    link: { href: "/tte", label: "Open TTE Screening" },
+  },
+  {
+    id: "diagnostics",
+    title: "Diagnostics",
+    image: "pramaanDevice",
+    alt: "The PRAMAAN evidence unit",
+    todo: [
+      "Open Device Status and switch to Diagnostics.",
+      "Developer diagnostics lists every line the device sent, and whether it was understood.",
+      "Use Copy lines if you need to send them to someone.",
+    ],
+    see: "Green lines were understood; amber ones were not. Rejections say why.",
+    next: "If nothing arrives, the console tells you whether the port is silent or the firmware is different.",
+    link: { href: "/settings/device", label: "Open Diagnostics" },
+  },
+  {
     id: "device-status",
     title: "Device Status",
-    image: "deviceEvidence",
-    alt: "Phone and evidence device with status LEDs",
+    image: "pramaanDevice",
+    alt: "The PRAMAAN evidence unit with its status display and indicator lights",
     todo: [
       "Look at the Device Status card on the Dashboard.",
       "Green: ready. Amber: taking a reading or waiting for you. Red: a fault.",
@@ -197,7 +231,7 @@ const SECTIONS: Section[] = [
     id: "troubleshooting",
     title: "Troubleshooting",
     image: "railwayLight",
-    alt: "Railway platform with an Indian Railways sign",
+    alt: "A railway platform in soft light",
     todo: [
       "Device offline? Check the power bank, keep the device close, press Try again.",
       "Still offline? Use the USB cable, or carry on without the device.",
@@ -206,34 +240,6 @@ const SECTIONS: Section[] = [
     ],
     see: "Plain messages that say what to do next, never raw error codes.",
     next: "Nothing you capture is lost while you troubleshoot.",
-  },
-  {
-    id: "tte",
-    title: "TTE Demo Mode",
-    image: "railwayLight",
-    alt: "Railway platform with an Indian Railways sign",
-    todo: [
-      "Open TTE Screening. Everything there is a demonstration — there is no TTE device.",
-      "Select a seat in the coach to see its synthetic screening state.",
-      "If a cue warrants it, choose the cue and the access, then flag it for RPF.",
-    ],
-    see: "A DEMO MODE badge on every screen, and “SCREENING CUE — NOT A DETECTION”.",
-    next: "A flag becomes a signed record in a demo case, referred to RPF. It is not a detection, and “screened” never means chemically cleared.",
-    link: { href: "/tte", label: "Open TTE Screening" },
-  },
-  {
-    id: "diagnostics",
-    title: "Device Diagnostics",
-    image: "deviceEvidence",
-    alt: "Phone and PRAMAAN device with status LEDs",
-    todo: [
-      "Open PRAMAAN and switch to Technical View.",
-      "Developer diagnostics lists every line the device sent, and whether it was understood.",
-      "Use Copy lines if you need to send them to someone.",
-    ],
-    see: "Green lines were understood; amber ones were not. Rejections say why.",
-    next: "If nothing arrives, the console tells you whether the port is silent or the firmware is different.",
-    link: { href: "/hardware", label: "Open PRAMAAN" },
   },
   {
     id: "statuses",
@@ -292,6 +298,31 @@ export default function HelpPage() {
         }
       />
 
+      {/* The three things every officer does, as pictures first. */}
+      <section aria-label="The guide at a glance" className="mb-6 grid gap-3 md:grid-cols-3">
+        {(
+          [
+            { href: "#capture", image: "helpCapture", title: "Capture evidence", body: "Select the case, press ACQUIRE, review, confirm." },
+            { href: "#sync", image: "helpSync", title: "Offline to online", body: "Records wait safely on the device and sync later." },
+            { href: "#verify", image: "helpVerify", title: "Verify evidence", body: "One check tells you whether the chain is intact." },
+          ] as { href: string; image: AssetKey; title: string; body: string }[]
+        ).map((c) => (
+          <a
+            key={c.href}
+            href={c.href}
+            className="hover-lift flex items-center gap-4 rounded-[20px] border border-line bg-white p-3 shadow-chip hover:shadow-lift"
+          >
+            <span className="w-[120px] shrink-0 overflow-hidden rounded-xl bg-ink-750">
+              <AssetImage name={c.image} alt="" rounded={false} />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-[17px] font-bold text-brand-deep">{c.title}</span>
+              <span className="mt-0.5 block text-[13.5px] leading-snug text-fg-muted">{c.body}</span>
+            </span>
+          </a>
+        ))}
+      </section>
+
       <nav aria-label="Help sections" className="mb-6">
         <ol className="flex flex-wrap gap-2">
           {SECTIONS.map((s, i) => (
@@ -315,20 +346,24 @@ export default function HelpPage() {
             <div
               className={cx(
                 "grid gap-6 p-5 lg:p-7",
-                s.image === "railwayBranding"
-                  ? "grid-cols-1"
-                  : "items-start md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]",
+                "items-start md:grid-cols-[minmax(0,340px)_minmax(0,1fr)]",
               )}
             >
-              <div className={cx("mx-auto w-full", s.image === "railwayBranding" ? "max-w-[1100px]" : "max-w-[340px]")}>
-                <AssetImage name={s.image} alt={s.alt} priority={i === 0} />
+              <div className="mx-auto w-full max-w-[340px]">
+                <AssetImage
+                  name={s.image}
+                  alt={s.alt}
+                  priority={i === 0}
+                  sizes="340px"
+                  className={s.image === "pramaanDevice" ? "border border-line" : undefined}
+                />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-3">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white">
                     {i + 1}
                   </span>
-                  <h2 className="text-[22px] font-semibold tracking-tight text-brand-deep">{s.title}</h2>
+                  <h2 className="font-display text-[23px] font-bold tracking-tight text-brand-deep">{s.title}</h2>
                 </div>
 
                 <div className="mt-5 grid gap-4 lg:grid-cols-3">

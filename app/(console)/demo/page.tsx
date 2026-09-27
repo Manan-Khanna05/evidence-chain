@@ -4,20 +4,22 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Anchor as AnchorIcon,
-  ArrowLeftRight,
   CheckCircle2,
   CloudOff,
   Download,
-  FileBadge,
-  FlaskConical,
-  MonitorPlay,
   PenLine,
   Radio,
   RotateCcw,
   Siren,
-  UploadCloud,
 } from "lucide-react";
+import {
+  Anchor as AnchorIcon,
+  ArrowLeftRight,
+  FileBadge,
+  FlaskConical,
+  MonitorPlay,
+  UploadCloud,
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import { DemoScenarios } from "@/features/demo/scenarios";

@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Bug, Check, Copy } from "lucide-react";
+import { Bug, Copy } from "lucide-react";
+import { Check } from "@/components/ui/icons";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { Button, KeyValue, Panel, PanelHead, cx } from "@/components/ui/primitives";
 

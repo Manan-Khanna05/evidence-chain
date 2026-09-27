@@ -5,14 +5,16 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
-  Check,
   Download,
-  FileBadge,
   Info,
   Printer,
+} from "lucide-react";
+import {
+  Check,
+  FileBadge,
   ShieldCheck,
   X,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {

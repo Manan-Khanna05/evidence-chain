@@ -3,14 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
-  Check,
   CircleDashed,
-  FlaskConical,
   Radio,
   RefreshCw,
   Signature,
 } from "lucide-react";
+import { Check, FlaskConical } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {

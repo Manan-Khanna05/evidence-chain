@@ -2,18 +2,20 @@
 
 import * as React from "react";
 import {
-  Anchor as AnchorIcon,
-  ArrowLeftRight,
-  Check,
   CircleDashed,
-  FileBadge,
-  FlaskConical,
   ListChecks,
   Radio,
   Signature,
+} from "lucide-react";
+import {
+  Anchor as AnchorIcon,
+  ArrowLeftRight,
+  Check,
+  FileBadge,
+  FlaskConical,
   UploadCloud,
   X,
-} from "lucide-react";
+} from "@/components/ui/icons";
 import type { ClientStore, EvidenceRecord } from "@/lib/domain/types";
 import type { CaseSummary } from "@/lib/domain/status";
 import { fmtInterval, fmtTime } from "@/lib/format";

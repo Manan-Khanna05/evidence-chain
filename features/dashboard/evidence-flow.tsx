@@ -2,19 +2,21 @@
 
 import * as React from "react";
 import {
-  Anchor,
   ArrowRight,
-  Camera,
   CheckCircle2,
   Circle,
-  CloudUpload,
   Database,
   FileText,
-  FlaskConical,
   PenLine,
   Scale,
   Repeat,
 } from "lucide-react";
+import {
+  Anchor,
+  Camera,
+  CloudUpload,
+  FlaskConical,
+} from "@/components/ui/icons";
 import { cx } from "@/components/ui/primitives";
 
 export type FlowState = "done" | "active" | "pending" | "failed";

@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Minus, TriangleAlert, X } from "lucide-react";
+import { ArrowRight, Gauge, Minus, Thermometer, Weight } from "lucide-react";
+import { Check, TriangleAlert, X } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { connectionKind, useHardware } from "@/components/providers/hardware-provider";
 import { Button, ButtonLink, Panel, cx } from "@/components/ui/primitives";
@@ -79,14 +80,8 @@ export function QuickActionTile({
       <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-chip", t.well)}>
         <RailIcon name={icon} size={24} />
       </span>
-      <span className="relative min-w-0">
-        <span className="flex items-center gap-1.5 text-[16px] font-semibold text-fg sm:text-[17px]">
-          {title}
-          <ArrowRight
-            size={16}
-            className="text-fg-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-brand"
-          />
-        </span>
+      <span className="relative min-w-0 flex-1">
+        <span className="block text-[16px] font-semibold leading-snug text-fg sm:text-[17px]">{title}</span>
         <span className="mt-0.5 block text-[13.5px] leading-snug text-fg-muted">{body}</span>
         {badge ? (
           <span
@@ -101,6 +96,11 @@ export function QuickActionTile({
           </span>
         ) : null}
       </span>
+      <RailIcon
+        name="chevron-right"
+        size={20}
+        className="relative shrink-0 text-fg-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-brand"
+      />
     </Link>
   );
 }
@@ -200,9 +200,15 @@ export function PramaanCard() {
         }
         right={<ConnectionStatus size="sm" />}
       />
-      <div className="grid flex-1 gap-4 px-5 py-4 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)]">
-        <div className="mx-auto w-full max-w-[300px] overflow-hidden rounded-2xl border border-line bg-ink-750 sm:max-w-none">
-          <AssetImage name="deviceEvidence" alt="The PRAMAAN evidence device beside a phone" rounded={false} />
+      <div className="grid gap-4 px-5 py-4 sm:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+        <div className="mx-auto aspect-[3/2] w-full max-w-[320px] overflow-hidden rounded-2xl border border-line bg-[#EFE7D6] sm:max-w-none">
+          <AssetImage
+            name="pramaanDevice"
+            alt="The PRAMAAN evidence unit: load cell, status display, indicator lights and ACQUIRE buttons, with a phone mount"
+            rounded={false}
+            fit="cover"
+            sizes="(min-width: 1280px) 260px, (min-width: 640px) 45vw, 320px"
+          />
         </div>
         <dl className="grid grid-cols-1 content-start gap-2.5 text-[13px]">
           {[
@@ -219,19 +225,26 @@ export function PramaanCard() {
         </dl>
       </div>
 
-      <div className="grid gap-3 px-5 pb-4 sm:grid-cols-2">
-        <div className="rounded-2xl border border-line bg-white px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-1.5">
-            <span className="text-[12.5px] font-medium text-fg-muted">Weight</span>
-            <SourceBadge state={weightState} source={weightState === "UNAVAILABLE" ? undefined : "Load Cell"} />
-          </div>
-          <div className={cx("mt-1.5 text-[26px] font-bold leading-none tabular-nums", weightState === "UNAVAILABLE" ? "text-fg-dim" : "text-fg")}>
-            {weightState !== "UNAVAILABLE" && hw.weight.value !== null ? `${hw.weight.value.toFixed(1)} g` : "—"}
-          </div>
-        </div>
-        <div className="rounded-2xl border border-line bg-white px-4 py-3">
-          <div className="flex flex-wrap items-center justify-between gap-1.5">
-            <span className="text-[12.5px] font-medium text-fg-muted">Temperature</span>
+      <div className="grid gap-3 px-5 pb-4 sm:grid-cols-2 xl:grid-cols-1 min-[1600px]:grid-cols-2">
+        <ReadingTile
+          icon={<Weight size={18} />}
+          label={weightState === "UNAVAILABLE" ? "Weight" : "Weight (Load Cell)"}
+          value={weightState !== "UNAVAILABLE" && hw.weight.value !== null ? `${hw.weight.value.toFixed(1)} g` : "—"}
+          state={weightState}
+          badge={<SourceBadge state={weightState} source={weightState === "UNAVAILABLE" ? undefined : "Load Cell"} />}
+        />
+        <ReadingTile
+          icon={hw.temperature.source === "potentiometer" ? <Gauge size={18} /> : <Thermometer size={18} />}
+          label={
+            tempState === "UNAVAILABLE"
+              ? "Temperature"
+              : hw.temperature.source === "potentiometer"
+                ? "Temperature (Potentiometer)"
+                : "Temperature (Thermal)"
+          }
+          value={tempState !== "UNAVAILABLE" && hw.temperature.value !== null ? `${hw.temperature.value.toFixed(1)} °C` : "—"}
+          state={tempState}
+          badge={
             <SourceBadge
               state={tempState}
               source={
@@ -242,11 +255,13 @@ export function PramaanCard() {
                     : "Thermal"
               }
             />
-          </div>
-          <div className={cx("mt-1.5 text-[26px] font-bold leading-none tabular-nums", tempState === "UNAVAILABLE" ? "text-fg-dim" : "text-fg")}>
-            {tempState !== "UNAVAILABLE" && hw.temperature.value !== null ? `${hw.temperature.value.toFixed(1)} °C` : "—"}
-          </div>
-        </div>
+          }
+          note={
+            tempState === "SIMULATED"
+              ? "Source: potentiometer — not a thermal sensor"
+              : undefined
+          }
+        />
       </div>
 
       <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-line px-5 py-3.5">
@@ -276,6 +291,56 @@ export function PramaanCard() {
         </span>
       </div>
     </Panel>
+  );
+}
+
+/**
+ * One PRAMAAN reading. The tint follows the source, never the value: sage for a
+ * live measurement, terracotta for a simulated input, plain for unavailable.
+ */
+function ReadingTile({
+  icon,
+  label,
+  value,
+  state,
+  badge,
+  note,
+}: {
+  /** No weight or dial exists in the supplied set; these match its stroke. */
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  state: SourceState;
+  badge: React.ReactNode;
+  note?: string;
+}) {
+  const tone =
+    state === "LIVE"
+      ? "border-ok/20 bg-[#EEF3EC]"
+      : state === "SIMULATED" || state === "DEMO"
+        ? "border-sim/20 bg-terracotta-soft/60"
+        : "border-line bg-white";
+  return (
+    <div className={cx("min-w-0 rounded-2xl border px-3.5 py-3", tone)}>
+      <div className="flex min-w-0 items-start gap-3">
+        <span
+          className={cx(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+            state === "LIVE" ? "bg-white text-brand" : state === "UNAVAILABLE" ? "bg-ink-750 text-fg-dim" : "bg-white text-sim",
+          )}
+        >
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[12.5px] font-medium leading-snug text-fg-muted">{label}</div>
+          <div className={cx("mt-1 text-[24px] font-bold leading-none tabular-nums", state === "UNAVAILABLE" ? "text-fg-dim" : "text-fg")}>
+            {value}
+          </div>
+        </div>
+      </div>
+      <div className="mt-2.5">{badge}</div>
+      {note ? <div className="mt-1.5 text-[11.5px] leading-snug text-fg-muted">{note}</div> : null}
+    </div>
   );
 }
 

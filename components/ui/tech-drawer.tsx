@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { createPortal } from "react-dom";
-import { Code2, X } from "lucide-react";
+import { Code2 } from "lucide-react";
+import { X } from "@/components/ui/icons";
 import { Button, cx } from "@/components/ui/primitives";
 
 /**

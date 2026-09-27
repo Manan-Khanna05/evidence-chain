@@ -2,18 +2,20 @@
 
 import * as React from "react";
 import {
-  Check,
   CircleDot,
-  Cpu,
   Gauge,
   Lightbulb,
   MonitorSmartphone,
   MousePointerClick,
-  Smartphone,
   Thermometer,
-  TriangleAlert,
   Weight,
 } from "lucide-react";
+import {
+  Check,
+  Cpu,
+  Smartphone,
+  TriangleAlert,
+} from "@/components/ui/icons";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { Panel, PanelHead, Pill, cx } from "@/components/ui/primitives";
 import { AssetImage } from "@/components/ui/asset-image";
@@ -145,7 +147,13 @@ export function HardwareGuide() {
       />
       <div className="grid gap-5 p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
         <div className="min-w-0">
-          <AssetImage name="deviceEvidence" alt="The phone and the PRAMAAN device with status LEDs and ACQUIRE button" maxWidth={386} />
+          <AssetImage
+            name="pramaanDevice"
+            alt="The PRAMAAN evidence unit: load cell on the left, status display, amber and green indicator lights, ACQUIRE and control buttons, and a phone mount"
+            sizes="(min-width: 1024px) 460px, 92vw"
+            maxWidth={560}
+            className="border border-line"
+          />
           <div role="tablist" aria-label="Hardware components" className="mt-4 grid grid-cols-2 gap-2">
             {PARTS.map((p) => {
               const ok = healthOf(p);

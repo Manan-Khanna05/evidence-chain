@@ -2,10 +2,7 @@
 
 import * as React from "react";
 import {
-  AlertTriangle,
-  Check,
   CircleDashed,
-  MonitorPlay,
   Plug,
   RefreshCw,
   RotateCcw,
@@ -15,6 +12,7 @@ import {
   Weight,
   Wifi,
 } from "lucide-react";
+import { AlertTriangle, Check, MonitorPlay } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { useHardware } from "@/components/providers/hardware-provider";
 import { PageHeader } from "@/components/layout/app-shell";
@@ -63,7 +61,12 @@ export default function OperatorPage() {
         <Panel className="mx-auto mb-4 w-full max-w-[880px] overflow-hidden">
           <div className="grid items-center gap-5 p-5 sm:grid-cols-[auto_minmax(0,1fr)]">
             <div className="mx-auto w-full max-w-[260px] sm:w-[220px]">
-              <AssetImage name="deviceEvidence" alt="The phone and the PRAMAAN evidence device" />
+              <AssetImage
+                name="pramaanDevice"
+                alt="The PRAMAAN evidence unit with its load cell, status display and ACQUIRE buttons"
+                sizes="(min-width: 640px) 220px, 260px"
+                className="border border-line"
+              />
             </div>
             <div>
               <h2 className="text-[20px] font-semibold text-fg">

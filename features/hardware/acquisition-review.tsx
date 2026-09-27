@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { AlertTriangle, Check, Cpu, Thermometer, TriangleAlert, Weight, X } from "lucide-react";
+import { Thermometer, Weight } from "lucide-react";
+import {
+  AlertTriangle,
+  Check,
+  Cpu,
+  TriangleAlert,
+  X,
+} from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { useHardware } from "@/components/providers/hardware-provider";
 import {

@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, CircleDashed, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, CircleDashed, RefreshCw } from "lucide-react";
+import { Check, X } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { Button, ButtonLink, cx } from "@/components/ui/primitives";
 import { BrandLockup } from "@/components/brand/marks";

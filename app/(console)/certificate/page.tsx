@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight, FileBadge, Info } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
+import { FileBadge } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
 import {
@@ -48,6 +49,7 @@ export default function CertificatesPage() {
           />
           {store.certificates.length === 0 ? (
             <EmptyState
+                scene
               icon={<FileBadge size={22} />}
               title="No certificate has been generated"
               body="A certificate needs at least one anchored record and a verified two-party handoff, so the hash it certifies is bounded in time and complete."
