@@ -825,6 +825,7 @@ export async function buildSeed(): Promise<StoreShape> {
     sensor_cursor: 0,
     demo_device_role: "rpf",
     tsa_authorities,
+    audit: [],
   };
 
   // --- certificate for the flagship case ----------------------------------

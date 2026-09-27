@@ -338,6 +338,37 @@ export interface TamperEntry {
   note: string;
 }
 
+/**
+ * An operational audit event.
+ *
+ * This is NOT evidence. It records that someone used the application — opened
+ * a case, ran a sync, generated a certificate — so operators and maintainers
+ * can see what the system did. It is never signed, never chained, never part
+ * of a case chain, and never shown as a record in a case timeline.
+ */
+export interface AuditEvent {
+  audit_id: string;
+  /** Server clock. Honest about being a server clock, not trusted time. */
+  at: string;
+  category:
+    | "CASE"
+    | "EVIDENCE"
+    | "SYNC"
+    | "VERIFICATION"
+    | "HANDOFF"
+    | "CERTIFICATE"
+    | "DEVICE"
+    | "DEMO";
+  action: string;
+  /** Plain sentence an operator can read. */
+  summary: string;
+  officer_id: string | null;
+  case_ref: string | null;
+  record_id: string | null;
+  /** True for anything produced by demo controls or demo hardware. */
+  demo: boolean;
+}
+
 export interface StoreShape {
   version: number;
   seeded_at: string;
@@ -359,6 +390,8 @@ export interface StoreShape {
    * surface says "SIMULATED TSA".
    */
   tsa_authorities: TsaAuthority[];
+  /** Operational audit trail. Separate from evidence, capped in length. */
+  audit?: AuditEvent[];
 }
 
 export interface TsaAuthority {

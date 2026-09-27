@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { PageHeader } from "@/components/layout/app-shell";
+import { DemoScenarios } from "@/features/demo/scenarios";
+import { AuditTrail } from "@/features/demo/audit-trail";
 import {
   Button,
   ButtonLink,
@@ -240,6 +242,11 @@ export default function DemoPage() {
           </>
         }
       />
+
+      <div className="mb-5 space-y-5">
+        <DemoScenarios />
+        <AuditTrail />
+      </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.3fr_1fr]">
         {/* ------------------------------------------------------- the run */}

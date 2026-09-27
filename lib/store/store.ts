@@ -16,7 +16,7 @@
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import type { ClientStore, EvidenceRecord, StoreShape } from "@/lib/domain/types";
+import type { AuditEvent, ClientStore, EvidenceRecord, StoreShape } from "@/lib/domain/types";
 import { buildSeed } from "./seed";
 import { DATABASE_URL, dbLoad, dbRevision, dbSave } from "./db";
 
@@ -237,6 +237,30 @@ export function appendRecord(store: StoreShape, record: EvidenceRecord): Evidenc
   }
   store.records.push(record);
   return record;
+}
+
+/** How many audit events are kept. Old ones fall off the end. */
+const AUDIT_LIMIT = 200;
+
+/**
+ * Record that the application did something.
+ *
+ * Deliberately separate from `appendRecord`: an audit event is not evidence,
+ * carries no signature, and can never enter a case chain.
+ */
+export function appendAudit(
+  store: StoreShape,
+  event: Omit<AuditEvent, "audit_id" | "at">,
+): AuditEvent {
+  const entry: AuditEvent = {
+    ...event,
+    audit_id: `AUD-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+    at: new Date().toISOString(),
+  };
+  const log = store.audit ?? [];
+  log.push(entry);
+  store.audit = log.slice(-AUDIT_LIMIT);
+  return entry;
 }
 
 /** Strip signing keys before anything crosses the wire to the browser. */

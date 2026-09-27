@@ -1,5 +1,13 @@
 import { NextResponse } from "next/server";
-import { getStore, getStoreWithRevision, mutate, resetStore, toClientStore } from "@/lib/store/store";
+import {
+  appendAudit,
+  getStore,
+  getStoreWithRevision,
+  mutate,
+  resetStore,
+  toClientStore,
+} from "@/lib/store/store";
+import { describeAudit } from "@/lib/server/audit";
 import {
   WorkflowError,
   anchorTree,
@@ -228,6 +236,10 @@ export async function POST(request: Request) {
       default:
         return NextResponse.json({ error: `Unknown action "${body.action}"` }, { status: 400 });
     }
+
+    // Operational audit: what the application did, kept apart from evidence.
+    const audit = describeAudit(body.action, p as Record<string, unknown>, result);
+    if (audit) await mutate((store) => appendAudit(store, audit));
 
     const { store, revision } = await getStoreWithRevision();
     return NextResponse.json({ ok: true, result, store: toClientStore(store), revision });
