@@ -94,8 +94,8 @@ export function FieldTestDocument({
           </div>
         </div>
 
-        <div className="flex items-start gap-3 rounded-lg border-2 border-[#855A14] bg-[#fffbeb] px-4 py-3.5">
-          <AlertTriangle size={20} className="mt-[2px] shrink-0 text-[#855A14]" />
+        <div className="flex items-start gap-3 rounded-lg border-2 border-warn-ink bg-[#fffbeb] px-4 py-3.5">
+          <AlertTriangle size={20} className="mt-[2px] shrink-0 text-warn-ink" />
           <div>
             <div className="text-[15px] font-bold uppercase leading-tight tracking-tight text-[#92400e]">
               Presumptive — not a chemical identification

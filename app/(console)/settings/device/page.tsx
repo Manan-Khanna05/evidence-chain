@@ -151,7 +151,7 @@ export default function DeviceStatusPage() {
             <div className="p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-sim/35 bg-sim/[0.06] p-4">
-                  <div className="label text-[#8E4331]">Implemented in this build</div>
+                  <div className="label text-sim-ink">Implemented in this build</div>
                   <dl className="mt-3 space-y-3">
                     <Line k="Key location" v="Software key in the server process" />
                     <Line k="Algorithm" v="ECDSA P-256 / SHA-256 (Web Crypto)" />
@@ -407,9 +407,9 @@ function DiagnosticsChecklist() {
               <span
                 className={cx(
                   "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold",
-                  r.state === "ok" && "bg-ok/15 text-[#1F6A43]",
+                  r.state === "ok" && "bg-ok/15 text-ok-ink",
                   r.state === "absent" && "bg-ink-750 text-fg-dim",
-                  r.state === "fault" && "bg-danger/15 text-[#93322A]",
+                  r.state === "fault" && "bg-danger/15 text-danger-ink",
                 )}
                 aria-hidden="true"
               >
@@ -419,7 +419,7 @@ function DiagnosticsChecklist() {
               <span
                 className={cx(
                   "text-right text-[13px]",
-                  r.state === "fault" ? "font-semibold text-[#93322A]" : "text-fg-muted",
+                  r.state === "fault" ? "font-semibold text-danger-ink" : "text-fg-muted",
                 )}
               >
                 {r.note}

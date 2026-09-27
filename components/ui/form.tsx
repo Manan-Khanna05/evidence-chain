@@ -103,7 +103,7 @@ export function OptionGroup<T extends string>({
             className={cx(
               "flex min-h-[56px] flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition-all duration-150",
               active
-                ? "border-brand bg-brand/[0.09] text-fg shadow-[0_0_0_1px_rgba(20,83,45,0.35)_inset]"
+                ? "border-brand bg-brand/[0.09] text-fg shadow-[0_0_0_1px_rgba(35,66,124,0.35)_inset]"
                 : "border-line-strong bg-white/80 text-fg-muted shadow-chip hover:border-brand/40 hover:bg-white hover:text-fg",
             )}
           >

@@ -7,6 +7,7 @@ import {
   CircleDashed,
   Fingerprint,
   Landmark,
+  Languages,
 } from "lucide-react";
 import { ShieldCheck, UserRound } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
@@ -14,29 +15,14 @@ import { Button, Callout, IconContainer, Pill } from "@/components/ui/primitives
 import { Field, TextInput } from "@/components/ui/form";
 import { AssetImage } from "@/components/ui/asset-image";
 import { ASSETS } from "@/lib/assets";
+import { useT } from "@/components/providers/prefs-provider";
+import { LanguageGrid } from "@/components/layout/language-picker";
+import type { StringKey } from "@/lib/i18n/strings";
 
-const DEMO_LOGINS = [
-  {
-    officer_id: "RPF-104",
-    label: "RPF Officer Demo",
-    detail: "Capture triggers and field tests, create the custody transfer",
-    icon: ShieldCheck,
-    tone: "brand" as const,
-  },
-  {
-    officer_id: "GRP-076",
-    label: "GRP Officer Demo",
-    detail: "Receive custody and sign the receiving receipt",
-    icon: Landmark,
-    tone: "ok" as const,
-  },
-  {
-    officer_id: "VER-001",
-    label: "Verifier Demo",
-    detail: "Read-only: re-walk the chain and check the certificate",
-    icon: Fingerprint,
-    tone: "sim" as const,
-  },
+const DEMO_LOGINS: { officer_id: string; label: StringKey; detail: StringKey; icon: React.ComponentType<{ size?: number }>; tone: "brand" | "ok" | "sim" }[] = [
+  { officer_id: "RPF-104", label: "login.rpfDemo", detail: "login.rpfDetail", icon: ShieldCheck, tone: "brand" },
+  { officer_id: "GRP-076", label: "login.grpDemo", detail: "login.grpDetail", icon: Landmark, tone: "ok" },
+  { officer_id: "VER-001", label: "login.verDemo", detail: "login.verDetail", icon: Fingerprint, tone: "sim" },
 ];
 
 export default function LoginPage() {
@@ -45,6 +31,7 @@ export default function LoginPage() {
   const [officerId, setOfficerId] = React.useState("RPF-104");
   const [pin, setPin] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const t = useT();
 
   React.useEffect(() => {
     if (session) router.replace("/dashboard");
@@ -53,7 +40,7 @@ export default function LoginPage() {
   const submit = (id: string) => {
     const officer = store?.officers.find((o) => o.officer_id === id.trim().toUpperCase());
     if (!officer) {
-      setError(`We couldn't find officer ID "${id}". Check it and try again, or use a demo login below.`);
+      setError(`${t("login.notFound")} (${id})`);
       return;
     }
     setError(null);
@@ -75,7 +62,7 @@ export default function LoginPage() {
           backgroundSize: "auto 180vh",
           backgroundPosition: "right 55%",
           backgroundRepeat: "no-repeat",
-          backgroundColor: "#F5F0E5",
+          backgroundColor: "#F7F8FA",
           filter: "blur(4px)",
           transform: "scale(1.04)",
         }}
@@ -83,13 +70,13 @@ export default function LoginPage() {
       <div
         aria-hidden="true"
         className="fixed inset-0"
-        style={{ background: "linear-gradient(180deg, rgba(245,240,229,0.84) 0%, rgba(245,240,229,0.93) 55%, rgba(245,240,229,0.98) 100%)" }}
+        style={{ background: "linear-gradient(180deg, rgba(238,244,255,0.9) 0%, rgba(247,248,250,0.96) 50%, rgba(247,248,250,0.99) 100%)" }}
       />
 
       <div className="relative w-full max-w-[460px]">
         {/* Brand block, as in the console sidebar: the production-safe crest
             and the product name, with a forest-green and brass rule beneath. */}
-        <div className="relative flex items-center gap-4 overflow-hidden rounded-t-[22px] border border-b-0 border-line bg-[#FFFDF8] px-6 pb-5 pt-6">
+        <div className="relative flex items-center gap-4 overflow-hidden rounded-t-[16px] border border-b-0 border-line bg-white px-6 pb-5 pt-7">
           <span className="w-[52px] shrink-0">
             <AssetImage name="crest" alt="" rounded={false} sizes="52px" priority />
           </span>
@@ -97,22 +84,33 @@ export default function LoginPage() {
             <span className="block font-display text-[26px] font-bold leading-none tracking-tight text-brand-deep">
               Evidence Chain
             </span>
-            <span className="mt-1.5 block text-[13.5px] font-medium text-fg-muted">Railway Evidence Integrity Console</span>
-            <span className="mt-0.5 block text-[12px] font-semibold text-[#8A5F16]">V2 • SIH 2026</span>
+            <span className="mt-1.5 block text-[13.5px] font-medium text-fg-muted">{t("brand.subtitle")}</span>
+            <span className="mt-0.5 block text-[12px] font-semibold text-brand">V2 • SIH 2026</span>
           </span>
           <span aria-hidden="true" className="absolute inset-x-0 bottom-0 flex h-[4px]">
             <span className="w-2/3 bg-brand" />
-            <span className="flex-1 bg-gold" />
+            <span className="flex-1 bg-accent" />
           </span>
         </div>
 
-        <div className="overflow-hidden rounded-b-[22px] border border-t-0 border-line bg-ink-850 shadow-lift">
-          <div className="px-6 py-6">
+        <div className="overflow-hidden rounded-b-[16px] border border-t-0 border-line bg-white shadow-lift">
+          {/* Language first: everything below follows the choice. */}
+          <section aria-labelledby="lang-title" className="border-b border-line bg-brand-soft/60 px-6 py-5">
+            <h2 id="lang-title" className="flex items-center gap-2 text-[15px] font-semibold text-brand-deep">
+              <Languages size={17} aria-hidden="true" />
+              {t("login.chooseLanguage")}
+              {/* Always legible, whatever language is on screen. */}
+              <span className="text-[12.5px] font-normal text-fg-muted">· Choose your language</span>
+            </h2>
+            <div className="mt-3">
+              <LanguageGrid columns={3} compact />
+            </div>
+            <p className="mt-2.5 text-[12.5px] text-fg-muted">{t("login.languageHint")}</p>
+          </section>
 
-            <h2 className="font-display text-[26px] font-bold tracking-tight text-brand-deep">Sign in</h2>
-            <p className="mt-1.5 text-[14.5px] text-fg-muted">
-              Identify the officer operating this device.
-            </p>
+          <div className="px-6 py-6">
+            <h2 className="text-[24px] font-bold tracking-tight text-brand-deep">{t("login.signIn")}</h2>
+            <p className="mt-1.5 text-[14.5px] text-fg-muted">{t("login.identify")}</p>
 
             <form
               className="mt-6 space-y-4"
@@ -121,7 +119,7 @@ export default function LoginPage() {
                 submit(officerId);
               }}
             >
-              <Field label="Officer ID" required>
+              <Field label={t("login.officerId")} required>
                 <TextInput
                   value={officerId}
                   onChange={(e) => setOfficerId(e.target.value)}
@@ -131,8 +129,8 @@ export default function LoginPage() {
                 />
               </Field>
               <Field
-                label="Password / PIN"
-                hint="Not checked in this prototype. Identity infrastructure is out of Phase-1 scope."
+                label={t("login.password")}
+                hint={t("login.passwordHint")}
               >
                 <TextInput
                   type="password"
@@ -144,7 +142,7 @@ export default function LoginPage() {
               </Field>
 
               {error ? (
-                <Callout tone="danger" title="Could not sign in">
+                <Callout tone="danger" title={t("login.couldNotSignIn")}>
                   {error}
                 </Callout>
               ) : null}
@@ -158,13 +156,13 @@ export default function LoginPage() {
                 disabled={loading}
                 icon={<ArrowRight size={17} />}
               >
-                Continue
+                {t("login.continue")}
               </Button>
             </form>
 
             <div className="my-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-line" />
-              <span className="label">Demo logins</span>
+              <span className="label">{t("login.demoLogins")}</span>
               <div className="h-px flex-1 bg-line" />
             </div>
 
@@ -183,9 +181,9 @@ export default function LoginPage() {
                       <Icon size={18} />
                     </IconContainer>
                     <span className="min-w-0 flex-1">
-                      <span className="block text-[14.5px] font-semibold text-fg">{d.label}</span>
+                      <span className="block text-[14.5px] font-semibold text-brand-deep">{t(d.label)}</span>
                       <span className="block text-[12.5px] leading-snug text-fg-muted">
-                        {d.detail}
+                        {t(d.detail)}
                       </span>
                     </span>
                     <span className="mono shrink-0 text-[11px] text-fg-dim">{d.officer_id}</span>
@@ -196,10 +194,10 @@ export default function LoginPage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <Pill tone="sim" icon={<CircleDashed size={11} />}>
-                Synthetic identities
+                {t("login.synthetic")}
               </Pill>
               <Pill tone="neutral" icon={<UserRound size={11} />}>
-                No credential is verified
+                {t("login.noCredential")}
               </Pill>
             </div>
           </div>
@@ -219,19 +217,18 @@ export default function LoginPage() {
               <div
                 aria-hidden="true"
                 className="absolute inset-0"
-                style={{ background: "linear-gradient(90deg, rgba(248,242,230,0.96) 0%, rgba(248,242,230,0.7) 45%, rgba(248,242,230,0) 75%)" }}
+                style={{ background: "linear-gradient(90deg, rgba(238,244,255,0.97) 0%, rgba(238,244,255,0.75) 45%, rgba(238,244,255,0) 75%)" }}
               />
               <div className="absolute inset-y-0 left-0 flex flex-col justify-center px-6">
-                <span className="font-display text-[15px] font-semibold text-brand-deep">Railway evidence handling</span>
-                <span className="text-[12px] text-fg-muted">People • Safety • Integrity</span>
+                <span className="text-[14.5px] font-semibold text-brand-deep">{t("footer.railwayHandling")}</span>
+                <span className="text-[12px] text-fg-muted">{t("footer.values")}</span>
               </div>
             </div>
           </div>
         </div>
 
         <p className="mt-4 text-center text-[12.5px] leading-relaxed text-fg-muted">
-          A prototype built for railway evidence handling. Integrity verification is not chemical
-          identification.
+          {t("login.footer")}
         </p>
       </div>
     </div>

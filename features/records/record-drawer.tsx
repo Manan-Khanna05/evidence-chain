@@ -160,11 +160,11 @@ export function RecordDrawer({
             </div>
             <div className="grid gap-3.5 sm:grid-cols-2">
               <div className="rounded-lg border border-warn/30 bg-warn/[0.06] px-3.5 py-3">
-                <div className="label text-[#855A14]">Claimed time</div>
+                <div className="label text-warn-ink">Claimed time</div>
                 <div className="mt-1 text-[19px] font-semibold tabular-nums text-fg">
                   {fmtTime(record.claimed_time)}
                 </div>
-                <div className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#855A14]">
+                <div className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-warn-ink">
                   Untrusted device clock
                 </div>
                 <div className="mt-1 text-[11.5px] text-fg-dim">{fmtDateTime(record.claimed_time)}</div>
@@ -175,14 +175,14 @@ export function RecordDrawer({
                   interval ? "border-ok/30 bg-ok/[0.06]" : "border-line bg-ink-800",
                 )}
               >
-                <div className={cx("label", interval && "text-[#1F6A43]")}>Trusted bound</div>
+                <div className={cx("label", interval && "text-ok-ink")}>Trusted bound</div>
                 <div className="mt-1 text-[19px] font-semibold tabular-nums text-fg">
                   {interval ? fmtInterval(interval.start, interval.end) : "—"}
                 </div>
                 <div
                   className={cx(
                     "mt-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]",
-                    interval ? "text-[#1F6A43]" : "text-fg-dim",
+                    interval ? "text-ok-ink" : "text-fg-dim",
                   )}
                 >
                   {interval ? "Anchored interval" : "Not yet anchored — time unproven"}

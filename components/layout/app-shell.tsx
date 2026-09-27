@@ -19,14 +19,19 @@ import { useApp } from "@/components/providers/app-provider";
 import { Button, IconContainer, cx } from "@/components/ui/primitives";
 import { ConnectionStatus } from "@/features/hardware/connection-status";
 import { GlobalSearch } from "@/components/layout/global-search";
+import { LanguageGrid, LanguageMenu } from "@/components/layout/language-picker";
 import { OnboardingProvider, useReplayGuide } from "@/components/onboarding/onboarding";
 import { ASSETS } from "@/lib/assets";
 import { AssetImage } from "@/components/ui/asset-image";
 import { RailIcon, type RailIconName } from "@/components/ui/rail-icon";
+import { usePrefs, useT, TEXT_SCALE, type TextScale } from "@/components/providers/prefs-provider";
+import type { StringKey } from "@/lib/i18n/strings";
 
 type NavItem = {
   href: string;
   label: string;
+  /** Translation key for the label. */
+  tkey: StringKey;
   /** One of the supplied V2 icons (public/assets/icons). */
   icon: RailIconName;
   /** Extra path prefixes that should light this item. */
@@ -36,27 +41,27 @@ type NavItem = {
 };
 
 const NAV_MAIN: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { href: "/cases", label: "Cases", icon: "cases" },
-  { href: "/capture/trigger", label: "Capture", icon: "capture", match: ["/operator"] },
-  { href: "/capture/field-test", label: "Field Test", icon: "field-test" },
-  { href: "/queue", label: "Pending Sync", icon: "pending-sync" },
-  { href: "/handoff", label: "Handoff", icon: "handoff" },
-  { href: "/verification", label: "Verification", icon: "verification" },
-  { href: "/certificate", label: "Certificates", icon: "certificates" },
+  { href: "/dashboard", label: "Dashboard", tkey: "nav.dashboard", icon: "dashboard" },
+  { href: "/cases", label: "Cases", tkey: "nav.cases", icon: "cases" },
+  { href: "/capture/trigger", label: "Capture", tkey: "nav.capture", icon: "capture", match: ["/operator"] },
+  { href: "/capture/field-test", label: "Field Test", tkey: "nav.fieldTest", icon: "field-test" },
+  { href: "/queue", label: "Pending Sync", tkey: "nav.pendingSync", icon: "pending-sync" },
+  { href: "/handoff", label: "Handoff", tkey: "nav.handoff", icon: "handoff" },
+  { href: "/verification", label: "Verification", tkey: "nav.verification", icon: "verification" },
+  { href: "/certificate", label: "Certificates", tkey: "nav.certificates", icon: "certificates" },
 ];
 
 const NAV_SYSTEM: NavItem[] = [
-  { href: "/hardware", label: "PRAMAAN", icon: "pramaan" },
-  { href: "/settings/device", label: "Device Status", icon: "device-status" },
-  { href: "/tte", label: "TTE Screening", icon: "tte" },
-  { href: "/demo", label: "Demo Mode", icon: "demo-mode" },
+  { href: "/hardware", label: "PRAMAAN", tkey: "nav.pramaan", icon: "pramaan" },
+  { href: "/settings/device", label: "Device Status", tkey: "nav.deviceStatus", icon: "device-status" },
+  { href: "/tte", label: "TTE Screening", tkey: "nav.tte", icon: "tte" },
+  { href: "/demo", label: "Demo Mode", tkey: "nav.demo", icon: "demo-mode" },
 ];
 
 const NAV_HELP: NavItem[] = [
-  { href: "/help", label: "How to Use", icon: "guide" },
-  { href: "/whats-new", label: "What's New", icon: "whats-new" },
-  { href: "/system-guide", label: "System Guide", icon: "system-guide" },
+  { href: "/help", label: "How to Use", tkey: "nav.howTo", icon: "guide" },
+  { href: "/whats-new", label: "What's New", tkey: "nav.whatsNew", icon: "whats-new" },
+  { href: "/system-guide", label: "System Guide", tkey: "nav.systemGuide", icon: "system-guide" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -72,6 +77,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [navOpen, setNavOpen] = React.useState(false);
+  const { textScale } = usePrefs();
 
   React.useEffect(() => {
     setNavOpen(false);
@@ -93,7 +99,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-screen" aria-busy="true" aria-label="Loading the evidence store">
         <div className="hidden w-[268px] shrink-0 flex-col border-r border-line bg-ink-850 lg:flex">
-          <div className="h-[84px] border-b border-line" />
+          <div className="h-[84px] border-b border-line bg-white" />
           <div className="space-y-2 p-4">
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className="h-9 animate-pulse rounded-xl bg-ink-750" />
@@ -138,7 +144,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       {navOpen ? (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <div
-            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252525]/35"
+            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-fg/35"
             onClick={() => setNavOpen(false)}
           />
           <aside
@@ -168,7 +174,11 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <UtilityHeader onOpenNav={() => setNavOpen(true)} />
         <HonestyStrip />
-        <main id="main" className="mx-auto w-full max-w-[1480px] flex-1 px-4 pb-6 pt-5 lg:px-8 lg:pb-8 lg:pt-6">
+        <main
+          id="main"
+          className="mx-auto w-full max-w-[1480px] flex-1 px-4 pb-6 pt-5 lg:px-8 lg:pb-8 lg:pt-6"
+          style={textScale === "md" ? undefined : { zoom: TEXT_SCALE[textScale] }}
+        >
           {pathname === "/dashboard" ? <RailwayHero /> : null}
           <div key={pathname} className="animate-fade-up">
             {children}
@@ -192,11 +202,12 @@ function Shell({ children }: { children: React.ReactNode }) {
  * in the display serif, on the same ivory as the page.
  */
 function SidebarBrand() {
+  const t = useT();
   return (
     <Link
       href="/dashboard"
       aria-label="Evidence Chain — Railway Evidence Console, V2, SIH 2026. Go to dashboard."
-      className="relative flex h-[84px] shrink-0 items-center gap-3 border-b border-line px-5"
+      className="relative flex h-[84px] shrink-0 items-center gap-3 border-b border-line bg-white px-5"
     >
       <span className="w-[42px] shrink-0">
         <AssetImage name="crest" alt="" rounded={false} sizes="42px" priority />
@@ -205,11 +216,11 @@ function SidebarBrand() {
         <span className="block font-display text-[22px] font-bold leading-none tracking-tight text-brand-deep">
           Evidence Chain
         </span>
-        <span className="mt-1 block text-[12.5px] font-medium text-fg-muted">Railway Evidence Console</span>
-        <span className="mt-0.5 block text-[11.5px] font-semibold text-[#8A5F16]">V2 • SIH 2026</span>
+        <span className="mt-1 block text-[12.5px] font-medium text-fg-muted">{t("brand.subtitle")}</span>
+        <span className="mt-0.5 block text-[11.5px] font-semibold text-brand">V2 • SIH 2026</span>
       </span>
-      {/* Brass rule: the one ornament, as on a platform nameboard. */}
-      <span aria-hidden="true" className="absolute inset-x-5 bottom-[-1px] h-[2px] rounded-full bg-gold/70" />
+      {/* Orange rule: the one ornament, as on a platform nameboard. */}
+      <span aria-hidden="true" className="absolute inset-x-0 bottom-[-1px] h-[3px] bg-accent" />
     </Link>
   );
 }
@@ -223,6 +234,7 @@ function isActive(pathname: string, item: NavItem) {
 function SidebarBody({ pathname }: { pathname: string }) {
   const { store, session } = useApp();
   const replay = useReplayGuide();
+  const t = useT();
   if (!store || !session) return null;
 
   const pending = store.records.filter((r) => r.status === "queued" || r.status === "captured").length;
@@ -230,7 +242,7 @@ function SidebarBody({ pathname }: { pathname: string }) {
 
   const Section = ({ title, items }: { title: string; items: NavItem[] }) => (
     <div>
-      <div className="label px-3 pb-1.5">{title}</div>
+      <div className="px-3 pb-1.5 text-[11.5px] font-bold uppercase tracking-[0.1em] text-brand/70">{title}</div>
       <ul className="space-y-0.5">
         {items.map((item) => {
           const active = isActive(pathname, item);
@@ -240,24 +252,24 @@ function SidebarBody({ pathname }: { pathname: string }) {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cx(
-                  "group relative flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-[14.5px] transition-colors duration-150",
+                  "group relative flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 text-[14.5px] transition-colors duration-150",
                   active
-                    ? "bg-brand-soft font-semibold text-brand-deep"
-                    : "text-fg-muted hover:bg-ink-750 hover:text-fg",
+                    ? "bg-brand-tint font-semibold text-brand-deep"
+                    : "text-fg hover:bg-brand-soft hover:text-brand-deep",
                 )}
               >
                 {active ? (
-                  <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-brand" />
+                  <span className="absolute left-0 top-1/2 h-7 w-[4px] -translate-y-1/2 rounded-r-full bg-accent" />
                 ) : null}
                 <RailIcon
                   name={item.icon}
                   size={20}
-                  className={active ? "text-brand" : "text-fg-dim group-hover:text-fg-muted"}
+                  className={active ? "text-brand" : "text-brand/75 group-hover:text-brand"}
                 />
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1">{t(item.tkey)}</span>
                 {item.href === "/queue" && pending > 0 ? (
                   <span
-                    className="min-w-[22px] rounded-full bg-gold-soft px-1.5 py-[1px] text-center text-[11.5px] font-bold text-[#855A14] ring-1 ring-gold/40"
+                    className="min-w-[22px] rounded-full bg-accent px-1.5 py-[1px] text-center text-[11.5px] font-bold text-white"
                     aria-label={`${pending} records waiting to sync`}
                   >
                     {pending}
@@ -279,24 +291,24 @@ function SidebarBody({ pathname }: { pathname: string }) {
 
   return (
     <nav aria-label="Main" className="flex min-h-full flex-col gap-5 px-3.5 pb-5 pt-4">
-      <Section title="Main" items={NAV_MAIN} />
-      <Section title="System" items={NAV_SYSTEM} />
+      <Section title={t("nav.main")} items={NAV_MAIN} />
+      <Section title={t("nav.system")} items={NAV_SYSTEM} />
       <div>
-        <Section title="Help" items={NAV_HELP} />
+        <Section title={t("nav.help")} items={NAV_HELP} />
         <button
           type="button"
           onClick={replay}
-          className="mt-0.5 flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[14.5px] text-fg-muted transition-colors duration-150 hover:bg-ink-750 hover:text-fg"
+          className="mt-0.5 flex min-h-[44px] w-full items-center gap-3 rounded-[10px] px-3 text-[14.5px] text-fg transition-colors duration-150 hover:bg-brand-soft hover:text-brand-deep"
         >
-          <RailIcon name="replay" size={20} className="text-fg-dim" />
-          Replay Guide
+          <RailIcon name="replay" size={20} className="text-brand/75" />
+          {t("nav.replay")}
         </button>
       </div>
 
       <div className="mt-auto pt-2">
         {/* Railway context: the supplied footer illustration, cropped to the
             drawing itself (the file also carries a button and a caption). */}
-        <div className="overflow-hidden rounded-2xl border border-line bg-[#F8F2E6]">
+        <div className="overflow-hidden rounded-[12px] border border-line bg-brand-soft">
           <div className="relative aspect-[250/104]">
             <AssetImage
               name="railwayFooter"
@@ -309,12 +321,12 @@ function SidebarBody({ pathname }: { pathname: string }) {
             <div
               aria-hidden="true"
               className="absolute inset-x-0 top-0 h-8"
-              style={{ background: "linear-gradient(180deg, #F8F2E6 0%, rgba(248,242,230,0) 100%)" }}
+              style={{ background: "linear-gradient(180deg, #EEF4FF 0%, rgba(238,244,255,0) 100%)" }}
             />
           </div>
           <div className="px-4 pb-3 pt-1">
-            <p className="font-display text-[14px] font-semibold leading-snug text-brand-deep">Railway evidence handling</p>
-            <p className="text-[12px] leading-snug text-fg-muted">People • Safety • Integrity</p>
+            <p className="text-[13.5px] font-semibold leading-snug text-brand-deep">{t("footer.railwayHandling")}</p>
+            <p className="text-[12px] leading-snug text-fg-muted">{t("footer.values")}</p>
           </div>
         </div>
       </div>
@@ -330,11 +342,11 @@ function SidebarBody({ pathname }: { pathname: string }) {
  */
 function UtilityHeader({ onOpenNav }: { onOpenNav: () => void }) {
   return (
-    <header className="sticky top-0 z-[50] border-b border-line bg-ink-900/92 backdrop-blur-md">
-      <div className="mx-auto flex h-[64px] w-full max-w-[1480px] items-center gap-3 px-4 lg:h-[84px] lg:px-8">
+    <header className="sticky top-0 z-[50] border-b border-line bg-white">
+      <div className="mx-auto flex h-[64px] w-full max-w-[1480px] items-center gap-2.5 px-4 lg:h-[84px] lg:px-8">
         <button
           aria-label="Open navigation"
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-fg-muted hover:text-fg lg:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] border border-line-strong bg-white text-brand hover:bg-brand-soft lg:hidden"
           onClick={onOpenNav}
         >
           <RailIcon name="menu" size={20} />
@@ -344,8 +356,11 @@ function UtilityHeader({ onOpenNav }: { onOpenNav: () => void }) {
           <AssetImage name="crest" alt="" rounded={false} sizes="30px" />
         </Link>
         <RailwayContext />
-        <GlobalSearch className="min-w-0 flex-1 lg:max-w-[460px]" />
+        <GlobalSearch className="min-w-0 flex-1 lg:max-w-[440px]" />
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <HeaderClock />
+          <LanguageMenu className="hidden md:block" />
+          <TextSizeControl />
           <Notifications />
           <SystemStatus />
         </div>
@@ -354,19 +369,78 @@ function UtilityHeader({ onOpenNav }: { onOpenNav: () => void }) {
   );
 }
 
+/** Date and time, as on a station display. Local device clock — not trusted time. */
+function HeaderClock() {
+  const [now, setNow] = React.useState<Date | null>(null);
+  React.useEffect(() => {
+    setNow(new Date());
+    const id = setInterval(() => setNow(new Date()), 15_000);
+    return () => clearInterval(id);
+  }, []);
+  if (!now) return null;
+  return (
+    <div
+      className="hidden flex-col items-end border-r border-line pr-3 leading-tight xl:flex"
+      title="This device's clock. Evidence time comes from trusted-time anchors, not from here."
+    >
+      <span className="text-[12px] text-fg-muted">
+        {now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+      </span>
+      <span className="text-[14px] font-semibold tabular-nums text-brand-deep">
+        {now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false })}
+      </span>
+    </div>
+  );
+}
+
+/** A− A A+ for the reading area. */
+function TextSizeControl() {
+  const { textScale, setTextScale, t } = usePrefs();
+  const opts: { v: TextScale; label: string; aria: string; size: string }[] = [
+    { v: "sm", label: "A−", aria: t("header.textSmaller"), size: "text-[12px]" },
+    { v: "md", label: "A", aria: t("header.textDefault"), size: "text-[14px]" },
+    { v: "lg", label: "A+", aria: t("header.textLarger"), size: "text-[16px]" },
+  ];
+  return (
+    <div
+      role="group"
+      aria-label={t("header.textSize")}
+      className="hidden h-10 items-center rounded-[10px] border border-line-strong bg-white p-0.5 md:flex"
+    >
+      {opts.map((o) => (
+        <button
+          key={o.v}
+          type="button"
+          onClick={() => setTextScale(o.v)}
+          aria-label={o.aria}
+          aria-pressed={textScale === o.v}
+          className={cx(
+            "flex h-full min-w-[32px] items-center justify-center rounded-[8px] px-1.5 font-semibold transition-colors",
+            o.size,
+            textScale === o.v ? "bg-brand text-white" : "text-brand hover:bg-brand-soft",
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /**
  * The railway line under the brand, as in the reference masthead. Words only:
  * no emblem, no claim to be an official Indian Railways system.
  */
 function RailwayContext() {
+  const t = useT();
   return (
-    <div className="hidden shrink-0 items-center gap-3 text-[12.5px] font-medium text-fg-muted xl:flex">
-      <span aria-hidden="true" className="tricolour h-[3px] w-7 rounded-full" />
-      <span>Safer Railways</span>
+    <div className="hidden shrink-0 items-center gap-3 text-[12.5px] font-medium text-brand 2xl:flex">
+      <span aria-hidden="true" className="tricolour h-[3px] w-7 rounded-full ring-1 ring-line" />
+      <span>{t("context.saferRailways")}</span>
       <span aria-hidden="true" className="h-3.5 w-px bg-line-strong" />
-      <span>Stronger India</span>
+      <span>{t("context.strongerIndia")}</span>
       <span aria-hidden="true" className="h-3.5 w-px bg-line-strong" />
-      <span>Trusted Evidence</span>
+      <span>{t("context.trustedEvidence")}</span>
     </div>
   );
 }
@@ -376,24 +450,25 @@ function RailwayContext() {
  */
 function HonestyStrip() {
   const { storage } = useApp();
+  const t = useT();
   return (
-    <div className="border-b border-line bg-ink-850/80">
+    <div className="border-b border-line bg-brand-soft">
       <div className="mx-auto flex w-full max-w-[1480px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-[12px] text-fg-muted lg:px-8">
-        {["Mock Sensor", "Simulated TSA", "Demo Signatures"].map((t) => (
-          <span key={t} className="inline-flex items-center gap-1.5">
+        {(["strip.mockSensor", "strip.simTsa", "strip.demoSig"] as const).map((k) => (
+          <span key={k} className="inline-flex items-center gap-1.5">
             <CircleDashed size={11} className="text-sim" />
-            {t}
+            {t(k)}
           </span>
         ))}
         {storage?.backend === "postgres" ? (
           <span className="inline-flex items-center gap-1.5" title={storage.detail}>
             <Database size={11} className="text-ok" />
-            Shared Database
+            {t("strip.sharedDb")}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5" title={storage?.detail}>
             <CircleDashed size={11} className="text-sim" />
-            Local Prototype Storage
+            {t("strip.localStore")}
           </span>
         )}
       </div>
@@ -402,99 +477,80 @@ function HonestyStrip() {
 }
 
 /**
- * The dashboard masthead, after the reference: title on the left over a cream
- * wash, the station in the middle, and a bilingual slogan panel on the right.
+ * The dashboard masthead: title on the left over a light wash, the station in
+ * the middle, and a bilingual slogan panel on the right. It carries no action
+ * shortcuts — those live in the Quick Actions row just below it.
  *
- * railway-hero.jpg is used as delivered. A sepia filter and amber multiply
- * bring its cool morning light toward the reference's warm platform, and the
- * slogan panel sits over the artwork's own top-right badge and signboard so
- * the console never displays an official railway mark. On phones the image
- * is positioned to keep the train and leave that corner out of frame.
+ * railway-hero.jpg is used as delivered; its morning blues sit naturally in
+ * the navy palette. The slogan panel covers the artwork's own top-right badge
+ * and signboard so the console never displays an official railway mark. Below
+ * tablet width the title sits on white and the photo becomes a band beneath it,
+ * cropped to the train so the badge and signboard stay out of frame.
  */
 function RailwayHero() {
-  const tiles: { href: string; icon: RailIconName; title: string; sub: string; tint: string }[] = [
-    { href: "/capture/trigger", icon: "capture", title: "Capture", sub: "Collect evidence", tint: "bg-gold-soft text-[#9A5F12]" },
-    { href: "/capture/field-test", icon: "field-test", title: "Field Test", sub: "Record result", tint: "bg-terracotta-soft text-sim" },
-    { href: "/handoff", icon: "handoff", title: "Handoff", sub: "RPF to GRP", tint: "bg-gold-soft text-[#9A5F12]" },
-    { href: "/verification", icon: "verification", title: "Verify", sub: "Check integrity", tint: "bg-brand-soft text-brand-deep" },
-  ];
   return (
     <section
       aria-labelledby="hero-title"
-      className="relative mb-6 overflow-hidden rounded-[22px] border border-line shadow-hero"
+      className="relative mb-6 overflow-hidden rounded-[14px] border border-line shadow-hero"
     >
       <div
         aria-hidden="true"
-        className="absolute inset-0 bg-[length:auto_100%] bg-[position:77%_70%] bg-no-repeat md:bg-cover md:bg-[position:right_60%]"
-        style={{
-          backgroundImage: `url(${ASSETS.railwayHero.src})`,
-          filter: "sepia(0.32) saturate(0.95) brightness(1.02)",
-        }}
+        className="absolute inset-0 hidden bg-cover bg-[position:right_60%] bg-no-repeat md:block"
+        style={{ backgroundImage: `url(${ASSETS.railwayHero.src})` }}
       />
       <div
         aria-hidden="true"
-        className="absolute inset-0 mix-blend-multiply"
-        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 35%, rgba(236,190,128,0.42) 100%)" }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
+        className="absolute inset-0 hidden md:block"
         style={{
           background:
-            "linear-gradient(90deg, rgba(250,245,234,0.98) 0%, rgba(250,245,234,0.95) 36%, rgba(250,245,234,0.55) 56%, rgba(250,245,234,0) 74%)",
+            "linear-gradient(90deg, #FFFFFF 0%, #FAFCFF 40%, rgba(244,248,255,0.7) 55%, rgba(238,244,255,0) 72%)",
         }}
       />
 
-      <div className="relative flex min-h-[250px] items-stretch lg:min-h-[280px]">
-        <div className="min-w-0 flex-1 px-5 py-6 sm:px-8 lg:py-8">
-          <div className="text-[12.5px] font-bold uppercase tracking-[0.22em] text-brand">Evidence Chain</div>
+      <div className="relative flex flex-col bg-white md:min-h-[200px] md:flex-row md:items-stretch md:bg-transparent lg:min-h-[230px]">
+        <div className="flex min-w-0 flex-1 flex-col justify-center px-5 pb-5 pt-6 sm:px-8 md:py-7 lg:py-9">
+          <div className="text-[12.5px] font-bold uppercase tracking-[0.22em] text-accent-ink">Evidence Chain</div>
           <h1
             id="hero-title"
             className="mt-2 max-w-[520px] font-display text-[30px] font-bold leading-[1.06] tracking-tight text-brand-deep sm:text-[38px] lg:text-[44px]"
           >
             Railway Evidence Integrity Console
           </h1>
-          <p className="mt-2.5 font-display text-[17px] font-semibold text-fg sm:text-[19px]">
+          <p className="mt-2.5 font-display text-[17px] font-semibold text-brand sm:text-[19px]">
             Trusted Evidence. Safer Journeys.
           </p>
-          <ul className="mt-5 grid max-w-[700px] grid-cols-2 gap-2.5 md:grid-cols-4">
-            {tiles.map((t) => (
-              <li key={t.title}>
-                <Link
-                  href={t.href}
-                  className="hover-lift flex h-full items-center gap-2.5 rounded-2xl border border-white/70 bg-white/90 px-2.5 py-2.5 shadow-chip backdrop-blur-sm hover:shadow-lift"
-                >
-                  <span className={cx("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl", t.tint)}>
-                    <RailIcon name={t.icon} size={19} />
-                  </span>
-                  <span className="min-w-0 leading-tight">
-                    <span className="block text-[14px] font-semibold text-fg">{t.title}</span>
-                    <span className="block text-[12px] leading-snug text-fg-muted">{t.sub}</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
+
+        {/* Phones and small tablets: the train as a cropped band under the title,
+            framed so the photo's badge and signboard (right edge) stay out. */}
+        <div
+          aria-hidden="true"
+          className="aspect-[3/1] w-full bg-no-repeat md:hidden"
+          style={{
+            backgroundImage: `url(${ASSETS.railwayHero.src})`,
+            backgroundSize: "280% auto",
+            backgroundPosition: "73% 76%",
+          }}
+        />
 
         <aside
           aria-label="Slogan"
           className="relative hidden w-[240px] shrink-0 flex-col justify-center px-6 text-center md:flex lg:w-[270px]"
           style={{
             background:
-              "linear-gradient(90deg, rgba(250,244,232,0) 0%, rgba(250,244,232,0.9) 22%, rgba(250,244,232,0.97) 45%)",
+              "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.92) 22%, #FFFFFF 42%)",
           }}
         >
-          <p lang="hi" className="font-deva text-[25px] font-bold leading-[1.35] text-[#7A3B17] lg:text-[28px]">
+          <p lang="hi" className="font-deva text-[25px] font-bold leading-[1.35] text-brand-deep lg:text-[28px]">
             सुरक्षित यात्रा
             <br />
             विश्वसनीय प्रमाण
           </p>
           <div aria-hidden="true" className="mx-auto mt-3 flex h-[3px] w-28 overflow-hidden rounded-full">
             <span className="flex-1 bg-[#E07B24]" />
-            <span className="flex-1 bg-[#2E7D52]" />
+            <span className="flex-1 bg-ok" />
           </div>
-          <p className="mt-3 text-[13px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-fg">
+          <p className="mt-3 text-[13px] font-semibold uppercase leading-relaxed tracking-[0.16em] text-brand-deep">
             Safer Railways
             <br />
             Stronger India
@@ -578,11 +634,11 @@ function Notifications() {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={items.length ? `Notifications: ${items.length} need attention` : "Notifications"}
-        className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-white text-fg-muted shadow-chip transition-colors hover:text-fg"
+        className="relative flex h-10 w-10 items-center justify-center rounded-[10px] border border-line-strong bg-white text-brand transition-colors hover:bg-brand-soft"
       >
         <RailIcon name="notifications" size={20} />
         {items.length ? (
-          <span className="absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-danger px-1 text-[10.5px] font-bold text-white">
+          <span className="absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-accent-strong px-1 text-[10.5px] font-bold text-white">
             {items.length}
           </span>
         ) : null}
@@ -640,8 +696,8 @@ function SyncRow() {
         className={cx(
           "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
           sync.error
-            ? "border-warn/30 bg-warn/[0.1] text-[#855A14]"
-            : "border-ok/25 bg-ok/[0.08] text-[#1F6A43]",
+            ? "border-warn/30 bg-warn/[0.1] text-warn-ink"
+            : "border-ok/25 bg-ok/[0.08] text-ok-ink",
         )}
         title={storage?.detail}
       >
@@ -660,6 +716,7 @@ function SyncRow() {
 
 function SystemStatus() {
   const { store, officer, session, run, signOut } = useApp();
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const { open, setOpen, ref } = usePopover();
@@ -676,9 +733,9 @@ function SystemStatus() {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={`Operator ${officer?.name ?? session.officer_id}, ${online ? "online" : "offline"}`}
-        className="flex h-11 items-center gap-2.5 rounded-xl border border-line bg-white pl-1.5 pr-2.5 shadow-chip transition-colors hover:border-line-strong"
+        className="flex h-11 items-center gap-2.5 rounded-[10px] border border-line-strong bg-white pl-1.5 pr-2.5 transition-colors hover:bg-brand-soft"
       >
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#2E6A45] to-[#0B3B27] text-[11.5px] font-bold text-white">
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-brand text-[11.5px] font-bold text-white">
           {initials(officer?.name ?? session.officer_id)}
           <span
             className={cx(
@@ -688,9 +745,9 @@ function SystemStatus() {
           />
         </span>
         <span className="hidden text-left leading-tight md:block">
-          <span className="block text-[13px] font-semibold text-fg">{officer?.name ?? session.officer_id}</span>
-          <span className={cx("block text-[11.5px] font-semibold", online ? "text-[#1F6A43]" : "text-[#855A14]")}>
-            {officer?.force ?? "Officer"} • {online ? "System Online" : "Working Offline"}
+          <span className="block text-[13px] font-semibold text-brand-deep">{officer?.name ?? session.officer_id}</span>
+          <span className={cx("block text-[11.5px] font-semibold", online ? "text-ok-ink" : "text-warn-ink")}>
+            {officer?.force ?? "Officer"} • {online ? t("status.online") : t("status.offline")}
           </span>
         </span>
         <RailIcon name="chevron-down" size={15} className="hidden text-fg-dim md:block" />
@@ -713,7 +770,7 @@ function SystemStatus() {
               <span
                 className={cx(
                   "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
-                  online ? "border-ok/25 bg-ok/[0.08] text-[#1F6A43]" : "border-warn/30 bg-warn/[0.1] text-[#855A14]",
+                  online ? "border-ok/25 bg-ok/[0.08] text-ok-ink" : "border-warn/30 bg-warn/[0.1] text-warn-ink",
                 )}
               >
                 {online ? <Wifi size={13} /> : <WifiOff size={13} />}
@@ -721,6 +778,17 @@ function SystemStatus() {
               </span>
             </div>
             <SyncRow />
+          </div>
+
+          <div className="mt-4 space-y-3 border-t border-line pt-3 md:hidden">
+            <div>
+              <div className="label mb-2">{t("header.language")}</div>
+              <LanguageGrid columns={2} compact />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="label">{t("header.textSize")}</span>
+              <TextSizeInline />
+            </div>
           </div>
 
           <div className="mt-4 border-t border-line pt-3">
@@ -759,7 +827,7 @@ function SystemStatus() {
                 router.push("/login");
               }}
             >
-              Sign Out
+              {t("header.signOut")}
             </Button>
           </div>
         </div>
@@ -768,10 +836,35 @@ function SystemStatus() {
   );
 }
 
+function TextSizeInline() {
+  const { textScale, setTextScale, t } = usePrefs();
+  return (
+    <div role="group" aria-label={t("header.textSize")} className="flex h-10 rounded-[10px] border border-line-strong p-0.5">
+      {(["sm", "md", "lg"] as TextScale[]).map((v, i) => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => setTextScale(v)}
+          aria-pressed={textScale === v}
+          aria-label={[t("header.textSmaller"), t("header.textDefault"), t("header.textLarger")][i]}
+          className={cx(
+            "min-w-[34px] rounded-[8px] px-1.5 font-semibold",
+            ["text-[12px]", "text-[14px]", "text-[16px]"][i],
+            textScale === v ? "bg-brand text-white" : "text-brand",
+          )}
+        >
+          {["A−", "A", "A+"][i]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ----------------------------------------------------------- mobile nav */
 
 function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void }) {
   const { store } = useApp();
+  const t = useT();
   const pending = store
     ? store.records.filter((r) => r.status === "queued" || r.status === "captured").length
     : 0;
@@ -779,7 +872,7 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
   return (
     <nav
       aria-label="Quick navigation"
-      className="fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-ink-850/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-white px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 lg:hidden"
     >
       <ul className="grid grid-cols-5">
         {items.map((item) => {
@@ -791,13 +884,14 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
                 aria-current={active ? "page" : undefined}
                 className={cx(
                   "relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-medium transition-colors",
-                  active ? "text-brand" : "text-fg-muted",
+                  active ? "font-semibold text-brand" : "text-fg-muted",
                 )}
               >
+                {active ? <span aria-hidden="true" className="absolute inset-x-5 top-0 h-[3px] rounded-b-full bg-accent" /> : null}
                 <RailIcon name={item.icon} size={21} strokeWidth={active ? 2.2 : 1.8} />
-                {item.label}
+                {t(item.tkey)}
                 {item.href === "/queue" && pending ? (
-                  <span className="absolute right-3 top-1 min-w-[18px] rounded-full bg-warn px-1 text-center text-[10px] font-bold text-white">
+                  <span className="absolute right-3 top-1 min-w-[18px] rounded-full bg-accent-strong px-1 text-center text-[10px] font-bold text-white">
                     {pending}
                   </span>
                 ) : null}
@@ -812,7 +906,7 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
             className="flex min-h-[52px] w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-medium text-fg-muted"
           >
             <RailIcon name="menu" size={21} />
-            More
+            {t("nav.more")}
           </button>
         </li>
       </ul>
@@ -823,17 +917,15 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
 /* ---------------------------------------------------------------- footer */
 
 function SiteFooter() {
+  const t = useT();
   return (
     <footer className="mx-auto w-full max-w-[1480px] px-4 pb-28 lg:px-8 lg:pb-8">
       <div className="flex flex-col gap-2 border-t border-line pt-4 text-[12.5px] text-fg-dim sm:flex-row sm:items-center sm:justify-between">
         <span className="inline-flex items-center gap-2">
           <span className="tricolour inline-block h-[3px] w-8 rounded-full" />
-          Evidence Chain V2 · SIH 2026 prototype · built for railway evidence handling
+          {t("footer.line")}
         </span>
-        <span className="max-w-xl leading-relaxed">
-          Integrity verification is not chemical identification. This system records what happened;
-          it does not prove what a substance is.
-        </span>
+        <span className="max-w-xl leading-relaxed">{t("footer.caution")}</span>
       </div>
     </footer>
   );
@@ -922,7 +1014,7 @@ export function PageHeader({
       <div className="min-w-0">
         {eyebrow ? <div className="label mb-1.5">{eyebrow}</div> : null}
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="font-display text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px] lg:text-[36px]">
+          <h1 className="text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px] lg:text-[36px]">
             {title}
           </h1>
           {status}

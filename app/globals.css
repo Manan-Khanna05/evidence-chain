@@ -3,39 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* Latin in Inter; each Indian script in its own Noto Sans (see app/layout.tsx). */
+  --font-sans: var(--font-inter), "Inter", var(--font-noto-deva), var(--font-noto-beng), var(--font-noto-taml),
+    var(--font-noto-telu), var(--font-noto-gujr), var(--font-noto-knda), var(--font-noto-mlym),
+    var(--font-noto-guru), var(--font-noto-orya), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    "Nirmala UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Mono", Consolas,
     "Liberation Mono", Menlo, monospace;
 
   /*
    * Palette — one source of truth, mirrored in tailwind.config.ts.
-   * The --ec-* names come from the V2 asset pack (theme-tokens.css); values
-   * follow the V2 brief's railway palette, which the reference image uses.
+   * Indian Railways visual language: navy, white, light railway blue, orange,
+   * graphite. Green means success and red means integrity failure, nothing else.
    */
-  --ec-bg: #f5f0e5;
-  --ec-surface: #fffdf8;
-  --ec-surface-soft: #f3efe5;
-  --ec-surface-glass: rgba(255, 253, 248, 0.82);
-  --ec-text: #252525;
-  --ec-text-secondary: #6b716a;
-  --ec-primary: #14532d;
-  --ec-primary-dark: #0b3b27;
-  --ec-primary-soft: #e1ebe2;
-  --ec-success: #2e7d52;
-  --ec-warning: #c58a27;
-  --ec-warning-soft: #f4e6c5;
-  --ec-danger: #b84035;
-  --ec-danger-soft: #f8e1de;
-  --ec-gold: #c58a27;
-  --ec-gold-soft: #f4e6c5;
-  --ec-terracotta: #b65c45;
-  --ec-sage: #aebeae;
-  --ec-border: rgba(37, 37, 37, 0.1);
-  --ec-shadow: 0 14px 36px rgba(50, 44, 35, 0.1);
-  --ec-radius-sm: 12px;
-  --ec-radius: 18px;
-  --ec-radius-lg: 24px;
+  --ec-bg: #f7f8fa;
+  --ec-surface: #ffffff;
+  --ec-surface-soft: #eef4ff;
+  --ec-surface-glass: rgba(255, 255, 255, 0.92);
+  --ec-text: #1f2937;
+  --ec-text-secondary: #667085;
+  --ec-primary: #23427c;
+  --ec-primary-dark: #173666;
+  --ec-primary-soft: #eef4ff;
+  --ec-secondary: #2d5aa0;
+  --ec-accent: #f57c20;
+  --ec-accent-strong: #d9600c;
+  --ec-accent-soft: #fff1e6;
+  --ec-success: #2e7d32;
+  --ec-warning: #c77c00;
+  --ec-warning-soft: #fdf3e0;
+  --ec-danger: #c62828;
+  --ec-danger-soft: #fdecec;
+  --ec-gold: var(--ec-accent);
+  --ec-gold-soft: var(--ec-accent-soft);
+  --ec-terracotta: #d2561a;
+  --ec-sage: #c9d5e8;
+  --ec-border: #d9dee8;
+  --ec-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --ec-radius-sm: 10px;
+  --ec-radius: 14px;
+  --ec-radius-lg: 16px;
 
   /* Older names kept as aliases so nothing that reads them breaks. */
   --bg: var(--ec-bg);
@@ -52,11 +59,11 @@
   --gold: var(--ec-gold);
   --sage: var(--ec-sage);
 
-  /* Surfaces: mostly solid, with a light glass finish. */
-  --glass-fill: rgba(255, 253, 248, 0.9);
-  --glass-fill-strong: #fffdf8;
-  --glass-rim: rgba(255, 255, 255, 0.85);
-  --glass-edge: rgba(37, 39, 34, 0.08);
+  /* Surfaces: solid white; glass only over imagery. */
+  --glass-fill: #ffffff;
+  --glass-fill-strong: #ffffff;
+  --glass-rim: #d9dee8;
+  --glass-edge: rgba(16, 24, 40, 0.04);
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
 
   color-scheme: light;
@@ -71,22 +78,15 @@
   body {
     @apply bg-ink-900 text-fg antialiased;
     font-family: var(--font-sans);
-    /* Warm ivory base with the supplied texture at very low intensity. */
+    /* A flat light canvas, as on a government portal. */
     background-color: var(--bg);
-    background-image:
-      radial-gradient(1100px 620px at 6% -12%, rgba(20, 83, 45, 0.06), transparent 62%),
-      radial-gradient(900px 520px at 98% 0%, rgba(197, 138, 39, 0.08), transparent 60%),
-      linear-gradient(180deg, rgba(245, 240, 229, 0.93), rgba(245, 240, 229, 0.97)),
-      url("/assets/evidence-pattern.png");
-    background-size: auto, auto, auto, cover;
-    background-attachment: fixed;
   }
 
   ::selection {
-    background: rgba(20, 83, 45, 0.16);
+    background: rgba(35, 66, 124, 0.16);
   }
 
-  /* Railway-green focus ring on every focusable element. */
+  /* Navy focus ring on every focusable element. */
   *:focus-visible {
     @apply outline-none ring-2 ring-brand/55 ring-offset-2 ring-offset-ink-900 rounded-[6px];
   }
@@ -115,23 +115,17 @@
 
   .panel {
     border-radius: var(--ec-radius);
-    background: var(--glass-fill);
-    border: 1px solid var(--glass-rim);
-    box-shadow:
-      0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
-      0 0 0 1px var(--glass-edge),
-      0 10px 30px -18px rgba(37, 39, 34, 0.28),
-      0 2px 6px -3px rgba(37, 39, 34, 0.1);
-    backdrop-filter: blur(10px) saturate(1.1);
-    -webkit-backdrop-filter: blur(10px) saturate(1.1);
+    background: var(--ec-surface);
+    border: 1px solid var(--ec-border);
+    box-shadow: var(--ec-shadow);
   }
 
-  /* The 20–30% of surfaces that are genuinely glass: over imagery only. */
+  /* The few surfaces that are translucent: over imagery only. */
   .glass {
     background: var(--surface);
     border: 1px solid rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(14px) saturate(1.15);
-    -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
   }
 
   /* A slightly more opaque variant for dense content (tables, forms). */
@@ -141,7 +135,7 @@
 
   .panel-head {
     @apply flex items-start justify-between gap-4 px-5 py-4;
-    border-bottom: 1px solid rgba(37, 39, 34, 0.07);
+    border-bottom: 1px solid #e6eaf1;
   }
 
   .panel-title {
@@ -160,22 +154,21 @@
   }
 
   .rule {
-    border-top: 1px solid rgba(37, 39, 34, 0.07);
+    border-top: 1px solid #e6eaf1;
   }
 
   /* --------------------------------------------------------- ornament */
 
   .grid-lines {
     background-image:
-      linear-gradient(to right, rgba(37, 39, 34, 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(37, 39, 34, 0.045) 1px, transparent 1px);
+      linear-gradient(to right, rgba(35, 66, 124, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(35, 66, 124, 0.05) 1px, transparent 1px);
     background-size: 30px 30px;
   }
 
-  /* Hairline tricolour accent — used sparingly, never as decoration. */
-  /* Thin gold rule used to separate sections without a heavy border. */
+  /* Thin orange rule used to separate sections without a heavy border. */
   .rule-gold {
-    background: linear-gradient(90deg, rgba(197, 138, 39, 0.55), rgba(197, 138, 39, 0));
+    background: linear-gradient(90deg, rgba(245, 124, 32, 0.6), rgba(245, 124, 32, 0));
   }
 
   .tricolour {
@@ -197,7 +190,8 @@
       border-color 0.18s ease;
   }
   .hover-lift:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    border-color: #c5cdda;
   }
 
   .tap {

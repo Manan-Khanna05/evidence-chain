@@ -132,6 +132,12 @@ export default function TteScreeningPage() {
     }
   };
 
+  /** Move to the next seat in the coach, as a TTE walking the aisle would. */
+  const walkNext = () => {
+    const i = selected ? SEATS.indexOf(selected) : -1;
+    walkTo(SEATS[(i + 1) % SEATS.length]);
+  };
+
   const resetWalk = () => {
     setScreened({});
     setSelected(null);
@@ -157,9 +163,14 @@ export default function TteScreeningPage() {
         subtitle="How a screening node would hand work to RPF. Every seat, cue and record on this page is synthetic."
         status={<DemoBadge />}
         actions={
-          <Button icon={<RotateCcw size={16} />} onClick={resetWalk}>
-            Reset demo walk
-          </Button>
+          <>
+            <Button variant="primary" icon={<ArrowRight size={16} />} onClick={walkNext}>
+              {selected ? "Walk to next seat" : "Start demo walk"}
+            </Button>
+            <Button icon={<RotateCcw size={16} />} onClick={resetWalk}>
+              Reset demo walk
+            </Button>
+          </>
         }
       />
 
@@ -170,22 +181,29 @@ export default function TteScreeningPage() {
       </Callout>
 
       {/* ------------------------------------------------ screening progress */}
-      <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-5">
+      <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-[12px] border border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
         {[
           { k: "Train", v: DEMO_TRAIN },
           { k: "Coach", v: DEMO_COACH },
           { k: "Seats screened", v: `${visitedCount} / ${SEATS.length}` },
           { k: "Flags", v: String(flags.length).padStart(2, "0"), warn: flags.length > 0 },
           { k: "Current seat", v: selected ?? "—" },
+          {
+            k: "Status",
+            v: selected
+              ? { flagged: "Flagged", attention: "Attention", screened: "Screened", not_screened: "Not screened" }[seatState(selected)]
+              : "—",
+            warn: selected ? seatState(selected) === "flagged" || seatState(selected) === "attention" : false,
+          },
         ].map((c) => (
-          <div key={c.k} className="bg-ink-850 px-4 py-3">
+          <div key={c.k} className="bg-white px-4 py-3">
             <dt className="label">{c.k}</dt>
-            <dd className={cx("mono mt-1 text-[18px] font-semibold", c.warn ? "text-[#8E4331]" : "text-fg")}>{c.v}</dd>
+            <dd className={cx("mt-1 text-[18px] font-semibold", c.warn ? "text-accent-ink" : "text-brand-deep")}>{c.v}</dd>
           </div>
         ))}
       </dl>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-700" role="progressbar" aria-label="Seats screened" aria-valuenow={visitedCount} aria-valuemin={0} aria-valuemax={SEATS.length}>
-        <div className="h-full rounded-full bg-brand transition-[width] duration-300" style={{ width: `${(visitedCount / SEATS.length) * 100}%` }} />
+        <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${(visitedCount / SEATS.length) * 100}%` }} />
       </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
@@ -210,9 +228,9 @@ export default function TteScreeningPage() {
                       className={cx(
                         "flex min-h-[56px] w-full flex-col items-center justify-center rounded-xl border text-[13px] font-semibold transition-all duration-150",
                         selected === seat && "ring-2 ring-brand/45",
-                        st === "flagged" && "border-sim/35 bg-sim/[0.12] text-[#8E4331]",
-                        st === "attention" && "border-warn/35 bg-warn/[0.12] text-[#855A14]",
-                        st === "screened" && "border-ok/25 bg-ok/[0.08] text-[#1F6A43]",
+                        st === "flagged" && "border-sim/35 bg-sim/[0.12] text-sim-ink",
+                        st === "attention" && "border-warn/35 bg-warn/[0.12] text-warn-ink",
+                        st === "screened" && "border-ok/25 bg-ok/[0.08] text-ok-ink",
                         st === "not_screened" && "border-line bg-white text-fg-dim",
                       )}
                     >
@@ -251,7 +269,7 @@ export default function TteScreeningPage() {
             />
             <div className="space-y-4 px-5 py-5">
               <div role="note" className="rounded-xl border-2 border-warn/45 bg-warn/[0.10] px-4 py-3">
-                <div className="text-[14px] font-bold uppercase tracking-[0.04em] text-[#855A14]">
+                <div className="text-[14px] font-bold uppercase tracking-[0.04em] text-warn-ink">
                   {SCREENING_NOTICE}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-fg-muted">

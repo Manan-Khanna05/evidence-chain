@@ -192,12 +192,12 @@ function FieldTestCaptureView() {
         </span>
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-[17px] font-bold uppercase tracking-[0.06em] text-[#8E4331] sm:text-[19px]">
+            <span className="text-[17px] font-bold uppercase tracking-[0.06em] text-sim-ink sm:text-[19px]">
               Presumptive result
             </span>
             <HelpTip term="presumptive" />
           </div>
-          <div className="text-[14px] font-bold uppercase tracking-[0.08em] text-[#9A5F12] sm:text-[15px]">
+          <div className="text-[14px] font-bold uppercase tracking-[0.08em] text-accent-ink sm:text-[15px]">
             Not a chemical identification
           </div>
           <p className="mt-1.5 text-[14px] leading-relaxed text-fg-muted">

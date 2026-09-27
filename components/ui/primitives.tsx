@@ -67,13 +67,13 @@ export type Tone = "ok" | "warn" | "danger" | "info" | "sim" | "neutral" | "bran
 
 /** Pill / chip surface: tinted fill, soft rim, readable text on cream. */
 const TONES: Record<Tone, string> = {
-  ok: "border-ok/25 bg-ok/[0.10] text-[#1F6A43]",
-  warn: "border-warn/30 bg-warn/[0.12] text-[#855A14]",
-  danger: "border-danger/30 bg-danger/[0.10] text-[#93322A]",
-  info: "border-info/25 bg-info/[0.09] text-[#0F4426]",
-  sim: "border-sim/28 bg-sim/[0.10] text-[#8E4331]",
-  brand: "border-brand/25 bg-brand/[0.09] text-[#0F4426]",
-  neutral: "border-line-strong bg-white/70 text-fg-muted",
+  ok: "border-ok/25 bg-ok/[0.10] text-ok-ink",
+  warn: "border-warn/30 bg-warn/[0.12] text-warn-ink",
+  danger: "border-danger/30 bg-danger/[0.10] text-danger-ink",
+  info: "border-info/25 bg-brand-soft text-brand-deep",
+  sim: "border-sim/28 bg-sim/[0.10] text-sim-ink",
+  brand: "border-brand/25 bg-brand-soft text-brand-deep",
+  neutral: "border-line-strong bg-white text-fg-muted",
 };
 
 /** Solid accent colour for numerals, icons and rules. */
@@ -100,26 +100,28 @@ export const TONE_BG: Record<Tone, string> = {
 
 /* ----------------------------------------------------------------- button */
 
-type ButtonVariant = "primary" | "secondary" | "accent" | "ghost" | "danger" | "success";
+type ButtonVariant = "primary" | "navy" | "secondary" | "accent" | "ghost" | "danger" | "success";
 
 function buttonClasses(variant: ButtonVariant, size: "sm" | "md" | "lg") {
   const base =
-    "inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45 select-none";
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[10px] font-semibold transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-45 select-none";
   const sizes = {
     sm: "h-9 px-3 text-[13px]",
     md: "h-11 px-4 text-[14px]",
     lg: "h-12 px-5 text-[15px]",
   }[size];
   const variants: Record<ButtonVariant, string> = {
-    primary:
-      "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(11,59,39,0.7)] hover:bg-[#1B6538] active:bg-[#0F4426]",
-    secondary:
-      "border border-line-strong bg-white/80 text-fg shadow-chip backdrop-blur-sm hover:bg-white hover:border-brand/35",
-    /* Muted brass: important secondary actions and railway identity. */
-    accent: "border border-gold/45 bg-gold-soft text-[#855A14] shadow-chip hover:bg-[#EFDDB0] hover:border-gold/60",
+    /* Railway orange: the one main action in an area. */
+    primary: "bg-accent-strong text-white shadow-chip hover:bg-accent-hover active:bg-accent-hover",
+    /* Navy: strong secondary actions (technical details, open, confirm). */
+    navy: "bg-brand text-white shadow-chip hover:bg-brand-deep active:bg-brand-deep",
+    /* Outline navy: everything else. */
+    secondary: "border border-line-strong bg-white text-brand shadow-chip hover:border-brand/45 hover:bg-brand-soft",
+    /* Orange outline: demo mode and other railway-accented secondary actions. */
+    accent: "border border-accent/50 bg-accent-soft text-accent-ink shadow-chip hover:border-accent hover:bg-[#FFE6D2]",
     ghost: "text-fg-muted hover:text-fg hover:bg-ink-750",
-    danger: "border border-danger/30 bg-danger/[0.09] text-[#93322A] hover:bg-danger/[0.15]",
-    success: "border border-ok/30 bg-ok/[0.09] text-[#1F6A43] hover:bg-ok/[0.15]",
+    danger: "border border-danger/30 bg-danger/[0.09] text-danger-ink hover:bg-danger/[0.15]",
+    success: "border border-ok/30 bg-ok/[0.09] text-ok-ink hover:bg-ok/[0.15]",
   };
   return cx(base, sizes, variants[variant]);
 }
@@ -351,7 +353,7 @@ export function EmptyState({
             backgroundPosition: "right 62%",
           }}
         >
-          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,253,248,0.1) 40%, rgba(255,253,248,0.85) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05) 40%, rgba(255,255,255,0.85) 100%)" }} />
           {icon ? (
             <span className="absolute bottom-3 left-1/2 flex h-12 w-12 -translate-x-1/2 items-center justify-center rounded-2xl border border-line bg-white text-brand shadow-chip">
               {icon}
@@ -363,9 +365,59 @@ export function EmptyState({
           {icon}
         </IconContainer>
       ) : null}
-      <div className={scene ? "font-display text-[19px] font-bold text-brand-deep" : "text-[15px] font-semibold text-fg"}>{title}</div>
+      <div className={scene ? "text-[19px] font-bold text-brand-deep" : "text-[15px] font-semibold text-fg"}>{title}</div>
       <p className="max-w-md text-[13.5px] leading-relaxed text-fg-muted">{body}</p>
       {action}
+    </div>
+  );
+}
+
+/**
+ * An error, explained: what happened, why, and what to do next. Used for device,
+ * sync and verification failures, so none of them ends at a raw error string.
+ */
+export function ErrorState({
+  title,
+  why,
+  next,
+  actions,
+  tone = "danger",
+  className,
+}: {
+  /** What happened, in plain words. */
+  title: string;
+  /** Why it happened, as far as the system knows. */
+  why: React.ReactNode;
+  /** The next thing the operator should do. */
+  next?: React.ReactNode;
+  actions?: React.ReactNode;
+  tone?: "danger" | "warn";
+  className?: string;
+}) {
+  return (
+    <div
+      role="alert"
+      className={cx(
+        "flex gap-3.5 overflow-hidden rounded-[12px] border bg-white py-3.5 pl-0 pr-4",
+        tone === "danger" ? "border-danger/30" : "border-warn/35",
+        className,
+      )}
+    >
+      <span aria-hidden="true" className={cx("w-1 shrink-0 rounded-r-full", tone === "danger" ? "bg-danger" : "bg-warn")} />
+      <div className="min-w-0 flex-1">
+        <div className={cx("text-[15px] font-semibold", tone === "danger" ? "text-danger-ink" : "text-warn-ink")}>{title}</div>
+        <p className="mt-1 text-[13.5px] leading-relaxed text-fg">
+          <span className="font-semibold text-fg-muted">Why: </span>
+          {why}
+        </p>
+        {next ? (
+          <p className="mt-1 text-[13.5px] leading-relaxed text-fg">
+            <span className="font-semibold text-fg-muted">Next: </span>
+            {next}
+          </p>
+        ) : null}
+        {actions ? <div className="mt-3 flex flex-wrap gap-2">{actions}</div> : null}
+      </div>
     </div>
   );
 }
@@ -461,7 +513,7 @@ export function SimulatedNote({
   return (
     <div
       className={cx(
-        "flex gap-2.5 rounded-xl border border-sim/22 bg-sim/[0.07] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#8E4331]",
+        "flex gap-2.5 rounded-xl border border-sim/22 bg-sim/[0.07] px-3.5 py-3 text-[12.5px] leading-relaxed text-sim-ink",
         className,
       )}
     >

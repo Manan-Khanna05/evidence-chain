@@ -33,10 +33,10 @@ function CardHead({
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-line px-5 py-3.5">
       <div className="flex min-w-0 items-center gap-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-brand-soft text-brand">
           <RailIcon name={icon} size={19} />
         </span>
-        <h3 className="text-[16.5px] font-semibold leading-tight text-fg">{title}</h3>
+        <h3 className="text-[16.5px] font-semibold leading-tight text-brand-deep">{title}</h3>
       </div>
       {right ? <div className="shrink-0">{right}</div> : null}
     </div>
@@ -45,10 +45,11 @@ function CardHead({
 
 /* ----------------------------------------------------------- quick actions */
 
+/** Orange marks the primary action; navy shades carry the rest. */
 const ACTION_TONE = {
-  green: { well: "bg-brand text-white", mark: "text-brand" },
-  terracotta: { well: "bg-terracotta text-white", mark: "text-terracotta" },
-  gold: { well: "bg-gold text-white", mark: "text-gold" },
+  primary: { well: "bg-accent-strong text-white", mark: "text-accent" },
+  navy: { well: "bg-brand text-white", mark: "text-brand" },
+  blue: { well: "bg-brand-mid text-white", mark: "text-brand-mid" },
   deep: { well: "bg-brand-deep text-white", mark: "text-brand-deep" },
 } as const;
 
@@ -71,25 +72,28 @@ export function QuickActionTile({
   return (
     <Link
       href={href}
-      className="panel hover-lift tap group relative flex min-h-[96px] items-center gap-4 overflow-hidden px-4 py-4 hover:shadow-lift sm:px-5"
+      className={cx(
+        "panel hover-lift tap group relative flex min-h-[92px] items-center gap-3 overflow-hidden px-4 py-4 hover:shadow-lift",
+        tone === "primary" && "border-accent/40 bg-accent-soft/60",
+      )}
     >
       {/* Faint watermark of the same icon: texture, not information. */}
       <span aria-hidden="true" className={cx("pointer-events-none absolute -right-3 -top-2 opacity-[0.07]", t.mark)}>
         <RailIcon name={icon} size={92} strokeWidth={1.4} />
       </span>
-      <span className={cx("flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-chip", t.well)}>
+      <span className={cx("flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] shadow-chip", t.well)}>
         <RailIcon name={icon} size={24} />
       </span>
       <span className="relative min-w-0 flex-1">
-        <span className="block text-[16px] font-semibold leading-snug text-fg sm:text-[17px]">{title}</span>
+        <span className="block text-[16px] font-semibold leading-snug text-brand-deep">{title}</span>
         <span className="mt-0.5 block text-[13.5px] leading-snug text-fg-muted">{body}</span>
         {badge ? (
           <span
             className={cx(
               "mt-1.5 inline-flex rounded-full border px-2 py-[1px] text-[11.5px] font-semibold",
               badge.danger
-                ? "border-danger/30 bg-danger/[0.08] text-[#93322A]"
-                : "border-gold/40 bg-gold-soft text-[#855A14]",
+                ? "border-danger/30 bg-danger/[0.08] text-danger-ink"
+                : "border-accent/40 bg-accent-soft text-accent-ink",
             )}
           >
             {badge.text}
@@ -98,8 +102,8 @@ export function QuickActionTile({
       </span>
       <RailIcon
         name="chevron-right"
-        size={20}
-        className="relative shrink-0 text-fg-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-brand"
+        size={18}
+        className="relative -mr-1 shrink-0 text-fg-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-brand"
       />
     </Link>
   );
@@ -128,9 +132,9 @@ export function MetricCard({
     <Link href={href} className="panel hover-lift group flex items-start gap-3.5 px-4 py-4 hover:shadow-lift">
       <span
         className={cx(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-          well === "gold" && "bg-gold-soft text-[#855A14]",
-          well === "terracotta" && "bg-terracotta-soft text-[#8E4331]",
+          "flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px]",
+          well === "gold" && "bg-accent-soft text-accent-ink",
+          well === "terracotta" && "bg-terracotta-soft text-sim-ink",
           well === "sage" && "bg-brand-soft text-brand",
         )}
       >
@@ -138,15 +142,15 @@ export function MetricCard({
       </span>
       <span className="min-w-0">
         <span className="block text-[13.5px] font-medium text-fg-muted">{label}</span>
-        <span className="mt-0.5 block text-[28px] font-bold leading-none tracking-tight text-fg tabular-nums">
+        <span className="mt-0.5 block text-[28px] font-bold leading-none tracking-tight text-brand-deep tabular-nums">
           {value}
         </span>
         <span
           className={cx(
             "mt-1.5 flex items-center gap-1 text-[12.5px] font-medium",
-            subTone === "ok" && "text-[#1F6A43]",
-            subTone === "gold" && "text-[#855A14]",
-            subTone === "attention" && "text-[#8E4331]",
+            subTone === "ok" && "text-ok-ink",
+            subTone === "gold" && "text-accent-ink",
+            subTone === "attention" && "text-sim-ink",
             subTone === "neutral" && "text-fg-dim",
           )}
         >
@@ -201,7 +205,7 @@ export function PramaanCard() {
         right={<ConnectionStatus size="sm" />}
       />
       <div className="grid gap-4 px-5 py-4 sm:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-        <div className="mx-auto aspect-[3/2] w-full max-w-[320px] overflow-hidden rounded-2xl border border-line bg-[#EFE7D6] sm:max-w-none">
+        <div className="mx-auto aspect-[3/2] w-full max-w-[320px] overflow-hidden rounded-2xl border border-line bg-ink-750 sm:max-w-none">
           <AssetImage
             name="pramaanDevice"
             alt="The PRAMAAN evidence unit: load cell, status display, indicator lights and ACQUIRE buttons, with a phone mount"
@@ -316,7 +320,7 @@ function ReadingTile({
 }) {
   const tone =
     state === "LIVE"
-      ? "border-ok/20 bg-[#EEF3EC]"
+      ? "border-ok/20 bg-ok-soft"
       : state === "SIMULATED" || state === "DEMO"
         ? "border-sim/20 bg-terracotta-soft/60"
         : "border-line bg-white";
@@ -392,11 +396,11 @@ export function IntegrityCard({
         title="Evidence Integrity"
         right={
           !result ? null : intact ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/[0.10] px-2.5 py-1 text-[12px] font-semibold text-[#1F6A43]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/[0.10] px-2.5 py-1 text-[12px] font-semibold text-ok-ink">
               <Check size={13} /> Chain Verified
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-sim/35 bg-terracotta-soft px-2.5 py-1 text-[12px] font-semibold text-[#8E4331]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-danger/30 bg-danger/[0.08] px-2.5 py-1 text-[12px] font-semibold text-danger-ink">
               <TriangleAlert size={13} /> Attention Required
             </span>
           )
@@ -413,25 +417,25 @@ export function IntegrityCard({
           <>
             <div
               className={cx(
-                "flex items-start gap-3 rounded-2xl border px-4 py-3",
-                intact ? "border-ok/25 bg-ok/[0.07]" : "border-sim/30 bg-terracotta-soft/60",
+                "flex items-start gap-3 rounded-[12px] border px-4 py-3",
+                intact ? "border-ok/25 bg-ok-soft" : "border-danger/25 bg-danger/[0.06]",
               )}
             >
               <span
                 className={cx(
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white",
-                  intact ? "bg-ok" : "bg-sim",
+                  intact ? "bg-ok" : "bg-danger",
                 )}
               >
                 {intact ? <Check size={17} strokeWidth={3} /> : <TriangleAlert size={16} />}
               </span>
               <div className="min-w-0">
-                <div className="text-[15px] font-semibold text-fg">
-                  {intact ? "Evidence chain is intact" : `${broken.length} case${broken.length === 1 ? "" : "s"} need attention`}
+                <div className={cx("text-[15px] font-semibold", intact ? "text-ok-ink" : "text-danger-ink")}>
+                  {intact ? "Evidence chain verified" : `${broken.length} case${broken.length === 1 ? "" : "s"} need attention`}
                 </div>
                 <div className="text-[13px] leading-snug text-fg-muted">
                   {intact
-                    ? "Every record still matches what was signed."
+                    ? "All records are valid and unchanged since signing."
                     : broken.map((b) => b.case_ref).join(", ")}
                 </div>
               </div>
@@ -462,9 +466,9 @@ export function IntegrityCard({
                     <dd
                       className={cx(
                         "inline-flex items-center gap-1.5 font-semibold",
-                        st === "pass" && "text-[#1F6A43]",
-                        st === "fail" && "text-[#93322A]",
-                        st === "degraded" && "text-[#855A14]",
+                        st === "pass" && "text-ok-ink",
+                        st === "fail" && "text-danger-ink",
+                        st === "degraded" && "text-warn-ink",
                         st === "none" && "text-fg-dim",
                       )}
                     >
@@ -480,7 +484,7 @@ export function IntegrityCard({
       </div>
       <div className="relative border-t border-line px-5 py-3.5">
         <TechnicalDetailsDrawer
-          buttonVariant="secondary"
+          buttonVariant="navy"
           buttonSize="md"
           className="w-full"
           subtitle="Every check across the whole log, as the verifier computed it."
@@ -495,7 +499,7 @@ export function IntegrityCard({
                   </div>
                   <p className="mt-1 text-[13px] leading-relaxed text-fg-muted">{c.detail}</p>
                   {c.failures.slice(0, 3).map((f) => (
-                    <p key={f.record_id + f.reason} className="mono mt-1 text-[12px] text-[#93322A]">
+                    <p key={f.record_id + f.reason} className="mono mt-1 text-[12px] text-danger-ink">
                       {f.record_id}: {f.reason}
                     </p>
                   ))}
@@ -534,8 +538,8 @@ export function PendingSyncCard({ onSync, busy }: { onSync: () => void; busy: bo
             className={cx(
               "inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] font-semibold",
               queued.length
-                ? "border-gold/40 bg-gold-soft text-[#855A14]"
-                : "border-ok/30 bg-ok/[0.08] text-[#1F6A43]",
+                ? "border-gold/40 bg-gold-soft text-warn-ink"
+                : "border-ok/30 bg-ok/[0.08] text-ok-ink",
             )}
           >
             {queued.length ? `${queued.length} record${queued.length === 1 ? "" : "s"}` : "All synced"}
@@ -558,7 +562,7 @@ export function PendingSyncCard({ onSync, busy }: { onSync: () => void; busy: bo
                     href={`/cases/${caseRef}`}
                     className="flex items-center gap-3 rounded-xl border border-line bg-white px-3.5 py-2.5 transition-colors hover:bg-ink-750"
                   >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold-soft text-[#855A14]">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold-soft text-warn-ink">
                       <RailIcon name="cases" size={16} />
                     </span>
                     <span className="min-w-0 flex-1">
@@ -621,7 +625,7 @@ export function TteDemoCard() {
           ].map(([k, v]) => (
             <div key={k} className="rounded-xl border border-line bg-white px-3 py-2.5">
               <div className="text-[12px] text-fg-dim">{k}</div>
-              <div className={cx("text-[20px] font-bold leading-tight tabular-nums", k === "Flags" && flags.length ? "text-[#8E4331]" : "text-fg")}>
+              <div className={cx("text-[20px] font-bold leading-tight tabular-nums", k === "Flags" && flags.length ? "text-sim-ink" : "text-fg")}>
                 {v}
               </div>
             </div>

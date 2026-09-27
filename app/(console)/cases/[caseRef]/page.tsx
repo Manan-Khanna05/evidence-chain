@@ -322,11 +322,11 @@ export default function CaseDetailPage() {
               className={
                 "mt-1 text-[15px] font-semibold " +
                 (c.tone === "ok"
-                  ? "text-[#1F6A43]"
+                  ? "text-ok-ink"
                   : c.tone === "gold"
-                    ? "text-[#855A14]"
+                    ? "text-warn-ink"
                     : c.tone === "danger"
-                      ? "text-[#93322A]"
+                      ? "text-danger-ink"
                       : "text-fg")
               }
             >

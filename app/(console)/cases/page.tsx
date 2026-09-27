@@ -123,7 +123,7 @@ export default function CasesPage() {
       <section
         aria-labelledby="new-case-title"
         className="relative mb-6 overflow-hidden rounded-[20px] border border-brand/25 shadow-glass"
-        style={{ background: "linear-gradient(120deg, #FFFDF8 0%, #F3EFE5 100%)" }}
+        style={{ background: "linear-gradient(120deg, #FFFFFF 0%, #EEF4FF 100%)" }}
       >
         <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5 bg-brand" />
         <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center">

@@ -28,7 +28,7 @@ export function TechnicalDetailsDrawer({
   label?: string;
   children: React.ReactNode;
   buttonSize?: "sm" | "md" | "lg";
-  buttonVariant?: "ghost" | "secondary";
+  buttonVariant?: "ghost" | "secondary" | "navy";
   className?: string;
 }) {
   const [open, setOpen] = React.useState(false);
@@ -67,7 +67,7 @@ export function TechnicalDetailsDrawer({
         ? createPortal(
             <div className="fixed inset-0 z-[75]">
               <div
-                className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252525]/30"
+                className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-fg/30"
                 onClick={() => setOpen(false)}
               />
               <div

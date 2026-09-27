@@ -19,6 +19,7 @@ import { useApp } from "@/components/providers/app-provider";
 import {
   Button,
   ButtonLink,
+  ErrorState,
   Callout,
   KeyValue,
   Panel,
@@ -118,34 +119,37 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
           </div>
 
           {hw.pramaan.error ? (
-            <div
-              role="alert"
-              className="rounded-2xl border border-sim/35 bg-terracotta-soft/70 px-4 py-3.5"
-            >
-              <div className="flex items-center gap-2 text-[15px] font-semibold text-[#8E4331]">
-                <TriangleAlert size={16} />
-                {hw.pramaan.portOpen && !hw.pramaan.identified
+            <ErrorState
+              title={
+                hw.pramaan.portOpen && !hw.pramaan.identified
                   ? "PRAMAAN is not responding"
-                  : "PRAMAAN needs attention"}
-              </div>
-              <p className="mt-1 text-[14px] leading-relaxed text-fg-muted">{hw.pramaan.error}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="primary"
-                  icon={<RefreshCw size={15} />}
-                  onClick={() => {
-                    hw.clearPramaanError();
-                    void hw.connectPramaan({ reuseGranted: canReconnect });
-                  }}
-                >
-                  Reconnect
-                </Button>
-                <ButtonLink href="/settings/device" size="sm">
-                  Diagnostics
-                </ButtonLink>
-              </div>
-            </div>
+                  : "PRAMAAN needs attention"
+              }
+              why={
+                hw.pramaan.portOpen && !hw.pramaan.identified
+                  ? `The USB connection opened, but the device did not complete the PRAMAAN handshake. ${hw.pramaan.error}`
+                  : hw.pramaan.error
+              }
+              next="Reconnect. If it still does not answer, open Diagnostics to see every line the port sent."
+              actions={
+                <>
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    icon={<RefreshCw size={15} />}
+                    onClick={() => {
+                      hw.clearPramaanError();
+                      void hw.connectPramaan({ reuseGranted: canReconnect });
+                    }}
+                  >
+                    Reconnect
+                  </Button>
+                  <ButtonLink href="/settings/device" size="sm" variant="secondary">
+                    Technical Details
+                  </ButtonLink>
+                </>
+              }
+            />
           ) : null}
 
           <div className="grid grid-cols-2 gap-4">
@@ -297,7 +301,7 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
 
         {showImage ? (
           <div className="hidden w-[260px] sm:block">
-            <div className="aspect-[3/2] overflow-hidden rounded-2xl border border-line bg-[#EFE7D6]">
+            <div className="aspect-[3/2] overflow-hidden rounded-2xl border border-line bg-ink-750">
               <AssetImage
                 name="pramaanDevice"
                 alt="The PRAMAAN evidence unit with its load cell, status display and ACQUIRE buttons"

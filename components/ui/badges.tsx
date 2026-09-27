@@ -10,10 +10,10 @@ import { cx } from "@/components/ui/primitives";
 export type SourceState = "LIVE" | "SIMULATED" | "UNAVAILABLE" | "DEMO";
 
 const SOURCE_STYLE: Record<SourceState, string> = {
-  LIVE: "border-ok/30 bg-ok/[0.10] text-[#1F6A43]",
-  SIMULATED: "border-gold/40 bg-gold-soft text-[#855A14]",
+  LIVE: "border-ok/30 bg-ok/[0.10] text-ok-ink",
+  SIMULATED: "border-gold/40 bg-gold-soft text-warn-ink",
   UNAVAILABLE: "border-line-strong bg-ink-750 text-fg-muted",
-  DEMO: "border-sim/35 bg-terracotta-soft text-[#8E4331]",
+  DEMO: "border-sim/35 bg-terracotta-soft text-sim-ink",
 };
 
 const SOURCE_MARK: Record<SourceState, string> = {
@@ -53,7 +53,7 @@ export function DemoBadge({ label = "DEMO MODE", className }: { label?: string; 
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-sim/35 bg-terracotta-soft px-2.5 py-[3px] text-[11px] font-bold tracking-[0.06em] text-[#8E4331]",
+        "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-sim/35 bg-terracotta-soft px-2.5 py-[3px] text-[11px] font-bold tracking-[0.06em] text-sim-ink",
         className,
       )}
     >

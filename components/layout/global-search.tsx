@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/icons";
 import { useApp } from "@/components/providers/app-provider";
 import { cx } from "@/components/ui/primitives";
+import { useT } from "@/components/providers/prefs-provider";
 import { RailIcon } from "@/components/ui/rail-icon";
 import { RECORD_TYPE_LABEL } from "@/lib/domain/vocab";
 
@@ -36,6 +37,7 @@ const ICON = {
  * store already in memory — nothing is sent anywhere.
  */
 export function GlobalSearch({ className }: { className?: string }) {
+  const t = useT();
   const [open, setOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -56,14 +58,14 @@ export function GlobalSearch({ className }: { className?: string }) {
         onClick={() => setOpen(true)}
         aria-label="Search cases, records, device, train, coach"
         className={cx(
-          "flex h-11 items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 text-left text-[14px] text-fg-dim shadow-chip transition-colors duration-150 hover:border-line-strong hover:text-fg-muted",
+          "flex h-11 items-center gap-2.5 rounded-[10px] border border-line-strong bg-white px-3.5 text-left text-[14px] text-fg-dim shadow-chip transition-colors duration-150 hover:border-line-strong hover:text-fg-muted",
           className,
         )}
       >
         <RailIcon name="search" size={18} className="shrink-0 text-fg-muted" />
         <span className="min-w-0 flex-1 truncate">
-          <span className="sm:hidden">Search…</span>
-          <span className="hidden sm:inline">Search cases, records, device, train, coach…</span>
+          <span className="sm:hidden">{t("search.short")}</span>
+          <span className="hidden sm:inline">{t("search.placeholder")}</span>
         </span>
         <kbd className="ml-auto hidden shrink-0 rounded-md border border-line-strong bg-ink-750 px-1.5 py-0.5 text-[10.5px] font-semibold text-fg-dim md:inline">
           Ctrl K
@@ -163,7 +165,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-start justify-center px-4 pt-[10vh]">
-      <div className="absolute inset-0 animate-[fade-in_.18s_ease-out] bg-[#252525]/30" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.18s_ease-out] bg-fg/30" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"

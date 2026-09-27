@@ -58,11 +58,39 @@ export default function SystemGuidePage() {
   return (
     <>
       <PageHeader
-        eyebrow="For maintainers"
+        eyebrow="Evidence Chain V2 · for maintainers"
         title="System & Architecture Guide"
         subtitle="How Evidence Chain V2 is put together, written against the code in this build."
         status={<Pill tone="neutral">Schema 2 · PRAMAAN-1</Pill>}
       />
+
+      <nav aria-label="Guide sections" className="mb-5 flex flex-wrap gap-2">
+        {[
+          ["architecture", "Architecture"],
+          ["data", "Data model"],
+          ["case", "Case model"],
+          ["record", "Record model"],
+          ["crypto", "Cryptography"],
+          ["pramaan", "PRAMAAN protocol"],
+          ["tte", "TTE architecture"],
+          ["storage", "Offline sync"],
+          ["verification", "Verification"],
+          ["merkle", "Merkle"],
+          ["anchoring", "Timestamp anchoring"],
+          ["handoff", "Handoff & certificates"],
+          ["security", "Security"],
+          ["deploy", "Deployment"],
+          ["ops", "Troubleshooting"],
+        ].map(([id, label]) => (
+          <a
+            key={id}
+            href={`#${id}`}
+            className="inline-flex min-h-[38px] items-center rounded-[10px] border border-line-strong bg-white px-3 text-[13.5px] font-medium text-brand hover:bg-brand-soft"
+          >
+            {label}
+          </a>
+        ))}
+      </nav>
 
       <div className="space-y-5">
         <Section id="architecture" title="Architecture" icon={<Boxes size={17} />}>
@@ -106,7 +134,7 @@ anchor_id      set once covered by an anchor`}</Code>
           </p>
         </Section>
 
-        <Section id="case" title="Case lifecycle" icon={<FileCode2 size={17} />}>
+        <Section id="case" title="Case model" icon={<FileCode2 size={17} />}>
           <Code>{`createCase()                 opens an empty case, no records
 capture*(case_ref)           appends at case_seq = highest + 1
                              refuses an unknown case_ref
@@ -120,7 +148,7 @@ verifyChain(case_ref)        walks only that case`}</Code>
           </p>
         </Section>
 
-        <Section id="record" title="Record lifecycle" icon={<FileCode2 size={17} />}>
+        <Section id="record" title="Record model" icon={<FileCode2 size={17} />}>
           <Code>{`telemetry          streamed, displayed, never stored as evidence
 review             officer sees the reading and its source
 confirm            officer confirms — only now is a record built
@@ -180,7 +208,7 @@ temperature input; thermal_sensor is false on this hardware.`}</Code>
           </p>
         </Section>
 
-        <Section id="storage" title="Storage and sync" icon={<Database size={17} />}>
+        <Section id="storage" title="Offline sync and storage" icon={<Database size={17} />}>
           <p>
             Backend in this session:{" "}
             <span className="mono">{storage?.backend ?? "unknown"}</span> — {storage?.detail ?? "—"}.
@@ -205,6 +233,33 @@ handoff             transfer and receipt agree`}</Code>
           <p>
             Scope is a case or the whole log. A failure names the record and, for case linkage, the
             position with expected and actual values.
+          </p>
+        </Section>
+
+        <Section id="merkle" title="Merkle log" icon={<Boxes size={17} />}>
+          <Code>{`leaf        SHA-256("00:" + record_hash)           domain-separated,
+node        SHA-256("01:" + left + ":" + right)     RFC 6962 style
+order       log_index — the order the server ACCEPTED records,
+            never a device or server clock
+inclusion   audit path from a record to the anchored root
+consistency an earlier anchored root is a prefix of today's tree`}</Code>
+          <p>
+            Ordering by acceptance matters: if the log were sorted by time, a record with an odd
+            timestamp could slide in front of history that was already anchored, and every later
+            proof would fail. Records written before <span className="mono">log_index</span> existed
+            keep their original ingest order and come first.
+          </p>
+        </Section>
+
+        <Section id="anchoring" title="Timestamp anchoring" icon={<ShieldCheck size={17} />}>
+          <Code>{`anchor      tree head (size, root) signed by TSA-01 and TSA-02
+window      a record existed after its ingest time and before the
+            anchor covering it — a bounded window, not an exact time
+dual        both authorities confirmed → trusted-time window
+single      one authority down → still verifies, marked degraded`}</Code>
+          <p>
+            Both time authorities are <strong>simulated</strong> in this build and are labelled so on
+            every screen. Device time is shown as device time and is never treated as trusted.
           </p>
         </Section>
 
@@ -245,7 +300,7 @@ DATABASE_URL               set in Vercel to share one store across instances;
           </p>
         </Section>
 
-        <Section id="ops" title="Running and troubleshooting" icon={<Wrench size={17} />}>
+        <Section id="ops" title="Troubleshooting" icon={<Wrench size={17} />}>
           <Code>{`npm run dev        development server
 npm run build      production build
 npm run typecheck  TypeScript

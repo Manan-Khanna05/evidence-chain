@@ -91,8 +91,8 @@ export function LoadGauge({
       <svg width="170" height="98" viewBox="0 0 170 98" aria-hidden="true">
         <defs>
           <linearGradient id="lg-arc" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#5A93F0" />
-            <stop offset="100%" stopColor="#14532D" />
+            <stop offset="0%" stopColor="#5B8AD6" />
+            <stop offset="100%" stopColor="#23427C" />
           </linearGradient>
         </defs>
         <path
@@ -264,9 +264,9 @@ export function LedMirror({
   );
   return (
     <div className="flex items-center gap-5">
-      {lamp(green, "#2E7D52", "Ready")}
-      {lamp(amber, "#C58A27", "Recording")}
-      {lamp(red, "#B84035", "Fault")}
+      {lamp(green, "#2E7D32", "Ready")}
+      {lamp(amber, "#F57C20", "Recording")}
+      {lamp(red, "#C62828", "Fault")}
     </div>
   );
 }

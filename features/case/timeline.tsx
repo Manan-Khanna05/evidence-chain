@@ -221,7 +221,7 @@ function buildSteps(summary: CaseSummary, store: ClientStore): Step[] {
               </span>
             ),
           },
-          { k: "Epistemic", v: <span className="text-[#855A14]">{fp.epistemic_status}</span> },
+          { k: "Epistemic", v: <span className="text-warn-ink">{fp.epistemic_status}</span> },
         ]
       : [{ k: "Status", v: "No field-test record for this case" }],
   });

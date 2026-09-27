@@ -147,8 +147,8 @@ function VerificationView() {
                   <div>
                     <div
                       className={cx(
-                        "font-display text-[30px] font-bold leading-tight tracking-tight",
-                        result.verified ? (result.degraded ? "text-[#855A14]" : "text-ok") : "text-danger",
+                        "text-[30px] font-bold leading-tight tracking-tight",
+                        result.verified ? (result.degraded ? "text-warn-ink" : "text-ok") : "text-danger",
                       )}
                     >
                       {result.verified ? "Evidence chain verified" : "Integrity attention"}
@@ -181,7 +181,7 @@ function VerificationView() {
                   </div>
                 ) : null}
                 {result.verified && result.degraded ? (
-                  <p className="mt-4 text-[14px] text-[#855A14]">
+                  <p className="mt-4 text-[14px] text-warn-ink">
                     One time authority was unavailable. The chain still verifies.
                   </p>
                 ) : null}

@@ -54,18 +54,30 @@ import {
 } from "@/features/dashboard/overview";
 import { RailIcon } from "@/components/ui/rail-icon";
 import { NewCaseDialog } from "@/features/case/case-context";
-import { summariseByRecency } from "@/lib/domain/status";
-import { fmtInterval, fmtRelative } from "@/lib/format";
+import { summariseByRecency, type CaseSummary } from "@/lib/domain/status";
+import { useT } from "@/components/providers/prefs-provider";
+import type { StringKey } from "@/lib/i18n/strings";
+import { DataTable } from "@/components/ui/data-table";
+import { fmtDateTime, fmtInterval, fmtRelative } from "@/lib/format";
 import type { AssetKey } from "@/lib/assets";
 import type { CaseVerdict } from "@/app/api/verify/route";
 import type { VerificationResult } from "@/lib/domain/verify";
 
-function greeting(d = new Date()) {
+function greeting(d = new Date()): StringKey {
   const h = d.getHours();
-  if (h < 12) return "Good Morning";
-  if (h < 17) return "Good Afternoon";
-  return "Good Evening";
+  if (h < 12) return "greet.morning";
+  if (h < 17) return "greet.afternoon";
+  return "greet.evening";
 }
+
+const HANDOFF_LABEL: Record<CaseSummary["handoff_status"], string> = {
+  not_started: "Not started",
+  transfer_created: "Transfer signed",
+  awaiting_receipt: "Awaiting receipt",
+  receipt_signed: "Receipt signed",
+  verified: "Verified",
+  mismatch: "Mismatch",
+};
 
 export default function DashboardPage() {
   const { store, verifyAllCases, run, officer, session } = useApp();
@@ -73,7 +85,8 @@ export default function DashboardPage() {
   const [verdicts, setVerdicts] = React.useState<CaseVerdict[] | null>(null);
   const [global, setGlobal] = React.useState<VerificationResult | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
-  const [hello, setHello] = React.useState("Welcome");
+  const t = useT();
+  const [hello, setHello] = React.useState<StringKey | null>(null);
   // Read on the client only, so server and client render agree.
   const [now, setNow] = React.useState<Date | null>(null);
   React.useEffect(() => {
@@ -214,21 +227,22 @@ export default function DashboardPage() {
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px]">
-            {hello}, {officer?.name ?? session?.officer_id}{" "}
+            {hello ? `${t(hello)}, ` : ""}
+            {officer?.name ?? session?.officer_id}{" "}
             <span role="img" aria-label="waving hand">
               👋
             </span>
           </h2>
           <p className="mt-1 text-[15px] leading-relaxed text-fg-muted">
             {pendingHandoffs.length + queuedRecords.length + brokenCases.length === 0
-              ? "Everything is in order. Start a new capture when you are ready."
-              : "Here is what needs your attention today."}
+              ? t("greet.allClear")
+              : t("greet.attention")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {now ? (
             <span className="inline-flex h-10 flex-wrap items-center gap-x-2 rounded-xl border border-line bg-white px-3 text-[13.5px] text-fg-muted">
-              <span className={cx("inline-flex items-center gap-1.5 font-semibold", store.connectivity.online ? "text-[#1F6A43]" : "text-[#855A14]")}>
+              <span className={cx("inline-flex items-center gap-1.5 font-semibold", store.connectivity.online ? "text-ok-ink" : "text-warn-ink")}>
                 <span className={cx("h-2 w-2 rounded-full", store.connectivity.online ? "bg-ok" : "bg-warn")} />
                 {store.connectivity.online ? "System Online" : "Working Offline"}
               </span>
@@ -251,13 +265,13 @@ export default function DashboardPage() {
           Quick actions
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <QuickActionTile href="/capture/trigger" icon="capture" tone="green" title="Capture Evidence" body="Start or continue a case" />
-          <QuickActionTile href="/capture/field-test" icon="field-test" tone="terracotta" title="Field Test" body="Record a presumptive result" />
+          <QuickActionTile href="/capture/trigger" icon="capture" tone="primary" title="Capture Evidence" body="Start or continue a case" />
+          <QuickActionTile href="/capture/field-test" icon="field-test" tone="navy" title="Field Test" body="Record a presumptive result" />
           <QuickActionTile
             href="/handoff"
             icon="handoff"
-            tone="gold"
-            title="Handoff"
+            tone="blue"
+            title="Handoff to GRP"
             body="Transfer custody to GRP"
             badge={pendingHandoffs.length ? { text: `${pendingHandoffs.length} waiting` } : undefined}
           />
@@ -358,35 +372,68 @@ export default function DashboardPage() {
             </ButtonLink>
           </div>
 
-          <div className="label mt-5 mb-2">Recent cases</div>
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {summaries.slice(0, 3).map((s) => {
-              const v = verdicts?.find((x) => x.case_ref === s.case_ref);
-              return (
-                <li key={s.case_ref}>
-                  <Link
-                    href={`/cases/${s.case_ref}`}
-                    className="hover-lift block rounded-2xl border border-line bg-white px-4 py-3.5 hover:shadow-chip"
-                  >
-                    <div className="mono text-[14px] font-semibold text-fg">{s.case_ref}</div>
-                    <div className="mt-0.5 truncate text-[13px] text-fg-muted">{s.place}</div>
-                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      <Pill tone="neutral">
-                        {s.record_count} record{s.record_count === 1 ? "" : "s"}
-                      </Pill>
-                      {v ? (
-                        v.verified ? (
-                          <Pill tone="ok" icon={<Check size={11} />}>Verified</Pill>
-                        ) : (
-                          <Pill tone="danger" icon={<X size={11} />}>Chain broken</Pill>
-                        )
-                      ) : null}
-                    </div>
+          <h3 className="mb-2 mt-5 text-[15px] font-semibold text-brand-deep">Recent Cases</h3>
+          <DataTable
+            caption="The five most recently active cases"
+            rows={summaries.slice(0, 5)}
+            rowKey={(s) => s.case_ref}
+            columns={[
+              {
+                key: "ref",
+                header: "Case Reference",
+                cell: (s) => (
+                  <Link href={`/cases/${s.case_ref}`} className="mono text-[13px] font-semibold text-brand hover:underline">
+                    {s.case_ref}
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
+                ),
+              },
+              { key: "created", header: "Created", cell: (s) => <span className="whitespace-nowrap text-fg-muted">{fmtDateTime(s.opened_at)}</span> },
+              { key: "records", header: "Records", align: "right", cell: (s) => s.record_count },
+              { key: "seq", header: "Latest Seq", align: "right", cell: (s) => (s.record_count ? `#${s.record_count}` : "—") },
+              {
+                key: "integrity",
+                header: "Integrity",
+                cell: (s) => {
+                  const v = verdicts?.find((x) => x.case_ref === s.case_ref);
+                  if (!v) return <span className="text-fg-dim">Checking…</span>;
+                  return v.verified ? (
+                    <Pill tone="ok" icon={<Check size={11} />}>Verified</Pill>
+                  ) : (
+                    <Pill tone="danger" icon={<X size={11} />}>Chain broken</Pill>
+                  );
+                },
+              },
+              {
+                key: "sync",
+                header: "Sync",
+                cell: (s) =>
+                  s.record_count === 0 ? (
+                    <span className="text-fg-dim">No records</span>
+                  ) : s.queued_count ? (
+                    <Pill tone="warn">Pending · {s.queued_count}</Pill>
+                  ) : s.anchor_state === "unanchored" ? (
+                    <Pill tone="brand">Synced</Pill>
+                  ) : (
+                    <Pill tone="brand">Anchored</Pill>
+                  ),
+              },
+              {
+                key: "handoff",
+                header: "Handoff",
+                cell: (s) => <span className="whitespace-nowrap text-fg-muted">{HANDOFF_LABEL[s.handoff_status]}</span>,
+              },
+              {
+                key: "action",
+                header: "Action",
+                align: "right",
+                cell: (s) => (
+                  <ButtonLink href={`/cases/${s.case_ref}`} size="sm" variant="navy">
+                    Open Case
+                  </ButtonLink>
+                ),
+              },
+            ]}
+          />
         </div>
       </Panel>
 

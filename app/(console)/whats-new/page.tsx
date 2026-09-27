@@ -32,32 +32,34 @@ type Change = { title: string; points: string[]; note?: string };
 const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Change[] }[] = [
   {
     id: "design",
-    title: "New railway theme",
+    title: "New railway visual theme",
     icon: <Palette size={18} />,
     changes: [
       {
-        title: "A railway operations console",
+        title: "Indian Railways visual language",
         points: [
-          "Warm ivory pages, forest green for navigation and primary actions, brass for pending states, terracotta for attention and demo markers, red only for genuine integrity failures.",
-          "The brand block carries a railway-evidence crest, with titles set in a serif display face.",
-          "The dashboard masthead shows the station, four quick actions, and a bilingual slogan panel: सुरक्षित यात्रा, विश्वसनीय प्रमाण — Safer Railways, Stronger India.",
-          "A product image of the PRAMAAN unit on the dashboard, Device Status and the hardware guide; a railway illustration at the foot of the navigation and the sign-in card.",
+          "Navy for navigation, headings and verification; orange for the main action, the active indicator and pending work; white panels on a light canvas.",
+          "Green appears only for success and red only for an integrity failure, so a colour always means the same thing.",
+          "The dashboard masthead shows the station and a bilingual slogan panel: सुरक्षित यात्रा, विश्वसनीय प्रमाण — Safer Railways, Stronger India. Actions live in the Quick Actions row beneath it.",
+          "A navy-headed Recent Cases table, a custody stepper on Handoff, and a PRAMAAN product image on the dashboard, Device Status and the hardware guide.",
         ],
-        note: "The crest is a generated railway-evidence mark, not an official emblem. This is an SIH prototype and does not claim to be an Indian Railways system.",
+        note: "The crest is a generated railway-evidence mark, not an official emblem. Evidence Chain is an SIH prototype and does not claim to be an Indian Railways or IRCTC system.",
       },
       {
         title: "Easier to read and operate",
         points: [
+          "Choose your language on the sign-in page — English, हिन्दी, বাংলা, मराठी, తెలుగు, தமிழ், ગુજરાતી, ಕನ್ನಡ, ଓଡ଼ିଆ, മലയാളം or ਪੰਜਾਬੀ — and change it any time from the header or the operator menu.",
+          "Text size control in the header: A−, A, A+.",
           "One icon set, supplied with the V2 asset pack, across navigation, actions and status.",
-          "Status is never carried by colour alone: every state has a word and a shape.",
-          "Skeletons while loading instead of spinners; no horizontal scrolling on phone-width screens.",
+          "Status is never carried by colour alone: every state has a word and a shape. Errors say what happened, why, and what to do next.",
         ],
+        note: "Translated so far: navigation, header, footer, the sign-in page and the dashboard greeting. Other pages stay in English until each is translated and reviewed by a native speaker.",
       },
     ],
   },
   {
     id: "cases",
-    title: "Case isolation",
+    title: "Case separation and case-scoped chains",
     icon: <FolderTree size={18} />,
     changes: [
       {
@@ -69,7 +71,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
         ],
       },
       {
-        title: "Append-only chains",
+        title: "Append-only records",
         points: [
           "An existing case can receive new records, appended at the end.",
           "Records already in a case cannot be edited, reordered or deleted through the application.",
@@ -105,7 +107,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
   },
   {
     id: "pramaan",
-    title: "PRAMAAN protocol and telemetry",
+    title: "PRAMAAN USB integration and source-aware telemetry",
     icon: <Cpu size={18} />,
     changes: [
       {
@@ -160,7 +162,7 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
   },
   {
     id: "verification",
-    title: "Verification and handoff",
+    title: "Verification and RPF → GRP handoff",
     icon: <ShieldCheck size={18} />,
     changes: [
       {

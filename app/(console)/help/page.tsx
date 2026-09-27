@@ -43,7 +43,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "new-case",
-    title: "New Case",
+    title: "Creating a New Case",
     image: "helpCapture",
     alt: "Capture evidence steps: select the case, press Acquire, wait, review, save",
     todo: [
@@ -57,7 +57,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "existing-case",
-    title: "Existing Case",
+    title: "Opening an Existing Case",
     image: "evidenceFlow",
     alt: "Evidence flow from capture to certificate",
     todo: [
@@ -125,7 +125,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "offline",
-    title: "Offline",
+    title: "Offline Mode",
     image: "helpSync",
     alt: "Laptop showing Saved Offline with two records queued",
     todo: [
@@ -175,7 +175,7 @@ const SECTIONS: Section[] = [
   },
   {
     id: "certificate",
-    title: "Certificate",
+    title: "Certificates",
     image: "evidenceFlow",
     alt: "Evidence flow from capture to certificate",
     todo: [
@@ -316,7 +316,7 @@ export default function HelpPage() {
               <AssetImage name={c.image} alt="" rounded={false} />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-[17px] font-bold text-brand-deep">{c.title}</span>
+              <span className="block text-[17px] font-bold text-brand-deep">{c.title}</span>
               <span className="mt-0.5 block text-[13.5px] leading-snug text-fg-muted">{c.body}</span>
             </span>
           </a>
@@ -363,7 +363,7 @@ export default function HelpPage() {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-brand text-[16px] font-bold text-white">
                     {i + 1}
                   </span>
-                  <h2 className="font-display text-[23px] font-bold tracking-tight text-brand-deep">{s.title}</h2>
+                  <h2 className="text-[23px] font-bold tracking-tight text-brand-deep">{s.title}</h2>
                 </div>
 
                 <div className="mt-5 grid gap-4 lg:grid-cols-3">
