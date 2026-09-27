@@ -25,6 +25,7 @@ import type {
   HandoffReceiptPayload,
   HandoffTransferPayload,
   RecordType,
+  ScreeningFlagPayload,
   SealState,
   StoreShape,
   TriggerPayload,
@@ -76,7 +77,12 @@ async function captureRecord(
   store: StoreShape,
   base: CaptureBase,
   type: RecordType,
-  payload: TriggerPayload | FieldTestPayload | HandoffTransferPayload | HandoffReceiptPayload,
+  payload:
+    | TriggerPayload
+    | FieldTestPayload
+    | ScreeningFlagPayload
+    | HandoffTransferPayload
+    | HandoffReceiptPayload,
   caseRef: string,
 ): Promise<EvidenceRecord> {
   const device = deviceOrThrow(store, base.device_id);
@@ -141,6 +147,83 @@ async function captureRecord(
     status: "queued",
   });
   appendRecord(store, record);
+  return record;
+}
+
+/* ------------------------------------------------------------- screening */
+
+export interface ScreeningFlagInput {
+  operator_id: string;
+  device_id: string;
+  screening_node_id: string;
+  train_id: string;
+  coach: string;
+  seat: string;
+  cue_type: ScreeningFlagPayload["cue_type"];
+  cue_note: string;
+  access_class: ScreeningFlagPayload["access_class"];
+  /** The case to append to. Omitted, a demo screening case is opened. */
+  case_ref?: string | null;
+}
+
+/** Demo screening work is kept in its own case, never mixed with operational cases. */
+export const TTE_DEMO_NOTE =
+  "TTE DEMO — synthetic screening event. No TTE hardware exists; this records that a flag was raised, not that anything was detected or identified.";
+
+/**
+ * Raise a screening flag.
+ *
+ * It travels the same path as every other record: signed on a device, chained
+ * into its case, queued and verified. What it carries is deliberately thin —
+ * where, who, which cue, how much access — and it says on its face that it is
+ * a demo event and not a detection.
+ */
+export async function captureScreeningFlag(store: StoreShape, input: ScreeningFlagInput) {
+  if (!input.train_id.trim() || !input.coach.trim() || !input.seat.trim()) {
+    throw new WorkflowError("Train, coach and seat are required for a screening flag");
+  }
+  const named = input.case_ref?.trim();
+  let caseRef: string;
+  if (named) {
+    if (!store.cases.some((c) => c.case_ref === named)) {
+      throw new WorkflowError(`CHAIN SAFETY CHECK FAILED — no case ${named} exists.`);
+    }
+    caseRef = named;
+  } else {
+    caseRef = nextCaseRef(store);
+    store.cases.push({
+      case_ref: caseRef,
+      title: `TTE DEMO screening — train ${input.train_id}, coach ${input.coach}`,
+      place: `Train ${input.train_id} · Coach ${input.coach} · Seat ${input.seat}`,
+      opened_at: new Date().toISOString(),
+      opened_by_officer_id: input.operator_id,
+      device_id: input.device_id,
+      notes: TTE_DEMO_NOTE,
+    });
+  }
+
+  const payload: ScreeningFlagPayload = {
+    screening_node_id: input.screening_node_id,
+    operator_id: input.operator_id,
+    train_id: input.train_id,
+    coach: input.coach,
+    seat: input.seat,
+    cue_type: input.cue_type,
+    cue_note: input.cue_note,
+    access_class: input.access_class,
+    demo: true,
+    demo_note: TTE_DEMO_NOTE,
+    referred_to: "RPF",
+  };
+
+  const record = await captureRecord(
+    store,
+    { case_ref: caseRef, device_id: input.device_id, officer_id: input.operator_id },
+    "screening_flag",
+    payload,
+    caseRef,
+  );
+  if (store.connectivity.online) await pushQueue(store);
   return record;
 }
 

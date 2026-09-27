@@ -103,6 +103,7 @@ export const SEARCH_OUTCOMES = [
 export const RECORD_TYPE_LABEL: Record<string, string> = {
   trigger: "s.43 Trigger",
   field_test: "Field Test",
+  screening_flag: "Screening Flag",
   handoff_transfer: "Handoff — Transfer",
   handoff_receipt: "Handoff — Receipt",
 };
@@ -110,6 +111,42 @@ export const RECORD_TYPE_LABEL: Record<string, string> = {
 export const RECORD_TYPE_SHORT: Record<string, string> = {
   trigger: "Trigger",
   field_test: "Field test",
+  screening_flag: "Screening flag",
   handoff_transfer: "Transfer",
   handoff_receipt: "Receipt",
 };
+
+/* ------------------------------------------------------------- screening */
+
+export const SCREENING_CUES: { value: string; label: string; detail: string }[] = [
+  {
+    value: "surface_trace_cue",
+    label: "Surface trace cue",
+    detail: "Something on the surface warranted a closer look. Not a detection.",
+  },
+  {
+    value: "thermal_observation_cue",
+    label: "Thermal observation cue",
+    detail: "A temperature difference was observed. Not a detection.",
+  },
+  { value: "visual_cue", label: "Visual cue", detail: "Seen by the operator. Not a detection." },
+  {
+    value: "operator_observation",
+    label: "Operator observation",
+    detail: "Raised on the operator's judgement alone.",
+  },
+];
+
+export const ACCESS_CLASSES: { value: string; label: string; detail: string }[] = [
+  { value: "AC0", label: "AC0 — Observation only", detail: "Seen, nothing reachable." },
+  { value: "AC1", label: "AC1 — Exterior trace", detail: "Outside surfaces reachable." },
+  { value: "AC2", label: "AC2 — Accessible material", detail: "Contents reachable with consent or authority." },
+  { value: "AC3", label: "AC3 — Validated package", detail: "Sealed item handled under procedure." },
+  { value: "AC4", label: "AC4 — Inaccessible", detail: "No lawful or physical access." },
+];
+
+/**
+ * Said once, in one place, so every screening surface repeats it identically.
+ */
+export const SCREENING_NOTICE =
+  "SCREENING CUE — NOT A DETECTION AND NOT AN IDENTIFICATION";

@@ -47,7 +47,7 @@ export function CaptureSteps({
             aria-current={st === "current" ? "step" : undefined}
             className={cx(
               "flex items-center gap-2 rounded-xl border px-2.5 py-2 text-[13px] font-medium",
-              st === "done" && "border-ok/25 bg-ok/[0.07] text-[#15803D]",
+              st === "done" && "border-ok/25 bg-ok/[0.07] text-[#236B45]",
               st === "current" && "border-brand/30 bg-brand/[0.07] text-brand-deep",
               st === "next" && "border-line bg-white text-fg-dim",
             )}

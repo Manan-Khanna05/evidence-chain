@@ -33,8 +33,25 @@ export interface PramaanDeviceHello {
   type: "device_hello";
   protocol: typeof PRAMAAN_PROTOCOL;
   device_id: string;
+  device_name?: string;
   firmware: string;
+  hardware_revision?: string;
+  /** Optional here: firmware may follow with a separate capabilities message. */
   capabilities: PramaanCapabilities;
+}
+
+/** Sent on request, or after hello, when capabilities change. */
+export interface PramaanCapabilitiesMessage {
+  type: "capabilities";
+  device_id: string;
+  capabilities: PramaanCapabilities;
+}
+
+/** Answer to a host ping. Proves the port is PRAMAAN, not just open. */
+export interface PramaanPong {
+  type: "pong";
+  device_id: string;
+  device_name?: string;
 }
 
 export interface PramaanTelemetry {
@@ -83,6 +100,8 @@ export interface PramaanErrorMessage {
 
 export type PramaanMessage =
   | PramaanDeviceHello
+  | PramaanCapabilitiesMessage
+  | PramaanPong
   | PramaanTelemetry
   | PramaanAcquireEvent
   | PramaanResetEvent
@@ -90,6 +109,7 @@ export type PramaanMessage =
 
 /** Host → device. Only these four are ever sent. */
 export type PramaanCommand =
+  | { type: "ping" }
   | { type: "acquire" }
   | { type: "reset" }
   | { type: "identify" }
@@ -118,8 +138,12 @@ export interface PramaanState {
   /** Present while the serial port is open, even before the first telemetry. */
   portOpen: boolean;
   deviceId: string | null;
+  deviceName: string | null;
   firmware: string | null;
+  hardwareRevision: string | null;
   protocol: string | null;
+  /** True once the device has identified itself on this connection. */
+  identified: boolean;
   lastSeen: number | null;
   state: PramaanDeviceState | null;
   seq: number | null;

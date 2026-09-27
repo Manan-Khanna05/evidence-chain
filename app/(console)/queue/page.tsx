@@ -187,7 +187,7 @@ export default function QueuePage() {
                         "text-[28px] font-semibold leading-none tabular-nums",
                         tone === "ok" && "text-ok",
                         tone === "info" && "text-info",
-                        tone === "warn" && "text-[#B45309]",
+                        tone === "warn" && "text-[#8A5A12]",
                         tone === "neutral" && "text-fg-dim",
                       )}
                     >
@@ -295,7 +295,7 @@ export default function QueuePage() {
                     >
                       {r.case_ref}
                     </Link>
-                    <span className="ml-auto text-[12px] font-medium text-[#B45309]">Waiting for anchor</span>
+                    <span className="ml-auto text-[12px] font-medium text-[#8A5A12]">Waiting for anchor</span>
                   </li>
                 ))}
               </ul>

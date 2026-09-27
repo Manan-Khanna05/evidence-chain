@@ -140,7 +140,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-start justify-center px-4 pt-[10vh]">
-      <div className="absolute inset-0 animate-[fade-in_.18s_ease-out] bg-[#102A56]/30" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.18s_ease-out] bg-[#252722]/30" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"

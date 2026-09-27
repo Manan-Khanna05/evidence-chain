@@ -18,7 +18,7 @@ export function EvidenceChainMark({ size = 40 }: { size?: number }) {
       style={{
         width: size,
         height: size,
-        background: "linear-gradient(150deg, #3B82F6 0%, #2563EB 45%, #173B8F 100%)",
+        background: "linear-gradient(150deg, #3E7A5C 0%, #285943 45%, #173C2B 100%)",
       }}
     >
       <svg

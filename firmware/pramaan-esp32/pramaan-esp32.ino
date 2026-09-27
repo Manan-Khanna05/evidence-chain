@@ -1,6 +1,6 @@
 /*
  * PRAMAAN — Evidence Integrity Hardware Device
- * Firmware 1.0.0 · protocol PRAMAAN-1 · ESP32
+ * Firmware 2.1.0 · protocol PRAMAAN-1 · ESP32
  *
  * Speaks newline-delimited JSON over USB serial at 115200 baud to the
  * Evidence Chain console.
@@ -44,7 +44,8 @@
 
 /* ------------------------------------------------------------ identity */
 static const char *DEVICE_ID = "PRAMAAN-ESP32-001";   /* stable, never random */
-static const char *FIRMWARE  = "1.0.0";
+static const char *FIRMWARE  = "2.1.0";
+static const char *HW_REV    = "PRAMAAN-HW-2";
 static const char *PROTOCOL  = "PRAMAAN-1";
 
 /* ---------------------------------------------------------------- pins */
@@ -184,13 +185,31 @@ static void printNumberOrNull(float v, int decimals) {
   else Serial.print(v, decimals);
 }
 
+static void sendCapabilities() {
+  Serial.print(F("{\"type\":\"capabilities\",\"device_id\":\""));
+  Serial.print(DEVICE_ID);
+  Serial.print(F("\",\"capabilities\":{\"potentiometer\":true,\"load_cell\":"));
+  Serial.print(loadCellOk ? F("true") : F("false"));
+  Serial.print(F(",\"thermal_sensor\":false,\"oled\":"));
+  Serial.print(oledOk ? F("true") : F("false"));
+  Serial.println(F(",\"acquire_button\":true,\"reset_button\":true}}"));
+}
+
+static void sendPong() {
+  Serial.print(F("{\"type\":\"pong\",\"device_id\":\""));
+  Serial.print(DEVICE_ID);
+  Serial.println(F("\",\"device_name\":\"PRAMAAN\"}"));
+}
+
 static void sendHello() {
   Serial.print(F("{\"type\":\"device_hello\",\"protocol\":\""));
   Serial.print(PROTOCOL);
-  Serial.print(F("\",\"device_id\":\""));
+  Serial.print(F("\",\"device_name\":\"PRAMAAN\",\"device_id\":\""));
   Serial.print(DEVICE_ID);
   Serial.print(F("\",\"firmware\":\""));
   Serial.print(FIRMWARE);
+  Serial.print(F("\",\"hardware_revision\":\""));
+  Serial.print(HW_REV);
   Serial.print(F("\",\"capabilities\":{\"potentiometer\":true,\"load_cell\":"));
   Serial.print(loadCellOk ? F("true") : F("false"));
   Serial.print(F(",\"thermal_sensor\":false,\"oled\":"));
@@ -203,12 +222,18 @@ static void sendTelemetry(float tempC, float weightG) {
   Serial.print(DEVICE_ID);
   Serial.print(F("\",\"seq\":"));
   Serial.print(sequence);
+  Serial.print(F(",\"temperature_c\":"));
+  printNumberOrNull(tempC, 1);
   Serial.print(F(",\"temperature\":"));
   printNumberOrNull(tempC, 1);
   Serial.print(F(",\"weight_g\":"));
   printNumberOrNull(weightG, 1);
-  Serial.print(F(",\"temperature_source\":\"potentiometer\",\"weight_source\":"));
+  /* The potentiometer stands in for a temperature probe; say so on the wire. */
+  Serial.print(F(",\"temperature_source\":\"potentiometer\",\"temperature_status\":\"SIMULATED\""));
+  Serial.print(F(",\"weight_source\":"));
   Serial.print(isnan(weightG) ? F("null") : F("\"load_cell\""));
+  Serial.print(F(",\"weight_status\":"));
+  Serial.print(isnan(weightG) ? F("\"UNAVAILABLE\"") : F("\"LIVE\""));
   Serial.print(F(",\"connected\":{\"potentiometer\":true,\"load_cell\":"));
   Serial.print(loadCellOk ? F("true") : F("false"));
   Serial.print(F(",\"thermal_sensor\":false},\"state\":\""));
@@ -294,6 +319,9 @@ static void handleCommand(const String &line) {
     resetStartedAt = millis();
   } else if (line.indexOf("\"identify\"") >= 0) {
     sendHello();
+    sendCapabilities();
+  } else if (line.indexOf("\"ping\"") >= 0) {
+    sendPong();
   } else if (line.indexOf("\"tare\"") >= 0) {
 #if ENABLE_LOAD_CELL
     if (loadCellOk) scale.tare();
@@ -362,6 +390,7 @@ void setup() {
 
   state = STATE_READY;
   sendHello();
+  sendCapabilities();
 }
 
 /* ---------------------------------------------------------------- loop */

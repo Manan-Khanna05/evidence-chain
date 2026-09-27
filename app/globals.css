@@ -9,23 +9,25 @@
     "Liberation Mono", Menlo, monospace;
 
   /* Palette (mirrors tailwind.config.ts) */
-  --bg: #f6f8fc;
-  --surface: rgba(255, 255, 255, 0.82);
-  --surface-solid: #ffffff;
-  --primary: #2563eb;
-  --primary-dark: #173b8f;
-  --text: #102a56;
-  --muted: #64748b;
-  --success: #16a34a;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --violet: #7c3aed;
+  --bg: #f7f3ea;
+  --surface: rgba(255, 253, 248, 0.82);
+  --surface-solid: #fffdf8;
+  --primary: #285943;
+  --primary-dark: #173c2b;
+  --text: #252722;
+  --muted: #687066;
+  --success: #2f7d53;
+  --warning: #c9851a;
+  --danger: #b7473d;
+  --terracotta: #b86b50;
+  --gold: #c99a3d;
+  --sage: #aebeae;
 
   /* Surfaces: mostly solid, with a light glass finish. */
-  --glass-fill: rgba(255, 255, 255, 0.9);
-  --glass-fill-strong: #ffffff;
-  --glass-rim: rgba(255, 255, 255, 0.9);
-  --glass-edge: rgba(16, 42, 86, 0.07);
+  --glass-fill: rgba(255, 253, 248, 0.9);
+  --glass-fill-strong: #fffdf8;
+  --glass-rim: rgba(255, 255, 255, 0.85);
+  --glass-edge: rgba(37, 39, 34, 0.08);
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
 
   color-scheme: light;
@@ -40,17 +42,19 @@
   body {
     @apply bg-ink-900 text-fg antialiased;
     font-family: var(--font-sans);
-    /* Near-white base with the supplied evidence texture at very low intensity. */
+    /* Warm ivory base with the supplied texture at very low intensity. */
     background-color: var(--bg);
     background-image:
-      linear-gradient(180deg, rgba(246, 248, 252, 0.9), rgba(246, 248, 252, 0.96)),
+      radial-gradient(1100px 620px at 6% -12%, rgba(40, 89, 67, 0.07), transparent 62%),
+      radial-gradient(900px 520px at 98% 0%, rgba(201, 154, 61, 0.08), transparent 60%),
+      linear-gradient(180deg, rgba(247, 243, 234, 0.92), rgba(247, 243, 234, 0.97)),
       url("/assets/evidence-pattern.png");
-    background-size: auto, cover;
+    background-size: auto, auto, auto, cover;
     background-attachment: fixed;
   }
 
   ::selection {
-    background: rgba(37, 99, 235, 0.18);
+    background: rgba(40, 89, 67, 0.16);
   }
 
   *:focus-visible {
@@ -86,8 +90,8 @@
     box-shadow:
       0 1px 0 0 rgba(255, 255, 255, 0.9) inset,
       0 0 0 1px var(--glass-edge),
-      0 10px 30px -18px rgba(16, 42, 86, 0.28),
-      0 2px 6px -3px rgba(16, 42, 86, 0.1);
+      0 10px 30px -18px rgba(37, 39, 34, 0.28),
+      0 2px 6px -3px rgba(37, 39, 34, 0.1);
     backdrop-filter: blur(10px) saturate(1.1);
     -webkit-backdrop-filter: blur(10px) saturate(1.1);
   }
@@ -107,7 +111,7 @@
 
   .panel-head {
     @apply flex items-start justify-between gap-4 px-5 py-4;
-    border-bottom: 1px solid rgba(16, 42, 86, 0.07);
+    border-bottom: 1px solid rgba(37, 39, 34, 0.07);
   }
 
   .panel-title {
@@ -126,19 +130,24 @@
   }
 
   .rule {
-    border-top: 1px solid rgba(16, 42, 86, 0.07);
+    border-top: 1px solid rgba(37, 39, 34, 0.07);
   }
 
   /* --------------------------------------------------------- ornament */
 
   .grid-lines {
     background-image:
-      linear-gradient(to right, rgba(16, 42, 86, 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(16, 42, 86, 0.045) 1px, transparent 1px);
+      linear-gradient(to right, rgba(37, 39, 34, 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(37, 39, 34, 0.045) 1px, transparent 1px);
     background-size: 30px 30px;
   }
 
   /* Hairline tricolour accent — used sparingly, never as decoration. */
+  /* Thin gold rule used to separate sections without a heavy border. */
+  .rule-gold {
+    background: linear-gradient(90deg, rgba(201, 154, 61, 0.55), rgba(201, 154, 61, 0));
+  }
+
   .tricolour {
     background: linear-gradient(
       90deg,

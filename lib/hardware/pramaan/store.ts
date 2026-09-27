@@ -48,8 +48,11 @@ const EMPTY: PramaanState = {
   connected: false,
   portOpen: false,
   deviceId: null,
+  deviceName: null,
   firmware: null,
+  hardwareRevision: null,
   protocol: null,
+  identified: false,
   lastSeen: null,
   state: null,
   seq: null,
@@ -90,6 +93,10 @@ class PramaanStore {
       onJunk: (line, reason) => this.log("warn", `Ignored serial line (${reason}): ${line}`),
       onOpen: () => {
         this.sawProtocolMessage = false;
+        this.patch({ identified: false });
+        // Ask who is there; a real PRAMAAN answers hello or pong.
+        void this.link.send({ type: "ping" });
+        void this.link.send({ type: "identify" });
         this.patch({ portOpen: true, connectionState: "connecting", error: null, rawLines: [] });
         this.log("info", "Serial port open, waiting for PRAMAAN telemetry");
         this.startHeartbeat();
@@ -153,7 +160,15 @@ class PramaanStore {
     if (this.silenceTimer) clearTimeout(this.silenceTimer);
     this.silenceTimer = setTimeout(() => {
       this.silenceTimer = null;
-      if (this.sawProtocolMessage || !this.state.portOpen) return;
+      if ((this.sawProtocolMessage && this.state.identified) || !this.state.portOpen) return;
+      if (this.sawProtocolMessage && !this.state.identified) {
+        this.patch({
+          error:
+            "Serial port opened, but this device did not identify itself as PRAMAAN. Check you picked the right port, or flash the PRAMAAN firmware.",
+        });
+        this.log("warn", "No identity message within 4s of opening the port");
+        return;
+      }
       const sawAnything = this.state.rawLines.length > 0;
       this.patch({
         error: sawAnything
@@ -181,6 +196,7 @@ class PramaanStore {
   }
 
   private markDisconnected(_reason: string) {
+    this.patch({ identified: false });
     this.stopHeartbeat();
     if (this.silenceTimer) {
       clearTimeout(this.silenceTimer);
@@ -241,12 +257,30 @@ class PramaanStore {
       case "device_hello":
         this.patch({
           deviceId: msg.device_id,
+          deviceName: msg.device_name ?? "PRAMAAN",
           firmware: msg.firmware,
+          hardwareRevision: msg.hardware_revision ?? null,
           protocol: msg.protocol,
           capabilities: msg.capabilities,
+          identified: true,
           error: null,
         });
         this.log("info", `PRAMAAN ${msg.device_id} firmware ${msg.firmware}`);
+        break;
+
+      case "capabilities":
+        this.patch({ capabilities: msg.capabilities, identified: true });
+        this.log("info", "Capabilities received");
+        break;
+
+      case "pong":
+        // Proves the open port is PRAMAAN and not some other serial device.
+        this.patch({
+          identified: true,
+          deviceId: this.state.deviceId ?? msg.device_id,
+          deviceName: this.state.deviceName ?? msg.device_name ?? "PRAMAAN",
+        });
+        this.log("info", `Pong from ${msg.device_id}`);
         break;
 
       case "telemetry": {
@@ -266,8 +300,10 @@ class PramaanStore {
               reset_button: true,
             };
         this.patch({
-          connected: true,
-          connectionState: "connected",
+          // Telemetry alone does not prove identity: a device is connected only
+          // once it has said who it is.
+          connected: this.state.identified,
+          connectionState: this.state.identified ? "connected" : "connecting",
           portOpen: true,
           deviceId: this.state.deviceId ?? msg.device_id,
           lastSeen: Date.now(),

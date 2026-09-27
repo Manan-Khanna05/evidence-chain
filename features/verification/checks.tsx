@@ -61,7 +61,7 @@ export function CheckList({ result }: { result: VerificationResult }) {
                     key={i}
                     className="rounded-lg border border-danger/30 bg-danger/[0.07] px-3 py-2 text-[12px] leading-relaxed"
                   >
-                    <span className="mono font-semibold text-[#DC2626]">{f.record_id}</span>
+                    <span className="mono font-semibold text-[#8F352C]">{f.record_id}</span>
                     <span className="mx-1.5 text-fg-dim">—</span>
                     <span className="text-fg-muted">{f.reason}</span>
                   </li>

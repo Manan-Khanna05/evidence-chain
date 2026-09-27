@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   UploadCloud,
   XCircle,
+  Flag,
 } from "lucide-react";
 import { Pill, type Tone } from "./primitives";
 import type { AnchorState } from "@/lib/domain/status";
@@ -38,6 +39,7 @@ export const RECORD_TYPE_META: Record<RecordType, { label: string; icon: React.R
   field_test: { label: "Field Test", icon: <FlaskConical size={13} />, tone: "info" },
   handoff_transfer: { label: "Handoff — Transfer", icon: <ArrowLeftRight size={13} />, tone: "sim" },
   handoff_receipt: { label: "Handoff — Receipt", icon: <FileSignature size={13} />, tone: "sim" },
+  screening_flag: { label: "Screening Flag", icon: <Flag size={13} />, tone: "warn" },
 };
 
 export function RecordTypePill({ type }: { type: RecordType }) {

@@ -6,6 +6,7 @@ import {
   applyTamper,
   captureFieldTest,
   captureTrigger,
+  captureScreeningFlag,
   createCase,
   createTransfer,
   generateCertificate,
@@ -58,6 +59,25 @@ export async function POST(request: Request) {
             place_kind: (p as Record<string, string | undefined>).place_kind,
             purpose: (p as Record<string, string | undefined>).purpose,
             notes: (p as Record<string, string | undefined>).notes,
+          }),
+        );
+        break;
+      }
+
+      /* --------------------------------------------------------- screening */
+      case "screening.flag": {
+        result = await mutate((store) =>
+          captureScreeningFlag(store, {
+            operator_id: (p as Record<string, string>).operator_id,
+            device_id: (p as Record<string, string>).device_id,
+            screening_node_id: (p as Record<string, string>).screening_node_id,
+            train_id: (p as Record<string, string>).train_id,
+            coach: (p as Record<string, string>).coach,
+            seat: (p as Record<string, string>).seat,
+            cue_type: (p as Record<string, never>).cue_type,
+            cue_note: (p as Record<string, string>).cue_note ?? "",
+            access_class: (p as Record<string, never>).access_class,
+            case_ref: (p as Record<string, string | null>).case_ref ?? null,
           }),
         );
         break;

@@ -76,7 +76,7 @@ export default function OperatorPage() {
                 port. You can still capture evidence and type values manually without it.
               </p>
               {hw.pramaan.error ? (
-                <p className="mt-2 text-[14px] font-medium text-[#B45309]">{hw.pramaan.error}</p>
+                <p className="mt-2 text-[14px] font-medium text-[#8A5A12]">{hw.pramaan.error}</p>
               ) : null}
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button variant="primary" size="lg" icon={<Plug size={18} />} onClick={() => void hw.connectPramaan()}>

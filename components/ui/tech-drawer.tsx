@@ -66,7 +66,7 @@ export function TechnicalDetailsDrawer({
         ? createPortal(
             <div className="fixed inset-0 z-[75]">
               <div
-                className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#102A56]/30"
+                className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/30"
                 onClick={() => setOpen(false)}
               />
               <div

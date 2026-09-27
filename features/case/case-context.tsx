@@ -139,7 +139,7 @@ export function NewCaseDialog({
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#102A56]/35" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35" onClick={onClose} />
       <Panel
         solid
         className="relative m-0 max-h-[94vh] w-full max-w-[520px] animate-fade-up overflow-y-auto rounded-b-none sm:m-4 sm:rounded-panel"
@@ -261,7 +261,7 @@ export function CasePickerDialog({
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#102A56]/35" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35" onClick={onClose} />
       <Panel
         solid
         className="relative m-0 max-h-[90vh] w-full max-w-[560px] animate-fade-up overflow-y-auto rounded-b-none sm:m-4 sm:rounded-panel"
@@ -424,7 +424,7 @@ export function ImmutableBadge({ className }: { className?: string }) {
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-full border border-ok/25 bg-ok/[0.07] px-2.5 py-1 text-[12px] font-semibold text-[#15803D]",
+        "inline-flex items-center gap-1.5 rounded-full border border-ok/25 bg-ok/[0.07] px-2.5 py-1 text-[12px] font-semibold text-[#236B45]",
         className,
       )}
       title="Recorded evidence cannot be edited, reordered or deleted."

@@ -7,7 +7,22 @@
  *   3. RPF -> GRP handoff     — the seam, carried as a transfer + a receipt
  */
 
-export type RecordType = "trigger" | "field_test" | "handoff_transfer" | "handoff_receipt";
+export type RecordType =
+  | "trigger"
+  | "field_test"
+  | "screening_flag"
+  | "handoff_transfer"
+  | "handoff_receipt";
+
+/** What a screening node observed. Never a detection and never an identification. */
+export type ScreeningCue =
+  | "surface_trace_cue"
+  | "thermal_observation_cue"
+  | "visual_cue"
+  | "operator_observation";
+
+/** How much of the item or region could actually be reached. */
+export type AccessClass = "AC0" | "AC1" | "AC2" | "AC3" | "AC4";
 
 /** captured -> queued -> pushed -> anchored (Implementation Plan, Step 9). */
 export type RecordStatus = "captured" | "queued" | "pushed" | "anchored";
@@ -163,9 +178,32 @@ export interface HandoffReceiptPayload {
   remarks: string;
 }
 
+/**
+ * A screening flag raised at a node (today: the TTE demo console).
+ *
+ * It records that something warranted a closer look, who raised it, and how
+ * much access was available. It carries no result, no probability and no
+ * identification — an RPF officer decides what to do next.
+ */
+export interface ScreeningFlagPayload {
+  screening_node_id: string;
+  operator_id: string;
+  train_id: string;
+  coach: string;
+  seat: string;
+  cue_type: ScreeningCue;
+  cue_note: string;
+  access_class: AccessClass;
+  /** Always true while no TTE hardware exists. Hashed into the record. */
+  demo: true;
+  demo_note: string;
+  referred_to: "RPF";
+}
+
 export type RecordPayload =
   | TriggerPayload
   | FieldTestPayload
+  | ScreeningFlagPayload
   | HandoffTransferPayload
   | HandoffReceiptPayload;
 

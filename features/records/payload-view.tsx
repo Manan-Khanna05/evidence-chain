@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { AlertTriangle } from "lucide-react";
+import { ACCESS_CLASSES, SCREENING_CUES } from "@/lib/domain/vocab";
 import type {
   ClientStore,
   EvidenceRecord,
   FieldTestPayload,
+  ScreeningFlagPayload,
   HandoffReceiptPayload,
   HandoffTransferPayload,
   TriggerPayload,
@@ -31,6 +33,8 @@ export function PayloadView({ record, store }: { record: EvidenceRecord; store: 
   if (record.type === "trigger") return <TriggerView payload={record.payload as TriggerPayload} />;
   if (record.type === "field_test")
     return <FieldTestView payload={record.payload as FieldTestPayload} store={store} />;
+  if (record.type === "screening_flag")
+    return <ScreeningFlagView payload={record.payload as ScreeningFlagPayload} />;
   if (record.type === "handoff_transfer")
     return <TransferView payload={record.payload as HandoffTransferPayload} store={store} />;
   return <ReceiptView payload={record.payload as HandoffReceiptPayload} store={store} />;
@@ -116,7 +120,7 @@ export function FieldTestView({
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-warn/40 bg-warn/[0.09] px-3.5 py-3">
-        <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.09em] text-[#B45309]">
+        <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.09em] text-[#8A5A12]">
           <AlertTriangle size={14} />
           {payload.epistemic_status}
         </div>
@@ -239,6 +243,46 @@ export function ReceiptView({
       <KeyValue k="Remarks" className="col-span-2">
         <span className="leading-relaxed">{payload.remarks || "—"}</span>
       </KeyValue>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------- screening flag */
+
+function ScreeningFlagView({ payload }: { payload: ScreeningFlagPayload }) {
+  const cue = SCREENING_CUES.find((c) => c.value === payload.cue_type);
+  const access = ACCESS_CLASSES.find((a) => a.value === payload.access_class);
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-sim/30 bg-sim/[0.08] px-4 py-3">
+        <div className="text-[13px] font-bold uppercase tracking-[0.06em] text-[#8A4B32]">
+          TTE demo · screening flag
+        </div>
+        <p className="mt-1 text-[13px] leading-relaxed text-fg-muted">{payload.demo_note}</p>
+      </div>
+      <div className="grid grid-cols-2 gap-x-5 gap-y-3.5">
+        <KeyValue k="Train">
+          <span className="mono">{payload.train_id}</span>
+        </KeyValue>
+        <KeyValue k="Coach / seat">
+          <span className="mono">
+            {payload.coach} · {payload.seat}
+          </span>
+        </KeyValue>
+        <KeyValue k="Screening cue" hint={cue?.detail}>
+          {cue?.label ?? payload.cue_type}
+        </KeyValue>
+        <KeyValue k="Access" hint={access?.detail}>
+          {access?.label ?? payload.access_class}
+        </KeyValue>
+        <KeyValue k="Screening node">
+          <span className="mono">{payload.screening_node_id}</span>
+        </KeyValue>
+        <KeyValue k="Referred to">{payload.referred_to}</KeyValue>
+        <KeyValue k="Note" className="col-span-2">
+          {payload.cue_note || "—"}
+        </KeyValue>
+      </div>
     </div>
   );
 }

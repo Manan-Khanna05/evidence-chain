@@ -26,6 +26,9 @@ import {
   RefreshCw,
   ShieldCheck,
   Smartphone,
+  Sparkles,
+  Layers,
+  Train,
   TriangleAlert,
   Wifi,
   WifiOff,
@@ -58,12 +61,17 @@ const NAV_MAIN: NavItem[] = [
 ];
 
 const NAV_SYSTEM: NavItem[] = [
-  { href: "/hardware", label: "Hardware", icon: Cpu },
+  { href: "/hardware", label: "PRAMAAN", icon: Cpu },
   { href: "/settings/device", label: "Device Status", icon: Smartphone },
+  { href: "/tte", label: "TTE Screening", icon: Train },
   { href: "/demo", label: "Demo Mode", icon: MonitorPlay },
 ];
 
-const NAV_HELP: NavItem[] = [{ href: "/help", label: "How to Use", icon: BookOpen }];
+const NAV_HELP: NavItem[] = [
+  { href: "/help", label: "How to Use", icon: BookOpen },
+  { href: "/whats-new", label: "What's New", icon: Sparkles },
+  { href: "/system-guide", label: "System Guide", icon: Layers },
+];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -126,7 +134,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       {navOpen ? (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <div
-            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#102A56]/35"
+            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35"
             onClick={() => setNavOpen(false)}
           />
           <aside
@@ -179,7 +187,7 @@ function SidebarBrand() {
       <span className="leading-tight">
         <span className="block text-[17px] font-bold tracking-tight text-brand-deep">Evidence Chain</span>
         <span className="block text-[12px] font-medium text-fg-muted">Railway Evidence Console</span>
-        <span className="mt-0.5 block text-[11px] font-semibold text-brand">SIH 2026 • Phase 1</span>
+        <span className="mt-0.5 block text-[11px] font-semibold text-brand">V2 · SIH 2026</span>
       </span>
     </Link>
   );
@@ -285,7 +293,7 @@ function SidebarBody({ pathname }: { pathname: string }) {
         <div className="rounded-2xl border border-line bg-ink-750/60 px-3.5 py-3">
           <div className="label">Operator</div>
           <div className="mt-1.5 flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3B82F6] to-[#173B8F] text-[12px] font-bold text-white">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3E7A5C] to-[#173C2B] text-[12px] font-bold text-white">
               {initials(officer?.name ?? session.officer_id)}
             </span>
             <span className="min-w-0 leading-tight">
@@ -563,8 +571,8 @@ function SyncRow() {
         className={cx(
           "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
           sync.error
-            ? "border-warn/30 bg-warn/[0.1] text-[#B45309]"
-            : "border-ok/25 bg-ok/[0.08] text-[#15803D]",
+            ? "border-warn/30 bg-warn/[0.1] text-[#8A5A12]"
+            : "border-ok/25 bg-ok/[0.08] text-[#236B45]",
         )}
         title={storage?.detail}
       >
@@ -600,7 +608,7 @@ function SystemStatus() {
         aria-label={`Operator ${officer?.name ?? session.officer_id}, ${online ? "online" : "offline"}`}
         className="glass flex h-11 items-center gap-2.5 rounded-xl pl-1.5 pr-2.5 shadow-chip transition-colors hover:bg-white"
       >
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#3B82F6] to-[#173B8F] text-[11.5px] font-bold text-white">
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#3E7A5C] to-[#173C2B] text-[11.5px] font-bold text-white">
           {initials(officer?.name ?? session.officer_id)}
           <span
             className={cx(
@@ -611,7 +619,7 @@ function SystemStatus() {
         </span>
         <span className="hidden text-left leading-tight md:block">
           <span className="block text-[13px] font-semibold text-fg">{officer?.name ?? session.officer_id}</span>
-          <span className={cx("block text-[11.5px] font-semibold", online ? "text-[#15803D]" : "text-[#B45309]")}>
+          <span className={cx("block text-[11.5px] font-semibold", online ? "text-[#236B45]" : "text-[#8A5A12]")}>
             {online ? "System online" : "Working offline"}
           </span>
         </span>
@@ -634,7 +642,7 @@ function SystemStatus() {
               <span
                 className={cx(
                   "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
-                  online ? "border-ok/25 bg-ok/[0.08] text-[#15803D]" : "border-warn/30 bg-warn/[0.1] text-[#B45309]",
+                  online ? "border-ok/25 bg-ok/[0.08] text-[#236B45]" : "border-warn/30 bg-warn/[0.1] text-[#8A5A12]",
                 )}
               >
                 {online ? <Wifi size={13} /> : <WifiOff size={13} />}

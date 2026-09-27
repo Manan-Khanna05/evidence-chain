@@ -105,7 +105,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
       {open && typeof document !== "undefined"
         ? createPortal(
             <div className="fixed inset-0 z-[90] flex items-end justify-center p-0 sm:items-center sm:p-4">
-              <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#102A56]/35" />
+              <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35" />
               <div
                 role="dialog"
                 aria-modal="true"

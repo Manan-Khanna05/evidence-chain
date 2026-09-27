@@ -61,7 +61,7 @@ export function EvidenceFlow({
             className={cx(
               "group relative flex h-[58px] w-[58px] items-center justify-center rounded-2xl border transition-all duration-200",
               s.state === "done" && "border-ok/25 bg-ok/[0.10] text-ok",
-              s.state === "active" && "border-warn/30 bg-warn/[0.12] text-[#B45309]",
+              s.state === "active" && "border-warn/30 bg-warn/[0.12] text-[#8A5A12]",
               s.state === "failed" && "border-danger/30 bg-danger/[0.10] text-danger",
               s.state === "pending" && "border-line-strong bg-white text-fg-dim",
               onSelect && "hover:-translate-y-0.5 hover:shadow-chip",

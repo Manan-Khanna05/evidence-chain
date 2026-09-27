@@ -28,7 +28,7 @@ export function IntervalBar({
   if (!end) {
     return (
       <div className="rounded-xl border border-warn/35 bg-warn/[0.07] px-4 py-3.5">
-        <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#B45309]">
+        <div className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.1em] text-[#8A5A12]">
           <TriangleAlert size={13} /> Not yet anchored — time unproven
         </div>
         <p className="mt-2 text-[12.5px] leading-relaxed text-fg-muted">
@@ -54,20 +54,20 @@ export function IntervalBar({
     <div className="rounded-xl border border-line bg-ink-850/70 p-4">
       <div className="mb-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-lg border border-warn/30 bg-warn/[0.06] px-3.5 py-2.5">
-          <div className="label text-[#B45309]">Claimed time</div>
+          <div className="label text-[#8A5A12]">Claimed time</div>
           <div className="mt-1 text-[22px] font-semibold tabular-nums leading-none text-fg">
             {fmtTime(claimed)}
           </div>
-          <div className="mt-1.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#B45309]">
+          <div className="mt-1.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#8A5A12]">
             Untrusted device clock
           </div>
         </div>
         <div className="rounded-lg border border-ok/30 bg-ok/[0.06] px-3.5 py-2.5">
-          <div className="label text-[#15803D]">Trusted bound</div>
+          <div className="label text-[#236B45]">Trusted bound</div>
           <div className="mt-1 text-[22px] font-semibold tabular-nums leading-none text-fg">
             {start ? `${fmtTime(start)} – ${fmtTime(end)}` : `≤ ${fmtTime(end)}`}
           </div>
-          <div className="mt-1.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#15803D]">
+          <div className="mt-1.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-[#236B45]">
             Anchored interval{width !== null ? ` · ${width} min` : ""}
           </div>
         </div>
@@ -84,7 +84,7 @@ export function IntervalBar({
             className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
             style={{ left: `${claimedOffset * 100}%` }}
           >
-            <span className="mono rounded-md border border-warn/40 bg-warn/12 px-1.5 py-[1px] text-[10.5px] tabular-nums text-[#B45309]">
+            <span className="mono rounded-md border border-warn/40 bg-warn/12 px-1.5 py-[1px] text-[10.5px] tabular-nums text-[#8A5A12]">
               {fmtTime(claimed)}
             </span>
             <span className="mt-1 h-4 w-px bg-warn/50" />

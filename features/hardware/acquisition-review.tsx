@@ -119,7 +119,7 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
   return (
     <>
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 bg-[#102A56]/35 backdrop-blur-sm" onClick={clearPending} />
+      <div className="absolute inset-0 bg-[#252722]/35 backdrop-blur-sm" onClick={clearPending} />
       <Panel
         solid
         className="relative m-0 max-h-[94vh] w-full max-w-[560px] animate-fade-up overflow-y-auto rounded-b-none sm:m-4 sm:rounded-panel"
@@ -209,7 +209,7 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
                   type="checkbox"
                   checked={ackCollector}
                   onChange={(e) => setAckCollector(e.target.checked)}
-                  className="h-4 w-4 accent-[#EF4444]"
+                  className="h-4 w-4 accent-[#B7473D]"
                 />
                 I acknowledge the collector was not fitted.
               </label>
@@ -217,7 +217,7 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
           ) : null}
 
           <div className="rounded-xl border border-warn/30 bg-warn/[0.09] px-3.5 py-3">
-            <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.05em] text-[#B45309]">
+            <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.05em] text-[#8A5A12]">
               <AlertTriangle size={14} />
               {PRESUMPTIVE_NOTICE}
             </div>
@@ -244,7 +244,7 @@ export function AcquisitionReview({ onDone }: { onDone?: (r: EvidenceRecord) => 
                     </Pill>
                   </>
                 ) : (
-                  <span className="text-[13.5px] font-medium text-[#B45309]">No case selected</span>
+                  <span className="text-[13.5px] font-medium text-[#8A5A12]">No case selected</span>
                 )}
                 <Button size="sm" type="button" onClick={() => setPickOpen(true)}>
                   {caseRef ? "Change" : "Choose case"}

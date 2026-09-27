@@ -6,10 +6,10 @@ import { connectionKind, useHardware, type ConnectionKind } from "@/components/p
 import { cx } from "@/components/ui/primitives";
 
 const STYLE: Record<ConnectionKind, { wrap: string; dot: string }> = {
-  connected: { wrap: "border-ok/25 bg-ok/[0.08] text-[#15803D]", dot: "bg-ok animate-pulse-ring" },
-  connecting: { wrap: "border-brand/25 bg-brand/[0.07] text-[#1D4ED8]", dot: "" },
-  offline: { wrap: "border-warn/30 bg-warn/[0.10] text-[#B45309]", dot: "" },
-  demo: { wrap: "border-sim/28 bg-sim/[0.08] text-[#6D28D9]", dot: "" },
+  connected: { wrap: "border-ok/25 bg-ok/[0.08] text-[#236B45]", dot: "bg-ok animate-pulse-ring" },
+  connecting: { wrap: "border-brand/25 bg-brand/[0.07] text-[#1F4A36]", dot: "" },
+  offline: { wrap: "border-warn/30 bg-warn/[0.10] text-[#8A5A12]", dot: "" },
+  demo: { wrap: "border-sim/28 bg-sim/[0.08] text-[#8A4B32]", dot: "" },
 };
 
 /**

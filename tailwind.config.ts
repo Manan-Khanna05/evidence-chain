@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * Design tokens — light railway console, subtle glass.
+ * Design tokens — V2 warm railway: ivory canvas, forest green, graphite.
  *
  * The token NAMES are stable across the app (ink-*, line, fg-*, brand, ok,
  * warn, danger, info, sim). Only their values changed when the console moved
@@ -21,37 +21,41 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        /* V2 accents used sparingly for state and emphasis. */
+        gold: { DEFAULT: "#C99A3D", soft: "#F4E8C9" },
+        terracotta: { DEFAULT: "#B86B50", soft: "#F4E2DA" },
+        sage: "#AEBEAE",
         /* Surfaces, lightest → most recessed. */
         ink: {
-          900: "#F6F8FC", // page canvas — --bg
-          850: "#FBFCFE", // sidebar
+          900: "#F7F3EA", // page canvas — warm ivory
+          850: "#FFFDF8", // sidebar / raised surface
           800: "#FFFFFF", // card fill (used with /75–/88 for glass)
-          750: "#F1F5FB", // hover / inset surface
-          700: "#E8EEF6", // pressed / stronger inset
-          600: "#DDE5EF",
-          500: "#CBD6E4",
+          750: "#F3EFE5", // hover / inset surface
+          700: "#E9E3D5", // pressed / stronger inset
+          600: "#DCD5C4",
+          500: "#C6BEA9",
         },
         line: {
-          DEFAULT: "#E4EAF3", // hairline
-          strong: "#D5DEEB", // cool hairline for controls
+          DEFAULT: "#E6DFD0", // warm hairline
+          strong: "#D6CDB8", // cool hairline for controls
         },
         fg: {
-          DEFAULT: "#102A56", // --text
-          muted: "#64748B",
-          dim: "#7C8BA1",
+          DEFAULT: "#252722", // graphite
+          muted: "#687066",
+          dim: "#8A9186",
         },
         brand: {
-          DEFAULT: "#2563EB", // --primary
-          deep: "#173B8F", // --primary-dark
-          soft: "#EAF1FE", // tinted fill
+          DEFAULT: "#285943", // forest green
+          deep: "#173C2B", // deep forest
+          soft: "#DCE9DF", // tinted fill
         },
-        ok: "#16A34A", // --success
-        warn: "#F59E0B", // --warning
-        danger: "#EF4444", // --danger
-        info: "#2563EB",
-        sim: "#7C3AED", // --violet
-        saffron: "#E8891E",
-        india: "#0E8A4F",
+        ok: "#2F7D53", // success green
+        warn: "#C9851A", // warm gold
+        danger: "#B7473D", // terracotta red
+        info: "#4E6E5D", // sage,
+        sim: "#B86B50", // terracotta — simulated / demo
+        saffron: "#C99A3D",
+        india: "#2F7D53",
       },
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
@@ -75,9 +79,9 @@ const config: Config = {
           to: { opacity: "1", transform: "translateY(0)" },
         },
         "pulse-ring": {
-          "0%": { boxShadow: "0 0 0 0 rgba(22,163,74,0.35)" },
-          "70%": { boxShadow: "0 0 0 10px rgba(22,163,74,0)" },
-          "100%": { boxShadow: "0 0 0 0 rgba(22,163,74,0)" },
+          "0%": { boxShadow: "0 0 0 0 rgba(47,125,83,0.35)" },
+          "70%": { boxShadow: "0 0 0 10px rgba(47,125,83,0)" },
+          "100%": { boxShadow: "0 0 0 0 rgba(47,125,83,0)" },
         },
         "grow-x": { from: { transform: "scaleX(0)" }, to: { transform: "scaleX(1)" } },
       },

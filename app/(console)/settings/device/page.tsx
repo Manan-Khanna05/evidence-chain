@@ -114,7 +114,7 @@ export default function DeviceStatusPage() {
             <div className="p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-sim/35 bg-sim/[0.06] p-4">
-                  <div className="label text-[#6D28D9]">Implemented in this build</div>
+                  <div className="label text-[#8A4B32]">Implemented in this build</div>
                   <dl className="mt-3 space-y-3">
                     <Line k="Key location" v="Software key in the server process" />
                     <Line k="Algorithm" v="ECDSA P-256 / SHA-256 (Web Crypto)" />

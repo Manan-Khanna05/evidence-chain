@@ -282,7 +282,7 @@ export default function DashboardPage() {
               <span
                 className={cx(
                   "text-[44px] font-bold leading-none tracking-tight",
-                  queuedRecords.length ? "text-[#B45309]" : "text-ok",
+                  queuedRecords.length ? "text-[#8A5A12]" : "text-ok",
                 )}
               >
                 {queuedRecords.length}

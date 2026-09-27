@@ -12,7 +12,9 @@ import {
   type PramaanAcquireEvent,
   type PramaanCapabilities,
   type PramaanCommand,
+  type PramaanCapabilitiesMessage,
   type PramaanDeviceHello,
+  type PramaanPong,
   type PramaanDeviceState,
   type PramaanErrorMessage,
   type PramaanMessage,
@@ -132,10 +134,30 @@ export function parsePramaanLine(raw: string): ParseResult {
         type: "device_hello",
         protocol: PRAMAAN_PROTOCOL,
         device_id,
+        device_name: str(v.device_name, 32) ?? undefined,
         firmware: str(v.firmware, 32) ?? "unknown",
+        hardware_revision: str(v.hardware_revision, 32) ?? undefined,
         capabilities: parseCapabilities(v.capabilities),
       };
       return { ok: true, message: hello };
+    }
+
+    case "capabilities": {
+      const caps: PramaanCapabilitiesMessage = {
+        type: "capabilities",
+        device_id,
+        capabilities: parseCapabilities(v.capabilities),
+      };
+      return { ok: true, message: caps };
+    }
+
+    case "pong": {
+      const pong: PramaanPong = {
+        type: "pong",
+        device_id,
+        device_name: str(v.device_name, 32) ?? undefined,
+      };
+      return { ok: true, message: pong };
     }
 
     case "telemetry": {
@@ -150,8 +172,13 @@ export function parsePramaanLine(raw: string): ParseResult {
         device_id,
         seq: int(v.seq) ?? 0,
         // A value is only kept when the device says that input is connected.
+        // Firmware 2.x sends temperature_c; 1.x sent temperature. Accept both.
         temperature: caps.potentiometer || caps.thermal_sensor
-          ? num(v.temperature, PRAMAAN_LIMITS.temperature_c.min, PRAMAAN_LIMITS.temperature_c.max)
+          ? num(
+              v.temperature_c ?? v.temperature,
+              PRAMAAN_LIMITS.temperature_c.min,
+              PRAMAAN_LIMITS.temperature_c.max,
+            )
           : null,
         weight_g: caps.load_cell
           ? num(v.weight_g, PRAMAAN_LIMITS.weight_g.min, PRAMAAN_LIMITS.weight_g.max)
