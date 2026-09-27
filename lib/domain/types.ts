@@ -235,6 +235,13 @@ export interface EvidenceRecord {
   status: RecordStatus;
   /** Server ingest time. Trusted only as "not before"; the anchor bounds it. */
   received_at: string | null;
+  /**
+   * Position in the server log, assigned in the order the server accepted
+   * records. The Merkle tree is built in this order — never by any clock, so a
+   * wrong or odd timestamp can never reorder history that has been anchored.
+   * Absent on records written before this field existed.
+   */
+  log_index?: number;
   anchor_id: string | null;
 }
 

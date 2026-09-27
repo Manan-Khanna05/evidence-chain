@@ -11,6 +11,7 @@ import {
   buildSignedRecord,
   caseChain,
   nextCaseSeq,
+  nextLogIndex,
   previousCaseHashFor,
   recordHash,
   serverLog,
@@ -513,6 +514,8 @@ export async function pushQueue(store: StoreShape): Promise<{ pushed: string[]; 
   const pushed: string[] = [];
   const rejected: string[] = [];
   const now = new Date().toISOString();
+  // Accepted records take the next log positions in the order accepted.
+  let logIndex = nextLogIndex(store.records);
 
   for (const device of store.devices) {
     const chain = store.records
@@ -530,6 +533,7 @@ export async function pushQueue(store: StoreShape): Promise<{ pushed: string[]; 
       }
       r.status = "pushed";
       r.received_at = now;
+      r.log_index = logIndex++;
       highestAccepted = r.seq;
       pushed.push(r.record_id);
     }

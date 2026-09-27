@@ -6,8 +6,7 @@ import { ArrowRight, CircleDashed, Fingerprint, Landmark, ShieldCheck, UserRound
 import { useApp } from "@/components/providers/app-provider";
 import { Button, Callout, IconContainer, Pill } from "@/components/ui/primitives";
 import { Field, TextInput } from "@/components/ui/form";
-import { BrandLockup } from "@/components/brand/marks";
-import { AssetImage } from "@/components/ui/asset-image";
+import { EvidenceChainMark } from "@/components/brand/marks";
 import { ASSETS } from "@/lib/assets";
 
 const DEMO_LOGINS = [
@@ -57,78 +56,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
-      {/* ------------------------------------------------------- left panel */}
-      <div className="relative hidden flex-col gap-8 overflow-hidden border-r border-line p-10 lg:flex">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-10">
+      {/* Station light, faint: context for the card, never competing with it. */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0"
+        style={{
+          backgroundImage: `url(${ASSETS.railwayLight.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="fixed inset-0"
+        style={{ background: "linear-gradient(180deg, rgba(245,240,229,0.95) 0%, rgba(245,240,229,0.97) 60%, rgba(245,240,229,0.99) 100%)" }}
+      />
+
+      <div className="relative w-full max-w-[460px]">
+        {/* Brand block, as in the console sidebar. */}
         <div
-          aria-hidden="true"
-          className="absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage: `url(${ASSETS.railwayLight.src})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-white/40 via-[#F6F8FC]/85 to-[#F6F8FC]" />
-
-        <div className="relative">
-          <AssetImage
-            name="railwayBranding"
-            alt="Indian Railways — Evidence Chain, Railway Evidence Integrity Console. Trusted Evidence. Safer Journeys."
-            priority
-            className="rounded-3xl shadow-hero"
-          />
+          className="relative flex items-center gap-3 overflow-hidden rounded-t-[22px] px-6 py-5 text-white"
+          style={{ background: "linear-gradient(160deg, #14532D 0%, #0B3B27 100%)" }}
+        >
+          <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[3px] bg-gold/80" />
+          <EvidenceChainMark size={46} tone="gold" />
+          <span className="leading-tight">
+            <span className="block text-[20px] font-bold tracking-tight">Evidence Chain</span>
+            <span className="block text-[13px] font-medium text-white/80">Railway Evidence Integrity Console</span>
+            <span className="mt-0.5 block text-[12px] font-semibold text-gold-soft">V2 • SIH 2026</span>
+          </span>
         </div>
 
-        <div className="relative max-w-xl">
-          <div className="tricolour mb-4 h-[3px] w-12 rounded-full" />
-          <h1 className="text-[34px] font-bold leading-[1.15] tracking-tight text-brand-deep">
-            Trusted evidence across the RPF → GRP seam.
-          </h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-fg-muted">
-            RPF searches under NDPS s.43; the GRP prosecutes. This console records what happened at
-            the stop, the presumptive field test, and the custody handoff — signed and chained on the
-            device, and anchored to a bounded trusted time window.
-          </p>
-          <ol className="mt-6 space-y-3">
-            {[
-              "s.43 trigger record — what caused the stop",
-              "Presumptive field test — kit, lot, expiry, colour, reference table",
-              "RPF → GRP custody handoff — two officers, two signatures, one transfer",
-            ].map((line, i) => (
-              <li key={line} className="flex items-start gap-3 text-[14.5px] text-fg">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-[12.5px] font-bold text-white">
-                  {i + 1}
-                </span>
-                <span className="leading-relaxed">{line}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        <div className="overflow-hidden rounded-b-[22px] border border-t-0 border-line bg-ink-850 shadow-lift">
+          <div className="px-6 py-6">
 
-        <div className="panel relative mt-auto max-w-xl px-5 py-4">
-          <div className="label">The limit, said out loud</div>
-          <p className="mt-2 text-[14px] leading-relaxed text-fg-muted">
-            This does not make a field test correct. It makes the test&apos;s reagent, lot, operator
-            and presumptive status legible to a court.
-          </p>
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------ right panel */}
-      <div className="relative flex items-center justify-center px-5 py-10">
-        <div className="w-full max-w-[420px]">
-          <div className="mb-6 space-y-5 lg:hidden">
-            <AssetImage
-              name="railwayBranding"
-              alt="Indian Railways — Evidence Chain, Railway Evidence Integrity Console"
-              priority
-              className="rounded-2xl shadow-lift"
-            />
-            <BrandLockup subtitle="SIH 2026 • Phase 1 Prototype" />
-          </div>
-
-          <div className="panel panel-solid px-6 py-7 shadow-lift">
             <h2 className="text-[24px] font-bold tracking-tight text-brand-deep">Sign in</h2>
             <p className="mt-1.5 text-[14.5px] text-fg-muted">
               Identify the officer operating this device.
@@ -224,6 +186,11 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
+
+        <p className="mt-4 text-center text-[12.5px] leading-relaxed text-fg-muted">
+          A prototype built for railway evidence handling. Integrity verification is not chemical
+          identification.
+        </p>
       </div>
     </div>
   );

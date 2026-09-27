@@ -43,10 +43,20 @@ import type {
 } from "@/lib/domain/types";
 import { MOCK_SENSOR_ID, MOCK_SENSOR_TYPE } from "@/lib/sensor/mock_readings";
 
-/** Times are anchored to today so the demo always reads as "this shift". */
+/**
+ * Seed times, written as clock times in a notional shift, then placed so the
+ * whole shift ends half an hour before the store is seeded.
+ *
+ * They must never be in the future: a capture made "before" a seeded record
+ * would otherwise read as older than history that has already been anchored.
+ * The relative spacing between seeded events is preserved exactly.
+ */
+const SEED_SHIFT_END_MIN = 15 * 60 + 15; // 15:15, just after the last seeded event
+const SEED_LEAD_MIN = 30;
+
 function at(h: number, m: number): string {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0).toISOString();
+  const minutesBeforeEnd = SEED_SHIFT_END_MIN - (h * 60 + m);
+  return new Date(Date.now() - (minutesBeforeEnd + SEED_LEAD_MIN) * 60_000).toISOString();
 }
 
 function plusMinutes(iso: string, mins: number): string {
@@ -698,7 +708,17 @@ export async function buildSeed(): Promise<StoreShape> {
   // Anchor 1 covers the first 5 server records; anchor 2 the first 9;
   // anchor 3 the first 12. CASE-2026-00423 (records 13–16) sits after the last
   // anchor, so altering one of its rows cannot disturb an anchored prefix.
-  const serverRecords = records.filter((r) => r.status !== "queued");
+  const serverRecords = records
+    .filter((r) => r.status !== "queued")
+    .sort((a, b) => {
+      const at = a.received_at ?? "";
+      const bt = b.received_at ?? "";
+      if (at === bt) return a.record_id.localeCompare(b.record_id);
+      return at < bt ? -1 : 1;
+    });
+  serverRecords.forEach((r, i) => {
+    r.log_index = i;
+  });
   const leaves: string[] = [];
   for (const r of serverRecords) leaves.push(await leafHash(await recordHash(r)));
 

@@ -10,6 +10,7 @@ import { TextInput } from "@/components/ui/form";
 import { AnchorPill, HandoffPill, RecordTypePill } from "@/components/ui/status";
 import { summariseByRecency } from "@/lib/domain/status";
 import { NewCaseDialog } from "@/features/case/case-context";
+import { RailIcon } from "@/components/ui/rail-icon";
 import { useRouter } from "next/navigation";
 import { fmtDate, fmtRelative } from "@/lib/format";
 import type { CaseVerdict } from "@/app/api/verify/route";
@@ -109,18 +110,53 @@ export default function CasesPage() {
       <PageHeader
         eyebrow="Evidence chain"
         title="Cases"
-        subtitle="Every case, with where its evidence is right now. Open a case for its full timeline. New records are always appended — nothing already recorded can change."
-        actions={
-          <>
-            <Button variant="primary" icon={<FolderPlus size={16} />} onClick={() => setNewOpen(true)}>
+        subtitle="Start a new evidence case, or open an existing one to read its history and append to it."
+      />
+
+      {/* -------------------------------------------------------- new case */}
+      <section
+        aria-labelledby="new-case-title"
+        className="relative mb-6 overflow-hidden rounded-[20px] border border-brand/25 shadow-glass"
+        style={{ background: "linear-gradient(120deg, #FFFDF8 0%, #F3EFE5 100%)" }}
+      >
+        <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5 bg-brand" />
+        <div className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-chip">
+            <RailIcon name="plus" size={28} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 id="new-case-title" className="text-[20px] font-semibold text-brand-deep">
               New Case
+            </h2>
+            <p className="mt-0.5 text-[14.5px] leading-relaxed text-fg-muted">
+              Creates a new, independent evidence chain. Its first record will be position 1, whatever
+              any other case contains.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="primary" size="lg" icon={<FolderPlus size={18} />} onClick={() => setNewOpen(true)}>
+              Create New Case
             </Button>
-            <ButtonLink href="/capture/trigger" icon={<Radio size={16} />}>
+            <ButtonLink href="/capture/trigger" size="lg" icon={<Radio size={17} />}>
               Capture Evidence
             </ButtonLink>
-          </>
-        }
-      />
+          </div>
+        </div>
+      </section>
+
+      {/* -------------------------------------------------- existing cases */}
+      <div className="mb-3 flex items-end justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 text-[20px] font-semibold text-fg">
+            <RailIcon name="cases" size={20} className="text-brand" />
+            Existing Cases
+          </h2>
+          <p className="mt-0.5 text-[14px] text-fg-muted">
+            A searchable archive. Opening a case never changes it — new records are appended at the end.
+          </p>
+        </div>
+        <Pill tone="neutral">{summaries.length} cases</Pill>
+      </div>
 
       <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="relative lg:w-[320px]">

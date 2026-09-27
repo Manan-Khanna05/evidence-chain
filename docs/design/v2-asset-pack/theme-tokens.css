@@ -1,0 +1,27 @@
+/* Evidence Chain V2 — Warm Railway Government Theme
+   Replace existing blue-heavy tokens with this palette. */
+:root {
+  --ec-bg: #F7F3EA;
+  --ec-surface: #FFFDF8;
+  --ec-surface-soft: #F3EFE5;
+  --ec-surface-glass: rgba(255,253,248,.82);
+  --ec-text: #252722;
+  --ec-text-secondary: #687066;
+  --ec-primary: #285943;
+  --ec-primary-dark: #173C2B;
+  --ec-primary-soft: #DCE9DF;
+  --ec-success: #2F7D53;
+  --ec-warning: #C9851A;
+  --ec-warning-soft: #FFF0CF;
+  --ec-danger: #B7473D;
+  --ec-danger-soft: #F8E1DE;
+  --ec-gold: #C99A3D;
+  --ec-gold-soft: #F4E8C9;
+  --ec-terracotta: #B86B50;
+  --ec-sage: #AEBEAE;
+  --ec-border: rgba(37,39,34,.10);
+  --ec-shadow: 0 14px 36px rgba(50,44,35,.10);
+  --ec-radius-sm: 12px;
+  --ec-radius: 18px;
+  --ec-radius-lg: 24px;
+}

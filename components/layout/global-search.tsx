@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Cpu, FileText, FolderOpen, Search, User, X } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
 import { cx } from "@/components/ui/primitives";
+import { RailIcon } from "@/components/ui/rail-icon";
 import { RECORD_TYPE_LABEL } from "@/lib/domain/vocab";
 
 type Hit = {
@@ -46,15 +47,18 @@ export function GlobalSearch({ className }: { className?: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Search cases, records, officers and devices"
+        aria-label="Search cases, records, device, train, coach"
         className={cx(
-          "glass flex h-11 items-center gap-2.5 rounded-xl px-3 text-[13.5px] text-fg-muted shadow-chip transition-colors duration-150 hover:text-fg",
+          "flex h-11 items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 text-left text-[14px] text-fg-dim shadow-chip transition-colors duration-150 hover:border-line-strong hover:text-fg-muted",
           className,
         )}
       >
-        <Search size={17} />
-        <span className="hidden xl:inline">Search cases, records…</span>
-        <kbd className="ml-2 hidden rounded-md border border-line-strong bg-white px-1.5 py-0.5 text-[10.5px] font-semibold text-fg-dim xl:inline">
+        <RailIcon name="search" size={18} className="shrink-0 text-fg-muted" />
+        <span className="min-w-0 flex-1 truncate">
+          <span className="sm:hidden">Search…</span>
+          <span className="hidden sm:inline">Search cases, records, device, train, coach…</span>
+        </span>
+        <kbd className="ml-auto hidden shrink-0 rounded-md border border-line-strong bg-ink-750 px-1.5 py-0.5 text-[10.5px] font-semibold text-fg-dim md:inline">
           Ctrl K
         </kbd>
       </button>
@@ -107,6 +111,18 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
         });
       }
     }
+    for (const r of store.records) {
+      if (r.type !== "screening_flag") continue;
+      const p = r.payload as { train_id?: string; coach?: string; seat?: string };
+      if (has(p.train_id, p.coach, p.seat && `seat ${p.seat}`)) {
+        out.push({
+          kind: "Record",
+          title: `${r.record_id} · DEMO screening flag`,
+          detail: `Train ${p.train_id} · Coach ${p.coach} · Seat ${p.seat} · ${r.case_ref}`,
+          href: `/cases/${r.case_ref}?record=${encodeURIComponent(r.record_id)}`,
+        });
+      }
+    }
     for (const o of store.officers) {
       if (has(o.officer_id, o.name, o.rank)) {
         const firstCase = store.cases.find((c) => c.opened_by_officer_id === o.officer_id);
@@ -140,7 +156,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-start justify-center px-4 pt-[10vh]">
-      <div className="absolute inset-0 animate-[fade-in_.18s_ease-out] bg-[#252722]/30" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.18s_ease-out] bg-[#252525]/30" onClick={onClose} />
       <div
         role="dialog"
         aria-modal="true"
@@ -165,7 +181,7 @@ function SearchDialog({ onClose }: { onClose: () => void }) {
               }
               if (e.key === "Enter" && hits[cursor]) go(hits[cursor]);
             }}
-            placeholder="Case ID, record ID, officer, device, location or record type"
+            placeholder="Case, record, officer, device, train, coach, location or record type"
             aria-label="Search query"
             role="combobox"
             aria-expanded={hits.length > 0}

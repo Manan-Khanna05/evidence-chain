@@ -116,9 +116,34 @@ export function DeviceStatusCard({ showImage = true }: { showImage?: boolean }) 
           </div>
 
           {hw.pramaan.error ? (
-            <Callout tone="warn" title="PRAMAAN" icon={<TriangleAlert size={13} />}>
-              {hw.pramaan.error}
-            </Callout>
+            <div
+              role="alert"
+              className="rounded-2xl border border-sim/35 bg-terracotta-soft/70 px-4 py-3.5"
+            >
+              <div className="flex items-center gap-2 text-[15px] font-semibold text-[#8E4331]">
+                <TriangleAlert size={16} />
+                {hw.pramaan.portOpen && !hw.pramaan.identified
+                  ? "PRAMAAN is not responding"
+                  : "PRAMAAN needs attention"}
+              </div>
+              <p className="mt-1 text-[14px] leading-relaxed text-fg-muted">{hw.pramaan.error}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={<RefreshCw size={15} />}
+                  onClick={() => {
+                    hw.clearPramaanError();
+                    void hw.connectPramaan({ reuseGranted: canReconnect });
+                  }}
+                >
+                  Reconnect
+                </Button>
+                <ButtonLink href="/settings/device" size="sm">
+                  Diagnostics
+                </ButtonLink>
+              </div>
+            </div>
           ) : null}
 
           <div className="grid grid-cols-2 gap-4">

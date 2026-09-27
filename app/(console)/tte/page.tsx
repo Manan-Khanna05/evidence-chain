@@ -27,6 +27,8 @@ import {
 import { Field, Select, TextArea } from "@/components/ui/form";
 import { ACCESS_CLASSES, SCREENING_CUES, SCREENING_NOTICE } from "@/lib/domain/vocab";
 import type { AccessClass, EvidenceRecord, ScreeningCue, ScreeningFlagPayload } from "@/lib/domain/types";
+import { TTE_DEMO_COACH, TTE_DEMO_NODE_ID, TTE_DEMO_SEATS, TTE_DEMO_TRAIN } from "@/lib/tte/demo";
+import { DemoBadge } from "@/components/ui/badges";
 
 /**
  * TTE screening console — DEMO ONLY.
@@ -38,10 +40,10 @@ import type { AccessClass, EvidenceRecord, ScreeningCue, ScreeningFlagPayload } 
  * — carrying a cue and an access class, never a detection or an identification.
  */
 
-const DEMO_NODE_ID = "TTE-DEMO-NODE-01";
-const DEMO_TRAIN = "12456";
-const DEMO_COACH = "S4";
-const SEATS = Array.from({ length: 24 }, (_, i) => String(i + 1));
+const DEMO_NODE_ID = TTE_DEMO_NODE_ID;
+const DEMO_TRAIN = TTE_DEMO_TRAIN;
+const DEMO_COACH = TTE_DEMO_COACH;
+const SEATS = Array.from({ length: TTE_DEMO_SEATS }, (_, i) => String(i + 1));
 
 type SeatState = "not_screened" | "screened" | "attention" | "flagged";
 
@@ -136,6 +138,13 @@ export default function TteScreeningPage() {
   };
 
   const current = selected ? syntheticState(selected) : null;
+  // Seats the operator has actually walked to in this session, plus any
+  // already flagged in the evidence store.
+  // A seat walked past with nobody in it was not screened, so it is not counted.
+  const visitedCount = SEATS.filter((seat) => {
+    const st = seatState(seat);
+    return st === "screened" || st === "attention" || st === "flagged";
+  }).length;
   const flagCase = lastFlag ? store.cases.find((c) => c.case_ref === lastFlag.case_ref) : null;
 
   return (
@@ -144,11 +153,7 @@ export default function TteScreeningPage() {
         eyebrow="System"
         title="TTE Screening Console"
         subtitle="How a screening node would hand work to RPF. Every seat, cue and record on this page is synthetic."
-        status={
-          <Pill tone="sim" icon={<MonitorPlay size={11} />}>
-            DEMO MODE
-          </Pill>
-        }
+        status={<DemoBadge />}
         actions={
           <Button icon={<RotateCcw size={16} />} onClick={resetWalk}>
             Reset demo walk
@@ -161,6 +166,25 @@ export default function TteScreeningPage() {
         generated in the browser and marked <span className="mono">demo</span> inside every record
         they produce. Nothing here measures or identifies a substance.
       </Callout>
+
+      {/* ------------------------------------------------ screening progress */}
+      <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-5">
+        {[
+          { k: "Train", v: DEMO_TRAIN },
+          { k: "Coach", v: DEMO_COACH },
+          { k: "Seats screened", v: `${visitedCount} / ${SEATS.length}` },
+          { k: "Flags", v: String(flags.length).padStart(2, "0"), warn: flags.length > 0 },
+          { k: "Current seat", v: selected ?? "—" },
+        ].map((c) => (
+          <div key={c.k} className="bg-ink-850 px-4 py-3">
+            <dt className="label">{c.k}</dt>
+            <dd className={cx("mono mt-1 text-[18px] font-semibold", c.warn ? "text-[#8E4331]" : "text-fg")}>{c.v}</dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-700" role="progressbar" aria-label="Seats screened" aria-valuenow={visitedCount} aria-valuemin={0} aria-valuemax={SEATS.length}>
+        <div className="h-full rounded-full bg-brand transition-[width] duration-300" style={{ width: `${(visitedCount / SEATS.length) * 100}%` }} />
+      </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         {/* ------------------------------------------------------- coach map */}
@@ -184,9 +208,9 @@ export default function TteScreeningPage() {
                       className={cx(
                         "flex min-h-[56px] w-full flex-col items-center justify-center rounded-xl border text-[13px] font-semibold transition-all duration-150",
                         selected === seat && "ring-2 ring-brand/45",
-                        st === "flagged" && "border-sim/35 bg-sim/[0.12] text-[#8A4B32]",
-                        st === "attention" && "border-warn/35 bg-warn/[0.12] text-[#8A5A12]",
-                        st === "screened" && "border-ok/25 bg-ok/[0.08] text-[#236B45]",
+                        st === "flagged" && "border-sim/35 bg-sim/[0.12] text-[#8E4331]",
+                        st === "attention" && "border-warn/35 bg-warn/[0.12] text-[#855A14]",
+                        st === "screened" && "border-ok/25 bg-ok/[0.08] text-[#1F6A43]",
                         st === "not_screened" && "border-line bg-white text-fg-dim",
                       )}
                     >
@@ -225,7 +249,7 @@ export default function TteScreeningPage() {
             />
             <div className="space-y-4 px-5 py-5">
               <div role="note" className="rounded-xl border-2 border-warn/45 bg-warn/[0.10] px-4 py-3">
-                <div className="text-[14px] font-bold uppercase tracking-[0.04em] text-[#8A5A12]">
+                <div className="text-[14px] font-bold uppercase tracking-[0.04em] text-[#855A14]">
                   {SCREENING_NOTICE}
                 </div>
                 <p className="mt-1 text-[13px] leading-relaxed text-fg-muted">

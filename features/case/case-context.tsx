@@ -139,7 +139,7 @@ export function NewCaseDialog({
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252525]/35" onClick={onClose} />
       <Panel
         solid
         className="relative m-0 max-h-[94vh] w-full max-w-[520px] animate-fade-up overflow-y-auto rounded-b-none sm:m-4 sm:rounded-panel"
@@ -161,23 +161,38 @@ export function NewCaseDialog({
         </div>
 
         <div className="space-y-4 px-5 py-5">
-          <div className="rounded-2xl border border-brand/25 bg-brand/[0.06] px-4 py-3.5">
+          <div className="rounded-2xl border border-brand/25 bg-brand-soft/60 px-4 py-3.5">
             <div className="label">Case reference</div>
-            <div className="mono mt-1 text-[18px] font-semibold text-brand-deep">
-              Generated on creation
-            </div>
-            <p className="mt-1 text-[13px] leading-relaxed text-fg-muted">
-              The next reference in the existing series. This case starts an empty chain of its own:
-              its first record will be position 1.
+            <div className="mono mt-1 text-[18px] font-semibold text-brand-deep">AUTO GENERATED</div>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-fg-muted">
+              This creates a new independent evidence chain. The next reference in the existing series
+              is assigned when you create it, and the first record will be position 1.
             </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Officer" hint="From the signed-in identity — never typed">
+            <Field label="Operator" hint="Current officer — never typed">
               <TextInput value={officer ? `${officer.name} · ${officer.officer_id}` : ""} readOnly disabled />
             </Field>
-            <Field label="Device" hint={hw.isPramaan ? "PRAMAAN is connected" : "Signing device"}>
+            <Field label="Signing device" hint="The handset that signs this case's records">
               <TextInput value={device?.device_id ?? "—"} readOnly disabled />
+            </Field>
+            <Field
+              className="sm:col-span-2"
+              label="Sensor device"
+              hint={hw.isPramaan ? "Readings can be captured into this case" : "Optional — manual entry works without it"}
+            >
+              <TextInput
+                value={
+                  hw.isPramaan && hw.state === "connected"
+                    ? `PRAMAAN · ${hw.deviceId ?? "connected"}`
+                    : hw.transport === "demo"
+                      ? "Demo device (simulated)"
+                      : "PRAMAAN · not connected"
+                }
+                readOnly
+                disabled
+              />
             </Field>
             <Field label="Place" required>
               <TextInput value={place} onChange={(e) => setPlace(e.target.value)} />
@@ -217,7 +232,7 @@ export function NewCaseDialog({
             icon={<FolderPlus size={16} />}
             onClick={create}
           >
-            Create New Case
+            Create Case
           </Button>
         </div>
       </Panel>
@@ -261,7 +276,7 @@ export function CasePickerDialog({
 
   return createPortal(
     <div className="fixed inset-0 z-[85] flex items-end justify-center sm:items-center">
-      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35" onClick={onClose} />
+      <div className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252525]/35" onClick={onClose} />
       <Panel
         solid
         className="relative m-0 max-h-[90vh] w-full max-w-[560px] animate-fade-up overflow-y-auto rounded-b-none sm:m-4 sm:rounded-panel"
@@ -424,7 +439,7 @@ export function ImmutableBadge({ className }: { className?: string }) {
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-1.5 rounded-full border border-ok/25 bg-ok/[0.07] px-2.5 py-1 text-[12px] font-semibold text-[#236B45]",
+        "inline-flex items-center gap-1.5 rounded-full border border-ok/25 bg-ok/[0.07] px-2.5 py-1 text-[12px] font-semibold text-[#1F6A43]",
         className,
       )}
       title="Recorded evidence cannot be edited, reordered or deleted."

@@ -8,20 +8,49 @@
   --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", "Cascadia Mono", Consolas,
     "Liberation Mono", Menlo, monospace;
 
-  /* Palette (mirrors tailwind.config.ts) */
-  --bg: #f7f3ea;
-  --surface: rgba(255, 253, 248, 0.82);
-  --surface-solid: #fffdf8;
-  --primary: #285943;
-  --primary-dark: #173c2b;
-  --text: #252722;
-  --muted: #687066;
-  --success: #2f7d53;
-  --warning: #c9851a;
-  --danger: #b7473d;
-  --terracotta: #b86b50;
-  --gold: #c99a3d;
-  --sage: #aebeae;
+  /*
+   * Palette — one source of truth, mirrored in tailwind.config.ts.
+   * The --ec-* names come from the V2 asset pack (theme-tokens.css); values
+   * follow the V2 brief's railway palette, which the reference image uses.
+   */
+  --ec-bg: #f5f0e5;
+  --ec-surface: #fffdf8;
+  --ec-surface-soft: #f3efe5;
+  --ec-surface-glass: rgba(255, 253, 248, 0.82);
+  --ec-text: #252525;
+  --ec-text-secondary: #6b716a;
+  --ec-primary: #14532d;
+  --ec-primary-dark: #0b3b27;
+  --ec-primary-soft: #e1ebe2;
+  --ec-success: #2e7d52;
+  --ec-warning: #c58a27;
+  --ec-warning-soft: #f4e6c5;
+  --ec-danger: #b84035;
+  --ec-danger-soft: #f8e1de;
+  --ec-gold: #c58a27;
+  --ec-gold-soft: #f4e6c5;
+  --ec-terracotta: #b65c45;
+  --ec-sage: #aebeae;
+  --ec-border: rgba(37, 37, 37, 0.1);
+  --ec-shadow: 0 14px 36px rgba(50, 44, 35, 0.1);
+  --ec-radius-sm: 12px;
+  --ec-radius: 18px;
+  --ec-radius-lg: 24px;
+
+  /* Older names kept as aliases so nothing that reads them breaks. */
+  --bg: var(--ec-bg);
+  --surface: var(--ec-surface-glass);
+  --surface-solid: var(--ec-surface);
+  --primary: var(--ec-primary);
+  --primary-dark: var(--ec-primary-dark);
+  --text: var(--ec-text);
+  --muted: var(--ec-text-secondary);
+  --success: var(--ec-success);
+  --warning: var(--ec-warning);
+  --danger: var(--ec-danger);
+  --terracotta: var(--ec-terracotta);
+  --gold: var(--ec-gold);
+  --sage: var(--ec-sage);
 
   /* Surfaces: mostly solid, with a light glass finish. */
   --glass-fill: rgba(255, 253, 248, 0.9);
@@ -45,18 +74,19 @@
     /* Warm ivory base with the supplied texture at very low intensity. */
     background-color: var(--bg);
     background-image:
-      radial-gradient(1100px 620px at 6% -12%, rgba(40, 89, 67, 0.07), transparent 62%),
-      radial-gradient(900px 520px at 98% 0%, rgba(201, 154, 61, 0.08), transparent 60%),
-      linear-gradient(180deg, rgba(247, 243, 234, 0.92), rgba(247, 243, 234, 0.97)),
+      radial-gradient(1100px 620px at 6% -12%, rgba(20, 83, 45, 0.06), transparent 62%),
+      radial-gradient(900px 520px at 98% 0%, rgba(197, 138, 39, 0.08), transparent 60%),
+      linear-gradient(180deg, rgba(245, 240, 229, 0.93), rgba(245, 240, 229, 0.97)),
       url("/assets/evidence-pattern.png");
     background-size: auto, auto, auto, cover;
     background-attachment: fixed;
   }
 
   ::selection {
-    background: rgba(40, 89, 67, 0.16);
+    background: rgba(20, 83, 45, 0.16);
   }
 
+  /* Railway-green focus ring on every focusable element. */
   *:focus-visible {
     @apply outline-none ring-2 ring-brand/55 ring-offset-2 ring-offset-ink-900 rounded-[6px];
   }
@@ -84,7 +114,7 @@
   /* ---------------------------------------------------------- surfaces */
 
   .panel {
-    border-radius: 20px;
+    border-radius: var(--ec-radius);
     background: var(--glass-fill);
     border: 1px solid var(--glass-rim);
     box-shadow:
@@ -145,7 +175,7 @@
   /* Hairline tricolour accent — used sparingly, never as decoration. */
   /* Thin gold rule used to separate sections without a heavy border. */
   .rule-gold {
-    background: linear-gradient(90deg, rgba(201, 154, 61, 0.55), rgba(201, 154, 61, 0));
+    background: linear-gradient(90deg, rgba(197, 138, 39, 0.55), rgba(197, 138, 39, 0));
   }
 
   .tricolour {

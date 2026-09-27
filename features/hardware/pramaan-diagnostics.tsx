@@ -114,7 +114,7 @@ export function PramaanDiagnostics() {
                     "mono flex gap-2 rounded-lg border px-2.5 py-1.5 text-[12px]",
                     l.accepted
                       ? "border-ok/25 bg-ok/[0.05] text-fg-muted"
-                      : "border-warn/25 bg-warn/[0.05] text-[#8A5A12]",
+                      : "border-warn/25 bg-warn/[0.05] text-[#855A14]",
                   )}
                   title={l.accepted ? "Understood" : "Not a PRAMAAN message"}
                 >
@@ -140,9 +140,9 @@ export function PramaanDiagnostics() {
                   className={cx(
                     "mono flex gap-2 rounded-lg border px-2.5 py-1.5 text-[12px]",
                     l.level === "error"
-                      ? "border-danger/25 bg-danger/[0.05] text-[#8F352C]"
+                      ? "border-danger/25 bg-danger/[0.05] text-[#93322A]"
                       : l.level === "warn"
-                        ? "border-warn/25 bg-warn/[0.05] text-[#8A5A12]"
+                        ? "border-warn/25 bg-warn/[0.05] text-[#855A14]"
                         : "border-line bg-white text-fg-muted",
                   )}
                 >

@@ -120,7 +120,7 @@ export function FieldTestView({
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-warn/40 bg-warn/[0.09] px-3.5 py-3">
-        <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.09em] text-[#8A5A12]">
+        <div className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-[0.09em] text-[#855A14]">
           <AlertTriangle size={14} />
           {payload.epistemic_status}
         </div>
@@ -255,7 +255,7 @@ function ScreeningFlagView({ payload }: { payload: ScreeningFlagPayload }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-sim/30 bg-sim/[0.08] px-4 py-3">
-        <div className="text-[13px] font-bold uppercase tracking-[0.06em] text-[#8A4B32]">
+        <div className="text-[13px] font-bold uppercase tracking-[0.06em] text-[#8E4331]">
           TTE demo · screening flag
         </div>
         <p className="mt-1 text-[13px] leading-relaxed text-fg-muted">{payload.demo_note}</p>

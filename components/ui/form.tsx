@@ -38,7 +38,7 @@ export function Field({
 const control =
   "w-full rounded-xl border border-line-strong bg-white/85 px-3.5 text-[14px] text-fg shadow-chip " +
   "placeholder:text-fg-dim transition-all duration-150 hover:border-brand/40 " +
-  "focus:border-brand focus:bg-white disabled:opacity-55 disabled:bg-ink-750";
+  "focus:border-brand focus:bg-white focus:ring-2 focus:ring-brand/20 disabled:opacity-55 disabled:bg-ink-750";
 
 export function TextInput({ className, ...rest }: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cx(control, "h-[44px]", className)} {...rest} />;
@@ -103,7 +103,7 @@ export function OptionGroup<T extends string>({
             className={cx(
               "flex min-h-[56px] flex-col items-start justify-center rounded-xl border px-4 py-3 text-left transition-all duration-150",
               active
-                ? "border-brand bg-brand/[0.09] text-fg shadow-[0_0_0_1px_rgba(46,107,230,0.35)_inset]"
+                ? "border-brand bg-brand/[0.09] text-fg shadow-[0_0_0_1px_rgba(20,83,45,0.35)_inset]"
                 : "border-line-strong bg-white/80 text-fg-muted shadow-chip hover:border-brand/40 hover:bg-white hover:text-fg",
             )}
           >

@@ -50,7 +50,15 @@ import { AssetImage } from "@/components/ui/asset-image";
 import { HelpTip } from "@/components/ui/help-tip";
 import { TechnicalDetailsDrawer } from "@/components/ui/tech-drawer";
 import { EvidenceFlow, FLOW_ICONS, type FlowState } from "@/features/dashboard/evidence-flow";
-import { DeviceStatusCard } from "@/features/hardware/device-status-card";
+import {
+  IntegrityCard,
+  MetricCard,
+  PendingSyncCard,
+  PramaanCard,
+  QuickActionTile,
+  TteDemoCard,
+} from "@/features/dashboard/overview";
+import { RailIcon } from "@/components/ui/rail-icon";
 import { NewCaseDialog } from "@/features/case/case-context";
 import { summariseByRecency } from "@/lib/domain/status";
 import { fmtInterval, fmtRelative } from "@/lib/format";
@@ -72,6 +80,13 @@ export default function DashboardPage() {
   const [global, setGlobal] = React.useState<VerificationResult | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [hello, setHello] = React.useState("Welcome");
+  // Read on the client only, so server and client render agree.
+  const [now, setNow] = React.useState<Date | null>(null);
+  React.useEffect(() => {
+    setNow(new Date());
+    const t = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(t);
+  }, []);
   const [newCaseOpen, setNewCaseOpen] = React.useState(false);
 
   // Time of day is read on the client only, so server and client render agree.
@@ -112,6 +127,15 @@ export default function DashboardPage() {
   const certificatesReady = summaries.filter((s) => s.certificate_ready && !s.has_certificate);
   const latestAnchor = store.anchors[store.anchors.length - 1] ?? null;
   const online = store.connectivity.online;
+
+  // "Today" is judged on the device clock, which the card says out loud.
+  const todayKey = (now ?? new Date(0)).toDateString();
+  const recordsToday = now
+    ? store.records.filter((r) => new Date(r.claimed_time).toDateString() === todayKey).length
+    : 0;
+  const casesToday = now
+    ? store.cases.filter((c) => new Date(c.opened_at).toDateString() === todayKey).length
+    : 0;
 
   /*
    * Recent activity: the last records appended to the log, newest first. The
@@ -193,7 +217,7 @@ export default function DashboardPage() {
   return (
     <>
       {/* ------------------------------------------------------- greeting */}
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h2 className="text-[28px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[32px]">
             {hello}, {officer?.name ?? session?.officer_id}{" "}
@@ -201,152 +225,113 @@ export default function DashboardPage() {
               👋
             </span>
           </h2>
-          <p className="mt-1.5 text-[15px] leading-relaxed text-fg-muted">
+          <p className="mt-1 text-[15px] leading-relaxed text-fg-muted">
             {pendingHandoffs.length + queuedRecords.length + brokenCases.length === 0
               ? "Everything is in order. Start a new capture when you are ready."
               : "Here is what needs your attention today."}
           </p>
         </div>
-        <ButtonLink href="/demo" variant="ghost" icon={<MonitorPlay size={16} />}>
-          Demo Mode
-        </ButtonLink>
+        <div className="flex flex-wrap items-center gap-2">
+          {now ? (
+            <span className="inline-flex h-10 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13.5px] text-fg-muted">
+              <RailIcon name="calendar" size={16} />
+              {now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+              <span className="text-line-strong">|</span>
+              {now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: false })}
+            </span>
+          ) : null}
+          <ButtonLink href="/demo" size="sm" variant="accent" icon={<RailIcon name="demo-mode" size={16} />}>
+            Demo Mode
+          </ButtonLink>
+        </div>
       </div>
 
       {/* --------------------------------------------------- quick actions */}
-      <section aria-labelledby="qa-title" className="mb-6">
+      <section aria-labelledby="qa-title" className="mb-5">
         <h2 id="qa-title" className="sr-only">
           Quick actions
         </h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-          <BigAction
-            href="/capture/trigger"
-            tone="brand"
-            icon={<Camera size={24} />}
-            title="Capture Evidence"
-            body="Start or continue a case"
-          />
-          <BigAction
-            href="/capture/field-test"
-            tone="sim"
-            icon={<FlaskConical size={24} />}
-            title="Field Test"
-            body="Record a presumptive result"
-          />
-          <BigAction
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <QuickActionTile href="/capture/trigger" icon="capture" tone="green" title="Capture Evidence" body="Start or continue a case" />
+          <QuickActionTile href="/capture/field-test" icon="field-test" tone="terracotta" title="Field Test" body="Record a presumptive result" />
+          <QuickActionTile
             href="/handoff"
-            tone="ok"
-            icon={<ArrowLeftRight size={24} />}
+            icon="handoff"
+            tone="gold"
             title="Handoff"
             body="Transfer custody to GRP"
-            badge={pendingHandoffs.length ? `${pendingHandoffs.length} waiting` : undefined}
+            badge={pendingHandoffs.length ? { text: `${pendingHandoffs.length} waiting` } : undefined}
           />
-          <BigAction
+          <QuickActionTile
             href="/verification"
-            tone="info"
-            icon={<ShieldCheck size={24} />}
+            icon="verification"
+            tone="deep"
             title="Verify Evidence"
             body="Check a chain is intact"
-            badge={brokenCases.length ? `${brokenCases.length} broken` : undefined}
-            badgeTone="danger"
+            badge={brokenCases.length ? { text: `${brokenCases.length} need attention`, danger: true } : undefined}
           />
         </div>
       </section>
 
-      {/* ------------------------------------ device status + pending sync */}
-      <div className="mb-6 grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <DeviceStatusCard />
-
-        <Panel className="min-w-0">
-          <PanelHead
-            title="Pending Sync"
-            icon={<CloudUpload size={17} />}
-            right={<HelpTip term="pending-sync" align="right" />}
+      {/* ------------------------------------------------ operational metrics */}
+      <section aria-labelledby="metrics-title" className="mb-5">
+        <h2 id="metrics-title" className="sr-only">
+          Operational metrics
+        </h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <MetricCard
+            icon="cases"
+            well="gold"
+            label="Active Cases"
+            value={String(store.cases.length).padStart(2, "0")}
+            sub={casesToday ? `${casesToday} opened today` : "None opened today"}
+            subTone={casesToday ? "ok" : "neutral"}
+            href="/cases"
           />
-          <div className="px-5 py-5">
-            <div
-              className={cx(
-                "flex items-center gap-3 rounded-2xl border px-4 py-3",
-                online ? "border-ok/25 bg-ok/[0.07]" : "border-warn/30 bg-warn/[0.09]",
-              )}
-            >
-              {online ? <Wifi size={20} className="text-ok" /> : <WifiOff size={20} className="text-warn" />}
-              <div>
-                <div className="text-[15px] font-semibold text-fg">{online ? "Online" : "Working offline"}</div>
-                <div className="text-[13px] text-fg-muted">
-                  {online ? "Records upload as soon as you sync." : "Keep capturing — nothing is lost."}
-                </div>
-              </div>
-            </div>
+          <MetricCard
+            icon="certificates"
+            label="Records Today"
+            value={String(recordsToday).padStart(2, "0")}
+            sub="By device time"
+            href="/cases"
+          />
+          <MetricCard
+            icon="shield"
+            label="Verified Chains"
+            value={verdicts ? String(verifiedCount).padStart(2, "0") : "—"}
+            sub={verdicts && verdicts.length ? `${Math.round(pct)}% of cases intact` : "Checking…"}
+            subTone={allVerify ? "ok" : "attention"}
+            href="/verification"
+          />
+          <MetricCard
+            icon="pending-sync"
+            well={queuedRecords.length ? "terracotta" : "sage"}
+            label="Pending Sync"
+            value={String(queuedRecords.length).padStart(2, "0")}
+            sub={queuedRecords.length ? "Awaiting upload" : "All synced"}
+            subTone={queuedRecords.length ? "gold" : "ok"}
+            href="/queue"
+          />
+          <MetricCard
+            icon="handoff"
+            well={pendingHandoffs.length ? "terracotta" : "sage"}
+            label="Handoffs Pending"
+            value={String(pendingHandoffs.length).padStart(2, "0")}
+            sub="RPF → GRP"
+            subTone={pendingHandoffs.length ? "gold" : "neutral"}
+            href="/handoff"
+          />
+        </div>
+      </section>
 
-            <div className="mt-5 flex items-baseline gap-2">
-              <span
-                className={cx(
-                  "text-[44px] font-bold leading-none tracking-tight",
-                  queuedRecords.length ? "text-[#8A5A12]" : "text-ok",
-                )}
-              >
-                {queuedRecords.length}
-              </span>
-              <span className="text-[16px] font-semibold text-fg">
-                record{queuedRecords.length === 1 ? "" : "s"} waiting
-              </span>
-            </div>
-            <p className="mt-2 text-[14px] leading-relaxed text-fg-muted">
-              {queuedRecords.length
-                ? "Saved safely on this device. They will upload automatically when connected."
-                : "Everything captured on this device has reached the server."}
-            </p>
-
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Button
-                variant="primary"
-                size="lg"
-                icon={<CloudUpload size={18} />}
-                busy={busy === "queue"}
-                disabled={!online || !queuedRecords.length || busy === "queue"}
-                onClick={syncNow}
-                title={!online ? "Go online to sync" : !queuedRecords.length ? "Nothing to sync" : undefined}
-              >
-                Sync Now
-              </Button>
-              <ButtonLink href="/queue" size="lg">
-                View Queue
-              </ButtonLink>
-            </div>
-            {!online && queuedRecords.length ? (
-              <p className="mt-3 text-[12.5px] text-fg-dim">Sync becomes available when you are back online.</p>
-            ) : null}
-          </div>
-        </Panel>
-      </div>
-
-      {/* --------------------------------------------------------- KPI row */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat value={store.cases.length} label="Active Cases" hint="Across all stations" tone="brand" icon={<FolderOpen size={21} />} href="/cases" />
-        <Stat
-          value={pendingHandoffs.length}
-          label="Pending Handoffs"
-          hint="Awaiting GRP receipt"
-          tone={pendingHandoffs.length ? "warn" : "ok"}
-          icon={<Clock size={21} />}
-          href="/handoff"
-        />
-        <Stat
-          value={unanchored.length}
-          label="Waiting for Trusted Time"
-          hint="On the server, not yet anchored"
-          tone={unanchored.length ? "sim" : "ok"}
-          icon={<Database size={21} />}
-          href="/queue"
-        />
-        <Stat
-          value={verdicts ? verifiedCount : "—"}
-          label="Verified Cases"
-          hint="Evidence chains intact"
-          tone={allVerify ? "ok" : "warn"}
-          icon={<ShieldCheck size={21} />}
-          href="/verification"
-        />
+      {/* ------------------------- device · integrity · pending sync + TTE */}
+      <div className="mb-6 grid gap-5 lg:grid-cols-2 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_minmax(0,0.95fr)]">
+        <PramaanCard />
+        <IntegrityCard result={global} verdicts={verdicts} />
+        <div className="min-w-0 space-y-5 lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0 xl:col-span-1 xl:block xl:space-y-5">
+          <PendingSyncCard onSync={syncNow} busy={busy === "queue"} />
+          <TteDemoCard />
+        </div>
       </div>
 
       {/* ------------------------------------------------------------ cases */}
@@ -542,67 +527,43 @@ export default function DashboardPage() {
         </div>
       </Panel>
 
-      {/* ------------------------------------- integrity + trusted time */}
+      {/* ------------------------------ what the system preserves + trusted time */}
       <div className="mb-6 grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Panel className="relative min-w-0 overflow-hidden">
           <div className="grid gap-5 px-5 py-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:px-6">
             <div className="min-w-0">
               <div className="flex items-center gap-2.5">
-                <IconContainer tone={allVerify ? "ok" : "danger"} size="sm">
-                  <ShieldCheck size={17} />
-                </IconContainer>
-                <h3 className="text-[18px] font-semibold text-fg">Is the evidence intact?</h3>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                  <RailIcon name="shield" size={19} />
+                </span>
+                <h3 className="text-[18px] font-semibold text-fg">What Evidence Chain preserves</h3>
               </div>
-
-              {!verdicts ? (
-                <div className="flex items-center gap-3 py-12 text-fg-muted">
-                  <CircleDashed size={18} className="animate-spin text-brand" />
-                  <span className="text-[14px]">Checking every chain…</span>
-                </div>
-              ) : (
-                <>
-                  <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className={cx("text-[48px] font-bold leading-none tracking-tight", allVerify ? "text-ok" : "text-danger")}>
-                      {verifiedCount}
-                    </span>
-                    <span className="text-[22px] font-semibold tracking-tight text-fg">
-                      of {verdicts.length} cases verify
-                    </span>
-                  </div>
-                  <p className="mt-2.5 max-w-[32rem] text-[14px] leading-relaxed text-fg-muted">
-                    {allVerify
-                      ? "Every record still matches what was signed, and every chain links up."
-                      : "One or more records no longer match what was signed."}
-                  </p>
-                  <div className="mt-4 flex max-w-[32rem] items-center gap-3">
-                    <ProgressRail value={pct} tone={allVerify ? "ok" : "danger"} />
-                    <span className="shrink-0 text-[15px] font-semibold tabular-nums text-fg">{Math.round(pct)}%</span>
-                  </div>
-
-                  <div className="mt-5 flex max-w-[36rem] flex-wrap items-center gap-x-5 gap-y-2">
-                    {global?.checks.map((c) => (
-                      <span key={c.id} className="inline-flex items-center gap-1.5 text-[13px]">
-                        {c.status === "pass" ? (
-                          <Check size={15} className="text-ok" />
-                        ) : c.status === "fail" ? (
-                          <X size={15} className="text-danger" />
-                        ) : c.status === "degraded" ? (
-                          <TriangleAlert size={14} className="text-warn" />
-                        ) : (
-                          <span className="text-fg-dim">–</span>
-                        )}
-                        <span className="text-fg-muted">{c.label}</span>
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-5">
-                    <ButtonLink href="/verification" icon={<ShieldCheck size={16} />}>
-                      Open Verification
-                    </ButtonLink>
-                  </div>
-                </>
-              )}
+              <ul className="mt-4 grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                {[
+                  "What was recorded",
+                  "Who recorded it",
+                  "When it was recorded",
+                  "Which device was used",
+                  "Whether anything changed",
+                  "When it synchronised",
+                  "Whether the chain still verifies",
+                  "How custody was handed over",
+                ].map((t) => (
+                  <li key={t} className="flex items-center gap-2 text-[14px] text-fg">
+                    <Check size={15} className="shrink-0 text-ok" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-4 max-w-[36rem] rounded-xl border border-line bg-ink-750/60 px-3.5 py-2.5 text-[13px] leading-relaxed text-fg-muted">
+                The system preserves the integrity and provenance of records. It does not establish the
+                chemical truth of a presumptive test, and verification does not prove what was in a sample.
+              </p>
+              <div className="mt-4">
+                <ButtonLink href="/verification" icon={<RailIcon name="verification" size={16} />}>
+                  Open Verification
+                </ButtonLink>
+              </div>
             </div>
             <div className="mx-auto w-full max-w-[320px] self-center lg:w-[280px]">
               <AssetImage name="indiaIntegrity" alt="A stronger India through safer railways: secure, integrity, accountability, trust" maxWidth={320} />
@@ -735,45 +696,6 @@ export default function DashboardPage() {
         against the evidence and deliberately left out.
       </p>
     </>
-  );
-}
-
-function BigAction({
-  href,
-  tone,
-  icon,
-  title,
-  body,
-  badge,
-  badgeTone = "warn",
-}: {
-  href: string;
-  tone: Tone;
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-  badge?: string;
-  badgeTone?: Tone;
-}) {
-  return (
-    <Link
-      href={href}
-      className="panel hover-lift tap group relative flex min-h-[132px] flex-col justify-between gap-3 p-4 hover:shadow-lift sm:p-5"
-    >
-      <div className="flex items-start justify-between gap-2">
-        <IconContainer tone={tone} size="lg">
-          {icon}
-        </IconContainer>
-        {badge ? <Pill tone={badgeTone}>{badge}</Pill> : null}
-      </div>
-      <div>
-        <div className="flex items-center gap-1.5 text-[16px] font-semibold text-fg sm:text-[17px]">
-          {title}
-          <ArrowRight size={16} className="text-fg-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-brand" />
-        </div>
-        <div className="mt-0.5 text-[13px] leading-snug text-fg-muted sm:text-[13.5px]">{body}</div>
-      </div>
-    </Link>
   );
 }
 

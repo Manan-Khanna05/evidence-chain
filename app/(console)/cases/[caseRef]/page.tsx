@@ -225,13 +225,15 @@ export default function CaseDetailPage() {
         <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-[18px] font-semibold text-fg">Case workspace</h2>
+              <h2 className="text-[18px] font-semibold text-fg">
+                {chainLength === 0 ? "New case" : "Existing case"} — workspace
+              </h2>
               <ImmutableBadge />
             </div>
             <p className="mt-1 text-[14px] leading-relaxed text-fg-muted">
               {chainLength === 0
                 ? "This case has no records yet. The first capture becomes position 1 of its own chain."
-                : `Append-only. The next capture becomes position ${chainLength + 1}; positions 1–${chainLength} cannot be edited, reordered or deleted.`}
+                : `Historical records are immutable. The next capture is appended as position ${chainLength + 1}; ${chainLength === 1 ? "position 1 cannot" : `positions 1–${chainLength} cannot`} be edited, reordered or deleted.`}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -254,6 +256,73 @@ export default function CaseDetailPage() {
           </div>
         </div>
       </Panel>
+
+      {/* ------------------------------------------------ case status strip */}
+      <dl className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-6">
+        {[
+          { k: "Records", v: String(summary.record_count) },
+          { k: "Latest Seq", v: chainLength ? `#${chainLength}` : "—" },
+          {
+            k: "Sync",
+            v: summary.queued_count ? `${summary.queued_count} waiting` : summary.record_count ? "Complete" : "—",
+            tone: summary.queued_count ? "gold" : "ok",
+          },
+          {
+            k: "Anchor",
+            v:
+              summary.anchor_state === "dual_anchored"
+                ? "Confirmed"
+                : summary.anchor_state === "single_anchor"
+                  ? "Degraded"
+                  : summary.record_count
+                    ? "Pending"
+                    : "—",
+            tone: summary.anchor_state === "dual_anchored" ? "ok" : "gold",
+          },
+          {
+            k: "Verification",
+            v: !result ? "Checking…" : result.verified ? "Verified" : "Attention",
+            tone: !result ? "neutral" : result.verified ? "ok" : "danger",
+          },
+          {
+            k: "Handoff",
+            v:
+              summary.handoff_status === "verified"
+                ? "Complete"
+                : summary.handoff_status === "mismatch"
+                  ? "Mismatch"
+                  : summary.handoff_status === "not_started"
+                    ? "Not started"
+                    : "Pending",
+            tone:
+              summary.handoff_status === "verified"
+                ? "ok"
+                : summary.handoff_status === "mismatch"
+                  ? "danger"
+                  : summary.handoff_status === "not_started"
+                    ? "neutral"
+                    : "gold",
+          },
+        ].map((c) => (
+          <div key={c.k} className="bg-ink-850 px-4 py-3">
+            <dt className="label">{c.k}</dt>
+            <dd
+              className={
+                "mt-1 text-[15px] font-semibold " +
+                (c.tone === "ok"
+                  ? "text-[#1F6A43]"
+                  : c.tone === "gold"
+                    ? "text-[#855A14]"
+                    : c.tone === "danger"
+                      ? "text-[#93322A]"
+                      : "text-fg")
+              }
+            >
+              {c.v}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       {/* ----------------------------------------------------- case summary */}
       <Panel className="mb-5">

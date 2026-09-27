@@ -143,6 +143,27 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
     ],
   },
   {
+    id: "operations",
+    title: "Operations",
+    icon: <ShieldCheck size={18} />,
+    changes: [
+      {
+        title: "Operational audit trail",
+        points: [
+          "Every action — case opened, record captured, sync run, certificate generated — is logged on the server clock.",
+          "Audit lines are kept apart from evidence: no signature, no chain position, no place in any case.",
+        ],
+      },
+      {
+        title: "Demo scenarios",
+        points: [
+          "Nine one-click scenarios set the system up for a specific demonstration.",
+          "Each step calls the same action the interface calls — nothing is an animation.",
+        ],
+      },
+    ],
+  },
+  {
     id: "certificates",
     title: "Certificates",
     icon: <FileBadge size={18} />,
@@ -162,11 +183,19 @@ const SECTIONS: { id: string; title: string; icon: React.ReactNode; changes: Cha
     icon: <Palette size={18} />,
     changes: [
       {
-        title: "Warm railway palette",
+        title: "Railway visual system",
         points: [
-          "Ivory canvas, forest green for actions and navigation, graphite text, gold and terracotta for warnings and demo markers.",
+          "Railway green for navigation and primary actions, brass for pending states, terracotta for attention and demo markers, red only for genuine integrity failures.",
+          "A dark-green brand block, a shared utility header with search and system state, and the station hero on the dashboard.",
+          "One icon set across navigation and actions, supplied with the V2 asset pack.",
+        ],
+      },
+      {
+        title: "Easier to read and operate",
+        points: [
           "Status is never carried by colour alone: every state has a word and a shape.",
-          "Larger touch targets, readable body text, and no horizontal scrolling on phone-width screens.",
+          "Every reading shows its source — LIVE, SIMULATED or UNAVAILABLE — next to the value.",
+          "Skeletons while loading instead of spinners; no horizontal scrolling on phone-width screens.",
         ],
       },
     ],

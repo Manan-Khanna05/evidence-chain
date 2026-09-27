@@ -184,7 +184,7 @@ function FieldTestCaptureView() {
       <CaptureTargetBar />
 
       <div role="note" className="mt-4 rounded-2xl border-2 border-warn/50 bg-warn/[0.10] px-5 py-4">
-        <div className="flex items-center gap-2.5 text-[16px] font-bold uppercase tracking-[0.05em] text-[#8A5A12] sm:text-[18px]">
+        <div className="flex items-center gap-2.5 text-[16px] font-bold uppercase tracking-[0.05em] text-[#855A14] sm:text-[18px]">
           <AlertTriangle size={20} className="shrink-0" />
           {PRESUMPTIVE_NOTICE}
           <HelpTip term="presumptive" />

@@ -65,12 +65,12 @@ export type Tone = "ok" | "warn" | "danger" | "info" | "sim" | "neutral" | "bran
 
 /** Pill / chip surface: tinted fill, soft rim, readable text on cream. */
 const TONES: Record<Tone, string> = {
-  ok: "border-ok/25 bg-ok/[0.10] text-[#236B45]",
-  warn: "border-warn/30 bg-warn/[0.12] text-[#8A5A12]",
-  danger: "border-danger/30 bg-danger/[0.10] text-[#8F352C]",
-  info: "border-info/25 bg-info/[0.09] text-[#1F4A36]",
-  sim: "border-sim/28 bg-sim/[0.10] text-[#8A4B32]",
-  brand: "border-brand/25 bg-brand/[0.09] text-[#1F4A36]",
+  ok: "border-ok/25 bg-ok/[0.10] text-[#1F6A43]",
+  warn: "border-warn/30 bg-warn/[0.12] text-[#855A14]",
+  danger: "border-danger/30 bg-danger/[0.10] text-[#93322A]",
+  info: "border-info/25 bg-info/[0.09] text-[#0F4426]",
+  sim: "border-sim/28 bg-sim/[0.10] text-[#8E4331]",
+  brand: "border-brand/25 bg-brand/[0.09] text-[#0F4426]",
   neutral: "border-line-strong bg-white/70 text-fg-muted",
 };
 
@@ -98,7 +98,7 @@ export const TONE_BG: Record<Tone, string> = {
 
 /* ----------------------------------------------------------------- button */
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "success";
+type ButtonVariant = "primary" | "secondary" | "accent" | "ghost" | "danger" | "success";
 
 function buttonClasses(variant: ButtonVariant, size: "sm" | "md" | "lg") {
   const base =
@@ -110,12 +110,14 @@ function buttonClasses(variant: ButtonVariant, size: "sm" | "md" | "lg") {
   }[size];
   const variants: Record<ButtonVariant, string> = {
     primary:
-      "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(37,99,235,0.85)] hover:bg-[#2E6A50] active:bg-[#1F4A36]",
+      "bg-brand text-white shadow-[0_8px_20px_-10px_rgba(11,59,39,0.7)] hover:bg-[#1B6538] active:bg-[#0F4426]",
     secondary:
       "border border-line-strong bg-white/80 text-fg shadow-chip backdrop-blur-sm hover:bg-white hover:border-brand/35",
+    /* Muted brass: important secondary actions and railway identity. */
+    accent: "border border-gold/45 bg-gold-soft text-[#855A14] shadow-chip hover:bg-[#EFDDB0] hover:border-gold/60",
     ghost: "text-fg-muted hover:text-fg hover:bg-ink-750",
-    danger: "border border-danger/30 bg-danger/[0.09] text-[#8F352C] hover:bg-danger/[0.15]",
-    success: "border border-ok/30 bg-ok/[0.09] text-[#236B45] hover:bg-ok/[0.15]",
+    danger: "border border-danger/30 bg-danger/[0.09] text-[#93322A] hover:bg-danger/[0.15]",
+    success: "border border-ok/30 bg-ok/[0.09] text-[#1F6A43] hover:bg-ok/[0.15]",
   };
   return cx(base, sizes, variants[variant]);
 }
@@ -436,7 +438,7 @@ export function SimulatedNote({
   return (
     <div
       className={cx(
-        "flex gap-2.5 rounded-xl border border-sim/22 bg-sim/[0.07] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#8A4B32]",
+        "flex gap-2.5 rounded-xl border border-sim/22 bg-sim/[0.07] px-3.5 py-3 text-[12.5px] leading-relaxed text-[#8E4331]",
         className,
       )}
     >

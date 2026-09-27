@@ -41,36 +41,41 @@ import { ConnectionStatus } from "@/features/hardware/connection-status";
 import { GlobalSearch } from "@/components/layout/global-search";
 import { OnboardingProvider, useReplayGuide } from "@/components/onboarding/onboarding";
 import { ASSETS } from "@/lib/assets";
+import { RailIcon, type RailIconName } from "@/components/ui/rail-icon";
 
 type NavItem = {
   href: string;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string; strokeWidth?: number }>;
+  /** One of the supplied V2 icons (public/assets/icons). */
+  icon: RailIconName;
   /** Extra path prefixes that should light this item. */
   match?: string[];
+  /** Paths that must NOT light this item even though they share a prefix. */
+  except?: string[];
 };
 
 const NAV_MAIN: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/cases", label: "Cases", icon: FolderOpen },
-  { href: "/capture/trigger", label: "Capture", icon: Camera, match: ["/capture", "/operator"] },
-  { href: "/queue", label: "Pending Sync", icon: CloudUpload },
-  { href: "/handoff", label: "Handoff", icon: ArrowLeftRight },
-  { href: "/verification", label: "Verification", icon: ShieldCheck },
-  { href: "/certificate", label: "Certificates", icon: FileBadge },
+  { href: "/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/cases", label: "Cases", icon: "cases" },
+  { href: "/capture/trigger", label: "Capture", icon: "capture", match: ["/operator"] },
+  { href: "/capture/field-test", label: "Field Test", icon: "field-test" },
+  { href: "/queue", label: "Pending Sync", icon: "pending-sync" },
+  { href: "/handoff", label: "Handoff", icon: "handoff" },
+  { href: "/verification", label: "Verification", icon: "verification" },
+  { href: "/certificate", label: "Certificates", icon: "certificates" },
 ];
 
 const NAV_SYSTEM: NavItem[] = [
-  { href: "/hardware", label: "PRAMAAN", icon: Cpu },
-  { href: "/settings/device", label: "Device Status", icon: Smartphone },
-  { href: "/tte", label: "TTE Screening", icon: Train },
-  { href: "/demo", label: "Demo Mode", icon: MonitorPlay },
+  { href: "/hardware", label: "PRAMAAN", icon: "pramaan" },
+  { href: "/settings/device", label: "Device Status", icon: "device-status" },
+  { href: "/tte", label: "TTE Screening", icon: "tte" },
+  { href: "/demo", label: "Demo Mode", icon: "demo-mode" },
 ];
 
 const NAV_HELP: NavItem[] = [
-  { href: "/help", label: "How to Use", icon: BookOpen },
-  { href: "/whats-new", label: "What's New", icon: Sparkles },
-  { href: "/system-guide", label: "System Guide", icon: Layers },
+  { href: "/help", label: "How to Use", icon: "guide" },
+  { href: "/whats-new", label: "What's New", icon: "whats-new" },
+  { href: "/system-guide", label: "System Guide", icon: "system-guide" },
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -103,11 +108,29 @@ function Shell({ children }: { children: React.ReactNode }) {
   }, [navOpen]);
 
   if (loading || !store) {
+    // Skeleton in the shape of the console, so nothing jumps when data lands.
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="panel flex items-center gap-3 px-5 py-4 text-fg-muted">
-          <CircleDashed size={18} className="animate-spin text-brand" />
-          <span className="text-[14px]">Loading evidence store…</span>
+      <div className="flex min-h-screen" aria-busy="true" aria-label="Loading the evidence store">
+        <div className="hidden w-[268px] shrink-0 flex-col border-r border-line bg-ink-850 lg:flex">
+          <div className="h-[92px]" style={{ background: "linear-gradient(160deg, #14532D 0%, #0B3B27 100%)" }} />
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="h-9 animate-pulse rounded-xl bg-ink-750" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1">
+          <div className="h-[64px] border-b border-line bg-ink-900" />
+          <div className="mx-auto max-w-[1480px] space-y-5 px-4 py-6 lg:px-8">
+            <div className="h-[190px] animate-pulse rounded-[22px] bg-ink-750" />
+            <div className="h-9 w-72 animate-pulse rounded-lg bg-ink-750" />
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-[96px] animate-pulse rounded-[18px] bg-ink-750" />
+              ))}
+            </div>
+            <span className="sr-only">Loading the evidence store…</span>
+          </div>
         </div>
       </div>
     );
@@ -124,7 +147,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       </a>
 
       {/* ---------------------------------------------------------- sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-[256px] shrink-0 flex-col border-r border-line bg-white/85 backdrop-blur-xl lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-[268px] shrink-0 flex-col border-r border-line bg-ink-850 lg:flex">
         <SidebarBrand />
         <div className="flex-1 overflow-y-auto">
           <SidebarBody pathname={pathname} />
@@ -134,23 +157,23 @@ function Shell({ children }: { children: React.ReactNode }) {
       {navOpen ? (
         <div className="fixed inset-0 z-[60] lg:hidden">
           <div
-            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252722]/35"
+            className="absolute inset-0 animate-[fade-in_.2s_ease-out] bg-[#252525]/35"
             onClick={() => setNavOpen(false)}
           />
           <aside
             role="dialog"
             aria-modal="true"
             aria-label="Navigation"
-            className="absolute left-0 top-0 flex h-full w-[288px] max-w-[86vw] animate-[drawer-in_.22s_ease-out] flex-col border-r border-line bg-white shadow-lift"
+            className="absolute left-0 top-0 flex h-full w-[288px] max-w-[86vw] animate-[drawer-in_.22s_ease-out] flex-col border-r border-line bg-ink-850 shadow-lift"
           >
-            <div className="flex items-center justify-between pr-3">
+            <div className="relative">
               <SidebarBrand />
               <button
                 aria-label="Close navigation"
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted hover:bg-ink-750"
+                className="absolute right-2 top-3 flex h-11 w-11 items-center justify-center rounded-xl text-white/80 hover:bg-white/10 hover:text-white"
                 onClick={() => setNavOpen(false)}
               >
-                <X size={19} />
+                <RailIcon name="close" size={19} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
@@ -162,8 +185,10 @@ function Shell({ children }: { children: React.ReactNode }) {
 
       {/* ------------------------------------------------------------- main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <main id="main" className="mx-auto w-full max-w-[1480px] flex-1 px-4 pb-6 pt-4 lg:px-8 lg:pb-8 lg:pt-6">
-          <GlobalHeader onOpenNav={() => setNavOpen(true)} />
+        <UtilityHeader onOpenNav={() => setNavOpen(true)} />
+        <HonestyStrip />
+        <main id="main" className="mx-auto w-full max-w-[1480px] flex-1 px-4 pb-6 pt-5 lg:px-8 lg:pb-8 lg:pt-6">
+          {pathname === "/dashboard" ? <RailwayHero /> : null}
           <div key={pathname} className="animate-fade-up">
             {children}
           </div>
@@ -182,38 +207,42 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function SidebarBrand() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-3 px-5 pb-4 pt-5">
-      <EvidenceChainMark size={42} />
+    <Link
+      href="/dashboard"
+      className="relative flex items-center gap-3 overflow-hidden px-5 pb-5 pt-5 text-white"
+      style={{ background: "linear-gradient(160deg, #14532D 0%, #0B3B27 100%)" }}
+    >
+      {/* A thin brass rule along the bottom edge, the only ornament. */}
+      <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[3px] bg-gold/80" />
+      <EvidenceChainMark size={44} tone="gold" />
       <span className="leading-tight">
-        <span className="block text-[17px] font-bold tracking-tight text-brand-deep">Evidence Chain</span>
-        <span className="block text-[12px] font-medium text-fg-muted">Railway Evidence Console</span>
-        <span className="mt-0.5 block text-[11px] font-semibold text-brand">V2 · SIH 2026</span>
+        <span className="block text-[18px] font-bold tracking-tight">Evidence Chain</span>
+        <span className="block text-[12.5px] font-medium text-white/80">Railway Evidence Console</span>
+        <span className="mt-0.5 block text-[11.5px] font-semibold text-gold-soft">V2 • SIH 2026</span>
       </span>
     </Link>
   );
 }
 
 function isActive(pathname: string, item: NavItem) {
+  if ((item.except ?? []).some((e) => pathname === e || pathname.startsWith(e + "/"))) return false;
   if (pathname === item.href || pathname.startsWith(item.href + "/")) return true;
   return (item.match ?? []).some((m) => pathname === m || pathname.startsWith(m + "/"));
 }
 
 function SidebarBody({ pathname }: { pathname: string }) {
-  const { store, officer, session, signOut } = useApp();
-  const router = useRouter();
+  const { store, session } = useApp();
   const replay = useReplayGuide();
   if (!store || !session) return null;
 
   const pending = store.records.filter((r) => r.status === "queued" || r.status === "captured").length;
   const needsVerification = store.tamper.length > 0;
-  const device = store.devices.find((d) => d.assigned_officer_id === session.officer_id) ?? null;
 
   const Section = ({ title, items }: { title: string; items: NavItem[] }) => (
     <div>
       <div className="label px-3 pb-1.5">{title}</div>
       <ul className="space-y-0.5">
         {items.map((item) => {
-          const Icon = item.icon;
           const active = isActive(pathname, item);
           return (
             <li key={item.href}>
@@ -223,18 +252,22 @@ function SidebarBody({ pathname }: { pathname: string }) {
                 className={cx(
                   "group relative flex min-h-[44px] items-center gap-3 rounded-xl px-3 text-[14.5px] transition-colors duration-150",
                   active
-                    ? "bg-brand/[0.09] font-semibold text-brand-deep"
+                    ? "bg-brand-soft font-semibold text-brand-deep"
                     : "text-fg-muted hover:bg-ink-750 hover:text-fg",
                 )}
               >
                 {active ? (
                   <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-brand" />
                 ) : null}
-                <Icon size={19} strokeWidth={2} className={active ? "text-brand" : "text-fg-dim group-hover:text-fg-muted"} />
+                <RailIcon
+                  name={item.icon}
+                  size={20}
+                  className={active ? "text-brand" : "text-fg-dim group-hover:text-fg-muted"}
+                />
                 <span className="flex-1">{item.label}</span>
                 {item.href === "/queue" && pending > 0 ? (
                   <span
-                    className="min-w-[22px] rounded-full bg-warn px-1.5 py-[1px] text-center text-[11.5px] font-bold text-white"
+                    className="min-w-[22px] rounded-full bg-gold-soft px-1.5 py-[1px] text-center text-[11.5px] font-bold text-[#855A14] ring-1 ring-gold/40"
                     aria-label={`${pending} records waiting to sync`}
                   >
                     {pending}
@@ -265,57 +298,38 @@ function SidebarBody({ pathname }: { pathname: string }) {
           onClick={replay}
           className="mt-0.5 flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[14.5px] text-fg-muted transition-colors duration-150 hover:bg-ink-750 hover:text-fg"
         >
-          <PlayCircle size={19} className="text-fg-dim" />
+          <RailIcon name="replay" size={20} className="text-fg-dim" />
           Replay Guide
         </button>
       </div>
 
-      <div className="mt-auto space-y-3 pt-2">
-        <div className="relative overflow-hidden rounded-2xl border border-line bg-white">
+      <div className="mt-auto pt-2">
+        {/* Railway context, kept small and at the foot of the navigation. */}
+        <div className="relative overflow-hidden rounded-2xl border border-line">
           <div
             aria-hidden="true"
-            className="absolute inset-0 opacity-[0.16]"
+            className="absolute inset-0"
             style={{
               backgroundImage: `url(${ASSETS.railwayLight.src})`,
               backgroundSize: "cover",
-              backgroundPosition: "center 40%",
+              backgroundPosition: "center 55%",
             }}
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(180deg, rgba(255,253,248,0.94) 0%, rgba(255,253,248,0.78) 100%)" }}
           />
           <div className="relative px-4 py-3.5">
             <div className="tricolour mb-2 h-[3px] w-10 rounded-full" />
-            <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-brand-deep">Indian Railways</p>
-            <p className="mt-0.5 text-[13px] font-medium leading-snug text-fg-muted">
-              Safer Railways. Stronger India.
+            <p className="text-[13px] font-semibold leading-snug text-brand-deep">
+              Safer Journeys
+              <br />
+              Stronger Railways
             </p>
+            <p className="mt-0.5 text-[12px] leading-snug text-fg-muted">Through trusted evidence</p>
           </div>
         </div>
-
-        <div className="rounded-2xl border border-line bg-ink-750/60 px-3.5 py-3">
-          <div className="label">Operator</div>
-          <div className="mt-1.5 flex items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3E7A5C] to-[#173C2B] text-[12px] font-bold text-white">
-              {initials(officer?.name ?? session.officer_id)}
-            </span>
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-[14px] font-semibold text-fg">{officer?.name ?? session.officer_id}</span>
-              <span className="mono block truncate text-[11.5px] text-fg-dim">
-                {session.officer_id}
-                {device ? ` · ${device.device_id}` : ""}
-              </span>
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => {
-            signOut();
-            router.push("/login");
-          }}
-          className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3 text-[14px] text-fg-muted transition-colors hover:bg-ink-750 hover:text-fg"
-        >
-          <LogOut size={18} />
-          Sign Out
-        </button>
       </div>
     </nav>
   );
@@ -324,97 +338,38 @@ function SidebarBody({ pathname }: { pathname: string }) {
 /* ---------------------------------------------------------------- header */
 
 /**
- * The railway masthead. Full height on the dashboard, compact elsewhere. The
- * supplied railway-hero.jpg carries its own tagline on the left, so a light
- * scrim sits over that side and the live title is rendered on top of it;
- * the train and station remain clear on the right.
+ * The utility bar every page shares: search, notifications, operator and
+ * system state. Kept compact and quiet so the page below does the talking.
  */
-function GlobalHeader({ onOpenNav }: { onOpenNav: () => void }) {
-  const pathname = usePathname();
-  const full = pathname === "/dashboard";
-  const { storage } = useApp();
-
+function UtilityHeader({ onOpenNav }: { onOpenNav: () => void }) {
   return (
-    <header className="relative mb-6 overflow-hidden rounded-[24px] border border-white shadow-hero">
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `url(${ASSETS.railwayHero.src})`,
-          backgroundSize: "cover",
-          backgroundPosition: full ? "right 62%" : "right 58%",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(248,250,254,0.98) 0%, rgba(248,250,254,0.96) 40%, rgba(248,250,254,0.62) 60%, rgba(248,250,254,0.06) 82%)",
-        }}
-      />
-
-      <div className={cx("relative flex flex-col gap-4 px-4 sm:px-6 lg:px-7", full ? "py-5 lg:py-7" : "py-4")}>
-        <div className="flex items-start gap-3">
-          <button
-            aria-label="Open navigation"
-            className="glass flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-fg-muted hover:text-fg lg:hidden"
-            onClick={onOpenNav}
-          >
-            <Menu size={19} />
-          </button>
-
-          <div className="min-w-0 flex-1">
-            {full ? (
-              <>
-                <div className="text-[13px] font-bold uppercase tracking-[0.14em] text-brand">Evidence Chain</div>
-                <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-tight text-brand-deep sm:text-[30px] lg:text-[34px]">
-                  Railway Evidence Integrity Console
-                </h1>
-                <p className="mt-1.5 text-[15px] font-medium text-fg-muted sm:text-[16px]">
-                  Trusted Evidence. Safer Journeys.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="text-[12px] font-bold uppercase tracking-[0.14em] text-brand">Evidence Chain</div>
-                <div className="mt-0.5 truncate text-[16px] font-semibold text-brand-deep sm:text-[18px]">
-                  Railway Evidence Integrity Console
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-2">
-            <GlobalSearch />
-            <Notifications />
-            <SystemStatus />
-          </div>
+    <header className="sticky top-0 z-[50] border-b border-line bg-ink-900/92 backdrop-blur-md">
+      <div className="mx-auto flex h-[64px] w-full max-w-[1480px] items-center gap-3 px-4 lg:px-8">
+        <button
+          aria-label="Open navigation"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-line bg-white text-fg-muted hover:text-fg lg:hidden"
+          onClick={onOpenNav}
+        >
+          <RailIcon name="menu" size={20} />
+        </button>
+        <GlobalSearch className="min-w-0 flex-1 lg:max-w-[520px]" />
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Notifications />
+          <SystemStatus />
         </div>
-
-        {full ? (
-          <ul className="flex flex-wrap gap-2" aria-label="What the console does">
-            {[
-              { icon: <Camera size={16} />, label: "Capture" },
-              { icon: <ShieldCheck size={16} />, label: "Secure" },
-              { icon: <CheckCircle2 size={16} />, label: "Verify" },
-              { icon: <ArrowLeftRight size={16} />, label: "Handoff" },
-            ].map((s) => (
-              <li
-                key={s.label}
-                className="glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-semibold text-brand-deep"
-              >
-                <span className="text-brand">{s.icon}</span>
-                {s.label}
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </div>
+    </header>
+  );
+}
 
-      {/* Standing honesty strip — never dismissible. */}
-      <div className="relative flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/80 bg-white/80 px-4 py-1.5 text-[11.5px] text-fg-muted sm:px-6 lg:px-7">
+/**
+ * What in this build is simulated — stated on every page, never dismissible.
+ */
+function HonestyStrip() {
+  const { storage } = useApp();
+  return (
+    <div className="border-b border-line bg-ink-850/80">
+      <div className="mx-auto flex w-full max-w-[1480px] flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-[12px] text-fg-muted lg:px-8">
         {["Mock Sensor", "Simulated TSA", "Demo Signatures"].map((t) => (
           <span key={t} className="inline-flex items-center gap-1.5">
             <CircleDashed size={11} className="text-sim" />
@@ -433,7 +388,84 @@ function GlobalHeader({ onOpenNav }: { onOpenNav: () => void }) {
           </span>
         )}
       </div>
-    </header>
+    </div>
+  );
+}
+
+/**
+ * The dashboard masthead.
+ *
+ * The supplied railway-hero.jpg is used as delivered; a warm cream wash on the
+ * left keeps the live title readable over the artwork's own tagline, and a
+ * light amber tint on the right brings the cool sky toward the reference's
+ * station-at-sunset warmth without altering the file.
+ */
+function RailwayHero() {
+  const tiles: { href: string; icon: RailIconName; title: string; sub: string }[] = [
+    { href: "/capture/trigger", icon: "capture", title: "Capture", sub: "Collect evidence" },
+    { href: "/cases", icon: "shield", title: "Secure", sub: "Keep it tamper-proof" },
+    { href: "/verification", icon: "verification", title: "Verify", sub: "Validate integrity" },
+    { href: "/handoff", icon: "handoff", title: "Handoff", sub: "Transfer to GRP" },
+  ];
+  return (
+    <section
+      aria-labelledby="hero-title"
+      className="relative mb-6 overflow-hidden rounded-[22px] border border-line shadow-hero"
+    >
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${ASSETS.railwayHero.src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "right 60%",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 mix-blend-multiply"
+        style={{ background: "linear-gradient(90deg, rgba(0,0,0,0) 40%, rgba(236,196,140,0.45) 100%)" }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(250,245,234,0.98) 0%, rgba(250,245,234,0.95) 38%, rgba(250,245,234,0.55) 60%, rgba(250,245,234,0) 82%)",
+        }}
+      />
+      <div className="relative px-5 py-6 sm:px-7 lg:py-8">
+        <div className="text-[12.5px] font-bold uppercase tracking-[0.16em] text-brand">Evidence Chain V2</div>
+        <h1
+          id="hero-title"
+          className="mt-1.5 max-w-[640px] text-[26px] font-bold leading-[1.12] tracking-tight text-brand-deep sm:text-[32px] lg:text-[38px]"
+        >
+          Railway Evidence Integrity Console
+        </h1>
+        <p className="mt-2 text-[15.5px] font-medium text-fg-muted sm:text-[17px]">
+          Trusted Evidence. Safer Journeys.
+        </p>
+        <ul className="mt-5 grid max-w-[720px] grid-cols-2 gap-2.5 sm:grid-cols-4">
+          {tiles.map((t) => (
+            <li key={t.title}>
+              <Link
+                href={t.href}
+                className="hover-lift flex h-full items-center gap-2.5 rounded-2xl border border-line bg-white/92 px-3 py-2.5 shadow-chip hover:shadow-lift"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-[#855A14]">
+                  <RailIcon name={t.icon} size={19} />
+                </span>
+                <span className="min-w-0 leading-tight">
+                  <span className="block text-[14px] font-semibold text-fg">{t.title}</span>
+                  <span className="block truncate text-[12px] text-fg-muted">{t.sub}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
 
@@ -509,9 +541,9 @@ function Notifications() {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={items.length ? `Notifications: ${items.length} need attention` : "Notifications"}
-        className="glass relative flex h-11 w-11 items-center justify-center rounded-xl text-fg-muted shadow-chip transition-colors hover:text-fg"
+        className="relative flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-white text-fg-muted shadow-chip transition-colors hover:text-fg"
       >
-        <Bell size={18} />
+        <RailIcon name="notifications" size={20} />
         {items.length ? (
           <span className="absolute -right-1 -top-1 flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-danger px-1 text-[10.5px] font-bold text-white">
             {items.length}
@@ -571,8 +603,8 @@ function SyncRow() {
         className={cx(
           "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
           sync.error
-            ? "border-warn/30 bg-warn/[0.1] text-[#8A5A12]"
-            : "border-ok/25 bg-ok/[0.08] text-[#236B45]",
+            ? "border-warn/30 bg-warn/[0.1] text-[#855A14]"
+            : "border-ok/25 bg-ok/[0.08] text-[#1F6A43]",
         )}
         title={storage?.detail}
       >
@@ -590,7 +622,8 @@ function SyncRow() {
 }
 
 function SystemStatus() {
-  const { store, officer, session, run } = useApp();
+  const { store, officer, session, run, signOut } = useApp();
+  const router = useRouter();
   const pathname = usePathname();
   const { open, setOpen, ref } = usePopover();
   React.useEffect(() => setOpen(false), [pathname, setOpen]);
@@ -606,9 +639,9 @@ function SystemStatus() {
         aria-expanded={open}
         aria-haspopup="true"
         aria-label={`Operator ${officer?.name ?? session.officer_id}, ${online ? "online" : "offline"}`}
-        className="glass flex h-11 items-center gap-2.5 rounded-xl pl-1.5 pr-2.5 shadow-chip transition-colors hover:bg-white"
+        className="flex h-11 items-center gap-2.5 rounded-xl border border-line bg-white pl-1.5 pr-2.5 shadow-chip transition-colors hover:border-line-strong"
       >
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#3E7A5C] to-[#173C2B] text-[11.5px] font-bold text-white">
+        <span className="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#2E6A45] to-[#0B3B27] text-[11.5px] font-bold text-white">
           {initials(officer?.name ?? session.officer_id)}
           <span
             className={cx(
@@ -619,10 +652,11 @@ function SystemStatus() {
         </span>
         <span className="hidden text-left leading-tight md:block">
           <span className="block text-[13px] font-semibold text-fg">{officer?.name ?? session.officer_id}</span>
-          <span className={cx("block text-[11.5px] font-semibold", online ? "text-[#236B45]" : "text-[#8A5A12]")}>
-            {online ? "System online" : "Working offline"}
+          <span className={cx("block text-[11.5px] font-semibold", online ? "text-[#1F6A43]" : "text-[#855A14]")}>
+            {officer?.force ?? "Officer"} • {online ? "System Online" : "Working Offline"}
           </span>
         </span>
+        <RailIcon name="chevron-down" size={15} className="hidden text-fg-dim md:block" />
       </button>
       {open ? (
         <div className="absolute right-0 top-full z-[70] mt-2 w-[320px] max-w-[calc(100vw-2rem)] animate-fade-up rounded-2xl border border-line-strong bg-white p-4 shadow-lift">
@@ -642,7 +676,7 @@ function SystemStatus() {
               <span
                 className={cx(
                   "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold",
-                  online ? "border-ok/25 bg-ok/[0.08] text-[#236B45]" : "border-warn/30 bg-warn/[0.1] text-[#8A5A12]",
+                  online ? "border-ok/25 bg-ok/[0.08] text-[#1F6A43]" : "border-warn/30 bg-warn/[0.1] text-[#855A14]",
                 )}
               >
                 {online ? <Wifi size={13} /> : <WifiOff size={13} />}
@@ -676,6 +710,21 @@ function SystemStatus() {
               {online ? "Simulate going offline" : "Simulate reconnecting"}
             </Button>
           </div>
+
+          <div className="mt-3 border-t border-line pt-3">
+            <Button
+              size="md"
+              variant="ghost"
+              className="w-full"
+              icon={<LogOut size={16} />}
+              onClick={() => {
+                signOut();
+                router.push("/login");
+              }}
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
       ) : null}
     </div>
@@ -689,20 +738,14 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
   const pending = store
     ? store.records.filter((r) => r.status === "queued" || r.status === "captured").length
     : 0;
-  const items: NavItem[] = [
-    NAV_MAIN[0],
-    NAV_MAIN[1],
-    NAV_MAIN[2],
-    NAV_MAIN[3],
-  ];
+  const items: NavItem[] = [NAV_MAIN[0], NAV_MAIN[1], NAV_MAIN[2], NAV_MAIN[4]];
   return (
     <nav
       aria-label="Quick navigation"
-      className="fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-white/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-[55] border-t border-line bg-ink-850/95 px-2 pb-[max(env(safe-area-inset-bottom),6px)] pt-1.5 backdrop-blur-xl lg:hidden"
     >
       <ul className="grid grid-cols-5">
         {items.map((item) => {
-          const Icon = item.icon;
           const active = isActive(pathname, item);
           return (
             <li key={item.href}>
@@ -714,7 +757,7 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
                   active ? "text-brand" : "text-fg-muted",
                 )}
               >
-                <Icon size={21} strokeWidth={active ? 2.3 : 2} />
+                <RailIcon name={item.icon} size={21} strokeWidth={active ? 2.2 : 1.8} />
                 {item.label}
                 {item.href === "/queue" && pending ? (
                   <span className="absolute right-3 top-1 min-w-[18px] rounded-full bg-warn px-1 text-center text-[10px] font-bold text-white">
@@ -731,7 +774,7 @@ function MobileNav({ pathname, onMore }: { pathname: string; onMore: () => void 
             onClick={onMore}
             className="flex min-h-[52px] w-full flex-col items-center justify-center gap-0.5 rounded-xl text-[11.5px] font-medium text-fg-muted"
           >
-            <MoreHorizontal size={21} />
+            <RailIcon name="menu" size={21} />
             More
           </button>
         </li>
@@ -748,7 +791,7 @@ function SiteFooter() {
       <div className="flex flex-col gap-2 border-t border-line pt-4 text-[12.5px] text-fg-dim sm:flex-row sm:items-center sm:justify-between">
         <span className="inline-flex items-center gap-2">
           <span className="tricolour inline-block h-[3px] w-8 rounded-full" />
-          Evidence Chain · SIH 2026 Phase 1 prototype · Indian Railways
+          Evidence Chain V2 · SIH 2026 prototype · built for railway evidence handling
         </span>
         <span className="max-w-xl leading-relaxed">
           Integrity verification is not chemical identification. This system records what happened;

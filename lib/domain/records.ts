@@ -154,16 +154,33 @@ export async function buildSignedRecord(input: BuildRecordInput): Promise<Eviden
   };
 }
 
-/** Records that have reached the server log, in ingest order. */
+/**
+ * Records that have reached the server log, in the order the server accepted
+ * them.
+ *
+ * Accepted order is `log_index`. Records from before that field existed have
+ * none; they predate every indexed record, so they come first, in the order
+ * their ingest time and id give — which is how they were anchored.
+ */
 export function serverLog(records: EvidenceRecord[]): EvidenceRecord[] {
   return records
     .filter((r) => r.status === "pushed" || r.status === "anchored")
     .sort((a, b) => {
+      const ai = a.log_index;
+      const bi = b.log_index;
+      if (ai !== undefined && bi !== undefined) return ai - bi;
+      if (ai === undefined && bi !== undefined) return -1;
+      if (ai !== undefined && bi === undefined) return 1;
       const at = a.received_at ?? "";
       const bt = b.received_at ?? "";
       if (at === bt) return a.record_id.localeCompare(b.record_id);
       return at < bt ? -1 : 1;
     });
+}
+
+/** The next free position in the server log. */
+export function nextLogIndex(records: EvidenceRecord[]): number {
+  return records.reduce((acc, r) => Math.max(acc, r.log_index ?? -1), -1) + 1;
 }
 
 export function recordsForCase(records: EvidenceRecord[], caseRef: string): EvidenceRecord[] {

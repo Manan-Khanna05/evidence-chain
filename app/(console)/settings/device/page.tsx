@@ -26,10 +26,14 @@ import { ConnectivityPill } from "@/components/ui/status";
 import { MOCK_READINGS, MOCK_SENSOR_ID, MOCK_SENSOR_TYPE } from "@/lib/sensor/mock_readings";
 import { REFERRAL_TIERS } from "@/lib/domain/vocab";
 import { DeviceStatusCard } from "@/features/hardware/device-status-card";
+import { LiveSensors } from "@/features/hardware/live-sensors";
+import { PramaanDiagnostics } from "@/features/hardware/pramaan-diagnostics";
+import { useHardware } from "@/components/providers/hardware-provider";
 
 export default function DeviceStatusPage() {
   const { store, officer, storage } = useApp();
   const [selected, setSelected] = React.useState<string | null>(null);
+  const [view, setView] = React.useState<"operator" | "technical" | "diagnostics">("operator");
 
   if (!store) return null;
 
@@ -53,10 +57,45 @@ export default function DeviceStatusPage() {
         status={<ConnectivityPill online={store.connectivity.online} />}
       />
 
-      <div className="mb-6">
-        <DeviceStatusCard />
+      <div
+        role="tablist"
+        aria-label="Device status view"
+        className="mb-5 inline-flex flex-wrap rounded-xl border border-line bg-white p-1 shadow-chip"
+      >
+        {(
+          [
+            { key: "operator", label: "Operator View" },
+            { key: "technical", label: "Technical View" },
+            { key: "diagnostics", label: "Diagnostics" },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.key}
+            role="tab"
+            aria-selected={view === t.key}
+            onClick={() => setView(t.key)}
+            className={cx(
+              "min-h-[44px] rounded-lg px-4 text-[14px] font-semibold transition-colors duration-150",
+              view === t.key ? "bg-brand text-white shadow-chip" : "text-fg-muted hover:bg-ink-750 hover:text-fg",
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
+      {view === "operator" ? (
+        <div className="space-y-5">
+          <DeviceStatusCard />
+          <LiveSensors />
+        </div>
+      ) : view === "diagnostics" ? (
+        <div className="space-y-5">
+          <DiagnosticsChecklist />
+          <PramaanDiagnostics />
+        </div>
+      ) : (
+      <>
       <h2 className="mb-3 text-[20px] font-semibold text-fg">Phones</h2>
 
       <div className="mb-4 flex flex-wrap gap-1.5">
@@ -114,7 +153,7 @@ export default function DeviceStatusPage() {
             <div className="p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-sim/35 bg-sim/[0.06] p-4">
-                  <div className="label text-[#8A4B32]">Implemented in this build</div>
+                  <div className="label text-[#8E4331]">Implemented in this build</div>
                   <dl className="mt-3 space-y-3">
                     <Line k="Key location" v="Software key in the server process" />
                     <Line k="Algorithm" v="ECDSA P-256 / SHA-256 (Web Crypto)" />
@@ -313,7 +352,85 @@ export default function DeviceStatusPage() {
           </Panel>
         </div>
       </div>
+      </>
+      )}
     </>
+  );
+}
+
+/**
+ * Every part the attached device says it has, and whether it is working.
+ * A part the device simply does not have is shown as "not fitted", not as a
+ * fault, and no reading is invented for it.
+ */
+function DiagnosticsChecklist() {
+  const hw = useHardware();
+  const connected = hw.state === "connected";
+  const rows = [
+    ...hw.capabilities.map((c) => ({
+      label: c.key === "potentiometer" ? "Temperature (potentiometer)" : c.label,
+      state: c.available ? "ok" : c.note ? "absent" : "fault",
+      note:
+        c.key === "potentiometer" && c.available
+          ? "SIMULATED — not a thermal sensor"
+          : !c.available && c.note
+            ? c.note
+            : c.available
+              ? "Working"
+              : "Reported not working",
+    })),
+    {
+      label: "USB",
+      state: hw.isPramaan && hw.pramaan.portOpen ? "ok" : "absent",
+      note: hw.isPramaan && hw.pramaan.portOpen ? "Port open" : "Not connected",
+    },
+  ] as { label: string; state: "ok" | "absent" | "fault"; note: string }[];
+
+  return (
+    <Panel className="min-w-0">
+      <PanelHead
+        title="PRAMAAN Diagnostics"
+        subtitle={
+          connected
+            ? `Firmware ${hw.firmware ?? "—"} · Protocol ${hw.isPramaan ? (hw.pramaan.protocol ?? "PRAMAAN-1") : "—"}`
+            : "Connect PRAMAAN to run diagnostics."
+        }
+        icon={<Cpu size={16} />}
+      />
+      {hw.capabilities.length === 0 ? (
+        <p className="px-5 py-6 text-[14px] text-fg-muted">
+          No device has reported its parts yet. Plug PRAMAAN in and press Connect PRAMAAN on the
+          Operator View.
+        </p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {rows.map((r) => (
+            <li key={r.label} className="flex items-center gap-3 px-5 py-3">
+              <span
+                className={cx(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-bold",
+                  r.state === "ok" && "bg-ok/15 text-[#1F6A43]",
+                  r.state === "absent" && "bg-ink-750 text-fg-dim",
+                  r.state === "fault" && "bg-danger/15 text-[#93322A]",
+                )}
+                aria-hidden="true"
+              >
+                {r.state === "ok" ? "✓" : r.state === "fault" ? "!" : "—"}
+              </span>
+              <span className="min-w-0 flex-1 text-[14.5px] font-medium text-fg">{r.label}</span>
+              <span
+                className={cx(
+                  "text-right text-[13px]",
+                  r.state === "fault" ? "font-semibold text-[#93322A]" : "text-fg-muted",
+                )}
+              >
+                {r.note}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }
 

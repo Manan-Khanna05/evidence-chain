@@ -109,6 +109,20 @@ verifyChain(case_ref)        walks only that case`}</Code>
           </p>
         </Section>
 
+        <Section id="record" title="Record lifecycle" icon={<FileCode2 size={17} />}>
+          <Code>{`telemetry          streamed, displayed, never stored as evidence
+review             officer sees the reading and its source
+confirm            officer confirms — only now is a record built
+captured/queued    signed on the device, appended to case + device chains
+pushed             server received it and re-checked signature and links
+anchored           covered by a tree head both simulated TSAs signed
+verified           any time: recomputed from stored data, never cached`}</Code>
+          <p>
+            Field-test results stay one of presumptive positive, presumptive negative or inconclusive.
+            An inconclusive or not-tested outcome is never converted into a negative.
+          </p>
+        </Section>
+
         <Section id="crypto" title="Cryptography" icon={<KeyRound size={17} />}>
           <Code>{`payload_hash = SHA-256(canonical JSON of payload)
 record_hash  = SHA-256(canonical record identity incl. case position)
@@ -180,6 +194,43 @@ handoff             transfer and receipt agree`}</Code>
           <p>
             Scope is a case or the whole log. A failure names the record and, for case linkage, the
             position with expected and actual values.
+          </p>
+        </Section>
+
+        <Section id="handoff" title="Handoff and certificates" icon={<FileCode2 size={17} />}>
+          <Code>{`handoff_transfer   signed by the RPF officer on the RPF device
+handoff_receipt    signed by the GRP officer on a DIFFERENT device,
+                   refused unless its transfer exists
+mismatch           counts or seals disagree — recorded, never hidden
+
+certificate        Section 63 (BSA 2023) Part A from verified records,
+                   SHA-256; Part B left blank for the expert`}</Code>
+        </Section>
+
+        <Section id="security" title="Security" icon={<ShieldCheck size={17} />}>
+          <ul className="list-disc space-y-1.5 pl-5">
+            <li>Private keys never leave the server; the browser receives the store with keys stripped.</li>
+            <li>Every write goes through one append-only door that refuses duplicates and unknown cases.</li>
+            <li>Serial input from PRAMAAN is parsed field by field; nothing received is executed.</li>
+            <li>The PRAMAAN link is only called connected after the device identifies itself.</li>
+            <li>
+              TTE screening flags and readings from the in-browser demo device are marked demo inside
+              their signed payloads. Records created by the Demo Mode scenarios are ordinary records in
+              a prototype store: the whole dataset is synthetic, and the honesty strip says so.
+            </li>
+            <li>
+              Not provided in this build: hardware-backed keys, device attestation, real RFC 3161
+              authorities, or real identity checks at sign-in.
+            </li>
+          </ul>
+        </Section>
+
+        <Section id="deploy" title="Deployment" icon={<Boxes size={17} />}>
+          <Code>{`npx vercel --prod          deploy (project: evidence-chain)
+DATABASE_URL               set in Vercel to share one store across instances;
+                           without it each instance keeps its own in-memory copy`}</Code>
+          <p>
+            Web Serial for PRAMAAN works from Chrome or Edge on a laptop, over https or on localhost.
           </p>
         </Section>
 
